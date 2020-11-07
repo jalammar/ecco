@@ -1,0 +1,70 @@
+# This file exists so you can easily regenerate your project.
+#
+# `cookiepatcher` is a convenient shim around `cookiecutter`
+# for regenerating projects (it will generate a .cookiecutterrc
+# automatically for any template). To use it:
+#
+#    pip install cookiepatcher
+#    cookiepatcher gh:ionelmc/cookiecutter-pylibrary ecco
+#
+# See:
+#    https://pypi.org/project/cookiepatcher
+#
+# Alternatively, you can run:
+#
+#    cookiecutter --overwrite-if-exists --config-file=ecco/.cookiecutterrc gh:ionelmc/cookiecutter-pylibrary
+
+default_context:
+
+    _extensions:               ['jinja2_time.TimeExtension']
+    _template:                 'gh:ionelmc/cookiecutter-pylibrary'
+    allow_tests_inside_package: 'no'
+    appveyor:                  'yes'
+    c_extension_function:      'longest'
+    c_extension_module:        '_ecco'
+    c_extension_optional:      'no'
+    c_extension_support:       'no'
+    c_extension_test_pypi:     'no'
+    c_extension_test_pypi_username: 'jalammar'
+    codacy:                    'no'
+    codacy_projectid:          '[Get ID from https://app.codacy.com/app/jalammar/ecco/settings]'
+    codeclimate:               'no'
+    codecov:                   'yes'
+    command_line_interface:    'plain'
+    command_line_interface_bin_name: 'ecco'
+    coveralls:                 'no'
+    coveralls_token:           '[Required for Appveyor, take it from https://coveralls.io/github/jalammar/ecco]'
+    distribution_name:         'ecco'
+    email:                     'alammar@gmail.com'
+    full_name:                 'Jay Alammar'
+    landscape:                 'no'
+    license:                   'BSD 3-Clause License'
+    linter:                    'flake8'
+    package_name:              'ecco'
+    pre_commit:                'yes'
+    project_name:              'ecco'
+    project_short_description: 'Visualization tools for NLP machine learning models.'
+    pypi_badge:                'yes'
+    pypi_disable_upload:       'no'
+    release_date:              'today'
+    repo_hosting:              'github.com'
+    repo_hosting_domain:       'github.com'
+    repo_name:                 'ecco'
+    repo_username:             'jalammar'
+    requiresio:                'yes'
+    scrutinizer:               'no'
+    setup_py_uses_setuptools_scm: 'no'
+    setup_py_uses_test_runner: 'no'
+    sphinx_docs:               'no'
+    sphinx_docs_hosting:       'https://ecco.readthedocs.io/'
+    sphinx_doctest:            'no'
+    sphinx_theme:              'sphinx-rtd-theme'
+    test_matrix_configurator:  'no'
+    test_matrix_separate_coverage: 'no'
+    test_runner:               'pytest'
+    travis:                    'yes'
+    travis_osx:                'no'
+    version:                   '0.0.0'
+    website:                   'https://jalammar.github.io'
+    year_from:                 '2020'
+    year_to:                   '2020'

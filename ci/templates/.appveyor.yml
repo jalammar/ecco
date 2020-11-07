@@ -1,0 +1,50 @@
+version: '{branch}-{build}'
+build: off
+image: Visual Studio 2019
+environment:
+  matrix:
+    - TOXENV: check
+      TOXPYTHON: C:\Python36\python.exe
+      PYTHON_HOME: C:\Python36
+      PYTHON_VERSION: '3.6'
+      PYTHON_ARCH: '32'
+{% for env in tox_environments %}
+{% if env.startswith(('py2', 'py3')) %}
+    - TOXENV: {{ env }},codecov{{ "" }}
+      TOXPYTHON: C:\Python{{ env[2:4] }}\python.exe
+      PYTHON_HOME: C:\Python{{ env[2:4] }}
+      PYTHON_VERSION: '{{ env[2] }}.{{ env[3] }}'
+      PYTHON_ARCH: '32'
+{% if 'nocov' in env %}
+      WHEEL_PATH: .tox/dist
+{% endif %}
+    - TOXENV: {{ env }},codecov{{ "" }}
+      TOXPYTHON: C:\Python{{ env[2:4] }}-x64\python.exe
+      PYTHON_HOME: C:\Python{{ env[2:4] }}-x64
+      PYTHON_VERSION: '{{ env[2] }}.{{ env[3] }}'
+      PYTHON_ARCH: '64'
+{% if 'nocov' in env %}
+      WHEEL_PATH: .tox/dist
+{% endif %}
+{% if env.startswith('py2') %}
+      WINDOWS_SDK_VERSION: v7.0
+{% endif %}
+{% endif %}{% endfor %}
+init:
+  - ps: echo $env:TOXENV
+  - ps: ls C:\Python*
+install:
+  - '%PYTHON_HOME%\python -mpip install --progress-bar=off tox -rci/requirements.txt'
+  - '%PYTHON_HOME%\Scripts\virtualenv --version'
+  - '%PYTHON_HOME%\Scripts\easy_install --version'
+  - '%PYTHON_HOME%\Scripts\pip --version'
+  - '%PYTHON_HOME%\Scripts\tox --version'
+test_script:
+  - cmd /E:ON /V:ON /C .\ci\appveyor-with-compiler.cmd %PYTHON_HOME%\Scripts\tox
+on_failure:
+  - ps: dir "env:"
+  - ps: get-content .tox\*\log\*
+
+### To enable remote debugging uncomment this (also, see: http://www.appveyor.com/docs/how-to/rdp-to-build-worker):
+# on_finish:
+#   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

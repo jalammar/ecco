@@ -1,0 +1,20 @@
+# To install the git pre-commit hook run:
+#   pre-commit install
+# To update the pre-commit hooks run:
+#   pre-commit install-hooks
+exclude: '^(\.tox|ci/templates|\.bumpversion\.cfg)(/|$)'
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: master
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: debug-statements
+  - repo: https://github.com/timothycrosley/isort
+    rev: master
+    hooks:
+      - id: isort
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: master
+    hooks:
+      - id: flake8

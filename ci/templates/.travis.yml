@@ -1,0 +1,44 @@
+language: python
+dist: xenial
+virt: lxd
+cache: false
+env:
+  global:
+    - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
+    - SEGFAULT_SIGNALS=all
+    - LANG=en_US.UTF-8
+matrix:
+  include:
+    - python: '3.6'
+      env:
+        - TOXENV=check
+{%- for env in tox_environments %}{{ '' }}
+    - env:
+        - TOXENV={{ env }},codecov
+{%- if env.startswith('pypy3') %}{{ '' }}
+      python: 'pypy3'
+{%- elif env.startswith('pypy') %}{{ '' }}
+      python: 'pypy'
+{%- else %}{{ '' }}
+      python: '{{ '{0[2]}.{0[3]}'.format(env) }}'
+{%- endif %}{{ '' }}
+{%- endfor %}{{ '' }}
+before_install:
+  - python --version
+  - uname -a
+  - lsb_release -a || true
+install:
+  - python -mpip install --progress-bar=off tox -rci/requirements.txt
+  - virtualenv --version
+  - easy_install --version
+  - pip --version
+  - tox --version
+script:
+  - tox -v
+after_failure:
+  - cat .tox/log/*
+  - cat .tox/*/log/*
+notifications:
+  email:
+    on_success: never
+    on_failure: always
