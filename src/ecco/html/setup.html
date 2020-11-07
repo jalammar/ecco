@@ -1,0 +1,31 @@
+<html lang="en">
+<script src="https://requirejs.org/docs/release/2.3.6/minified/require.js"></script>
+<script>
+    var ecco_url = 'https://storage.googleapis.com/ml-intro/ecco/'
+    // var ecco_url = 'http://localhost:8000/ecco/'
+
+    if (window.ecco === undefined) window.ecco = {}
+
+    requirejs.config({
+        urlArgs: "bust=" + (new Date()).getTime(),
+        nodeRequire: require,
+        paths: {
+            d3: "https://d3js.org/d3.v5.min",
+            d3array: "https://d3js.org/d3-array.v2.min",
+            jquery: "https://code.jquery.com/jquery-3.5.1.min",
+            oldEcco: ecco_url + 'ecco',
+            ecco: ecco_url + 'ecco-bundle',
+            XRegExp: 'https://cdnjs.cloudflare.com/ajax/libs/xregexp/3.2.0/xregexp-all.min'
+        }
+    });
+    requirejs(['d3'],
+        function (d3) {
+            d3.select('#css').attr('href', ecco_url + 'html/styles.css')
+        })
+
+    console.log('Ecco initialize.')
+</script>
+
+<head>
+    <link id='css' rel="stylesheet" type="text/css">
+</head>

@@ -1,0 +1,43 @@
+<script>
+
+    define('trace_tokens', [ 'd3', 'oldEcco'],
+        function (d3, ecco) {
+            return {
+                TraceTokens: function (viz_id, data, config) {
+                    const self = this
+                    self.viz_id = viz_id
+                    self.data = data
+                    self.config = config
+                    d3.select('#css').attr('href', ecco_url + 'html/styles.css')
+                    d3.select('#trace-token').attr('id', viz_id)
+
+                    self.visualize = function(){
+                        ecco.traceToken(self.viz_id, '#viz', data)
+                    }
+                    self.visualize()
+                }
+            }
+        }, function (err) {
+            console.log(err);
+        }
+    )
+
+
+</script>
+<html lang="en">
+<head>
+    <link href='https://fonts.googleapis.com/css?family=Roboto Mono' rel='stylesheet'>
+    <link id='css' rel="stylesheet" type="text/css">
+    <meta charset="UTF-8">
+    <title>Trace hidden states</title>
+
+    <style>
+    </style>
+</head>
+<body>
+<div id="trace-token">
+
+    <div id="viz"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<script src="https://requirejs.org/docs/release/2.3.6/minified/require.js"></script>
+<script>
+    requirejs.config({
+        urlArgs: "bust=" + (new Date()).getTime(),
+        paths: {
+            d3: "https://d3js.org/d3.v5.min",
+            jquery: "https://code.jquery.com/jquery-3.5.1.min",
+            ecco: 'http://localhost:8000/ecco/ecco'
+        }
+    });
+
+    requirejs(['jquery', 'd3', 'ecco'],
+        function ($, d3, ecco) {
+
+            function visualize() {
+                console.log(window.params['per_layer_activations_sum'].length)
+                ecco.layer_activations(
+                    '#layer-activations',
+                    window.params['tokens'],
+                    window.params['per_layer_activations_sum']
+                )
+            }
+
+
+            visualize()
+        }, function (err) {
+            console.log(err);
+        }
+    )
+
+
+</script>
+<html lang="en">
+<head>
+    <link href='https://fonts.googleapis.com/css?family=Roboto Mono' rel='stylesheet'>
+    <meta charset="UTF-8">
+    <title>Neuron activations</title>
+
+    <style>
+
+        #text-explorable {
+            position: relative;
+            margin: 10px;
+            font-size: 14px;
+            line-height: 1;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .exp-btn {
+            width: 150px;
+            height: 50px;
+        }
+
+        .layer-activations-text {
+            margin: 15px 2px;
+            border: 1px solid #bbb;
+            padding: 5px;
+        }
+
+        .token {
+            display: inline-block;
+            margin: 2px 1px;
+            padding: 7px 2px;
+        }
+
+        .layer-title {
+            font-weight: 900;
+            font-size: 18pt;
+            text-align: center;
+            margin: 5px 5px 15px 5px;
+        }
+
+        .new-line{
+            display: block !important;
+            width: 2em
+        }
+
+        .token-part{
+            margin-left: -4px !important;
+        }
+
+    </style>
+</head>
+<body>
+<div id="text-explorable">
+    <div id="layer-activations"></div>
+</div>
+</body>
+</html>

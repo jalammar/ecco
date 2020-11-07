@@ -1,0 +1,63 @@
+
+<!doctype html>
+<script src="https://requirejs.org/docs/release/2.3.6/minified/require.js"></script>
+<script>
+requirejs.config({
+  paths: {
+    d3: "https://d3js.org/d3.v5.min",
+    jquery: "https://code.jquery.com/jquery-3.5.1.min" ,
+    ecco: 'http://localhost:8000/ecco'
+  },
+});
+</script>
+
+<!--
+<script src="NeuronVizCluster.js"></script>
+-->
+ <head>
+  <meta charset="utf-8">
+  <meta content="utf-8" http-equiv="encoding">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Neuron Activation</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+  html{
+    font-family: "Lucida Console", Monaco, monospace;
+  }
+  #wrap {
+    position:relative;
+    margin: 10px;
+    font-size: 14px;
+    line-height: 2
+  }
+  .token {
+    display: inline-block;
+    margin:10px 1px;
+    padding: 1px 2px
+  }
+  </style>
+
+  </head>
+  <body>
+    <div id="wrap">
+      <button id="prev-neuron" style="width:150px; height:50px;">Previous</button>
+      <button id="next-neuron" style="width:150px; height:50px;">Next</button>
+      <button id="random-neuron" style="width:150px; height:50px;">Random</button>
+      <input type="checkbox" id="show-n-neurons-in-clusters" /> Show # of active neurons
+      <input type="checkbox" id="show-activation-sum" /> Show sum of neuron activations
+      <br />
+      Layer #<span id='layer-number'></span> |
+      <span id="neuron-or-cluster">Neuron</span> #<span id='neuron-number'></span> |
+      Neurons in cluster: <span id='n-neurons-in-cluster'></span>
+      <div id="viz">
+      </div>
+      <div id="neuron-histogram"></div>
+    </div>
+
+    <div id="heatmap"></div>
+    <div id="stats"></div>
+  </body>
+</html>

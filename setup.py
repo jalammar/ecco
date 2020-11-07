@@ -25,7 +25,7 @@ def read(*names, **kwargs):
 
 setup(
     name='ecco',
-    version='0.0.0',
+    version='0.0.2',
     license='BSD-3-Clause',
     description='Visualization tools for NLP machine learning models.',
     long_description='%s\n%s' % (
@@ -71,11 +71,16 @@ setup(
     keywords=[
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
+    python_requires='!=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
     install_requires=[
-        # eg: 'aspectlib==1.1.1', 'six>=1.7',
+        "transformers ~= 3.1",
+        "seaborn ~= 0.11",
+        "scikit-learn~=0.23"
     ],
     extras_require={
+        "dev": [
+            "pytest>=6.1",
+        ],
         # eg:
         #   'rst': ['docutils>=0.11'],
         #   ':python_version=="2.6"': ['argparse'],
@@ -85,4 +90,7 @@ setup(
             'ecco = ecco.cli:main',
         ]
     },
+    dependency_links=[
+        "https://download.pytorch.org/whl/torch_stable.html"
+    ]
 )

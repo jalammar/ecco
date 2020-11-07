@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<script src="https://requirejs.org/docs/release/2.3.6/minified/require.js"></script>
+<script>
+    var ecco_url = 'https://storage.googleapis.com/ml-intro/ecco/'
+
+
+    requirejs.config({
+        urlArgs: "bust=" + (new Date()).getTime(),
+        paths: {
+            d3: "https://d3js.org/d3.v5.min",
+            jquery: "https://code.jquery.com/jquery-3.5.1.min",
+            ecco: ecco_url + 'ecco',
+            XRegExp: 'https://cdnjs.cloudflare.com/ajax/libs/xregexp/3.2.0/xregexp-all.min'
+        }
+    });
+
+    requirejs(['jquery', 'd3', 'ecco', 'XRegExp'],
+        function ($, d3, ecco, xregexp) {
+
+            d3.select('#css').attr('href', ecco_url + 'html/styles.css')
+
+            var current_neuron = 0
+            ecco.setConfig({'tokenization' : 'WordPiece' })
+
+            function visualize() {
+
+
+                ecco.neuronTextExplorable(
+                    '#viz',
+                    window.params['tokens'],
+                    window.params['activations'],
+                    current_neuron
+                )
+
+                // console.log('len is' + window.params['activations'].slice(0,100).length)
+
+                // Update Neuron Number
+                d3.select('#neuron-number')
+                    .text((1 + current_neuron))
+
+                d3.select('#n-neurons-per-cluster')
+                    .text(window.params['n_neurons_per_cluster'][current_neuron])
+
+
+                // Update Layer Number
+                d3.select('#layer-number')
+                    .text(window.params['layer'])
+
+
+
+            }
+
+            ecco.single_heatmap('#heatmap',
+                window.params['tokens'],
+                window.params['activations'].slice(0, 50),
+                current_neuron,
+                15)
+
+
+            // Previous Neuron Button
+            d3.select('#prev-neuron').on('click', function () {
+                if (current_neuron == 0) {
+                    current_neuron = window.params['activations'].length - 1
+                } else
+                    current_neuron--
+                visualize()
+            })
+
+            // Next Neuron Button
+            d3.select('#next-neuron').on('click', function () {
+4
+                if (current_neuron == window.params['activations'].length - 1) {
+                    current_neuron = 0
+                } else
+                    current_neuron++
+
+                visualize()
+            })
+
+            // Random Neuron Button
+            d3.select('#random-neuron').on('click', function () {
+                const max = window.params['activations'].length - 1
+                current_neuron = Math.floor(Math.random() * max)
+                visualize()
+            })
+
+
+            visualize()
+        }, function (err) {
+            console.log(err);
+        }
+    )
+
+
+</script>
+<html lang="en">
+<head>
+    <link href='https://fonts.googleapis.com/css?family=Roboto Mono' rel='stylesheet'>
+    <link id='css' rel="stylesheet" type="text/css">
+    <meta charset="UTF-8">
+    <title>Neuron activations</title>
+
+    <style>
+        html {
+
+        }
+
+        #text-explorable {
+            position: relative;
+            margin: 10px;
+            font-size: 14px;
+            line-height: 1;
+
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .exp-btn {
+            width: 150px;
+            height: 50px;
+        }
+
+        .token {
+            display: inline-block;
+            margin: 2px 1px;
+            padding: 7px 2px;
+        }
+    </style>
+</head>
+<body>
+<div id="text-explorable">
+    <button id="prev-neuron" class="exp-btn">Previous</button>
+    <button id="next-neuron" class="exp-btn">Next</button>
+    <button id="random-neuron" class="exp-btn">Random</button>
+
+    <br />
+    <br />
+
+    Layer #<span id='layer-number'></span> |
+    <span id="neuron-or-cluster">Cluster</span>
+    #<span id='neuron-number'></span> |
+     # of Neurons in cluster: <span id="n-neurons-per-cluster"></span>
+
+    <br />
+    <br />
+
+    <div id="viz"></div>
+    <div id="heatmap"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<script>
+    console.log('defining basic')
+    define('basic', ['d3'],
+        function (d3) {
+            return {
+                init: function () {
+
+                    console.log('basic init')
+                    const viz_id = "viz_" + Math.round(Math.random() * 10000000)
+                    const div = d3.select('#basic').attr('id', viz_id),
+                        div_parent = d3.select('#' + viz_id).node().parentNode
+
+                    // Link to CSS file
+                    d3.select(div_parent).insert('link')
+                        .attr('rel', 'stylesheet')
+                        .attr('type', 'text/css')
+                        .attr('href', ecco_url + 'html/styles.css')
+
+                    return viz_id
+                }
+            }
+
+        }, function (err) {
+            console.log(err);
+        }
+
+    )
+
+    console.log('after defining basic')
+
+
+</script>
+
+<div id="basic"></div>

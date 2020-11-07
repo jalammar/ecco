@@ -1,0 +1,75 @@
+
+<!doctype html>
+<script src="https://requirejs.org/docs/release/2.3.6/minified/require.js"></script>
+<script>
+requirejs.config({
+  paths: {
+    d3: "https://d3js.org/d3.v5.min",
+    jquery: "https://code.jquery.com/jquery-3.5.1.min",
+    ecco: 'http://localhost:8000/ecco'
+  },
+});
+</script>
+<!--
+<script src="attention.js"></script> -->
+
+<script>
+ console.log('inside ecco attention html')
+requirejs(['jquery', 'd3', 'ecco'], //, './ecco.js'
+  function($, d3, ecco) {
+ console.log('inside requirejs html', d3)
+
+
+    $.getJSON("http://localhost:8000/data/distilbert_attentions_1598028523000.json", function(data) {
+   console.log('got datafile', data)
+      var layer = 5
+
+      ecco.attentionFlow('#attention', data['tokens'], data['attentions'][5])
+
+
+    }).fail(function(jqxhr, textStatus, error) {
+      var err = textStatus + ", " + error;
+      console.log("Request Failed: " + err);
+    });
+
+}, function (err) {
+    console.log('error in attention loading', err);
+    // console.log(window.location, window.location.pathname, d3)
+    }
+);
+
+
+
+</script>
+
+ <head>
+  <meta charset="utf-8">
+  <meta content="utf-8" http-equiv="encoding">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Neuron Activation</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+  html{
+    font-family: "Lucida Console", Monaco, monospace;
+  }
+  #wrap {
+    position:relative;
+    margin: 10px;
+    font-size: 14px;
+    line-height: 2
+  }
+  .token {
+    display: inline-block;
+    margin:10px 1px;
+    padding: 1px 2px
+  }
+  </style>
+
+  </head>
+  <body>
+    <div id="attention"></div>
+  </body>
+</html>

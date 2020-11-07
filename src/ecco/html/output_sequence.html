@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<script>
+
+    define('output_sequence', ['d3', 'ecco'],
+
+        function (d3, ecco) {
+            return {
+                outputSequence: function (viz_id, data, config) {
+
+                    const self = this
+                    self.viz_id = viz_id
+                    self.data = data
+                    self.config = config
+
+                    const div = d3.select('#output-sequence').attr('id', viz_id),
+                        div_parent = d3.select('#' + viz_id).node().parentNode
+
+                    // Link to CSS file
+                    d3.select(div_parent).insert('link')
+                        .attr('rel', 'stylesheet')
+                        .attr('type', 'text/css')
+                        .attr('href', ecco_url + 'html/styles.css')
+
+                    self.visualize = function () {
+                        ecco.renderOutputSequence(self.viz_id, data)
+                    }
+                    self.visualize()
+                }
+            }
+
+        }, function (err) {
+            console.log(err);
+        }
+    )
+
+
+</script>
+<html lang="en">
+<body>
+<div id="output-sequence">
+</div>
+<br/>
+<br/>
+<div style="clear:both; display:none">
+    On hover, highlight: Feature Importance / Attention Flow <br/>
+    Activations Choose layer, PCA <br/>
+    Hidden states<br/>
+    Attention<br/>
+</div>
+</body>
+</html>

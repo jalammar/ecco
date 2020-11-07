@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<script src="https://requirejs.org/docs/release/2.3.6/minified/require.js"></script>
+<script>
+    // var ecco_url = 'https://storage.googleapis.com/ml-intro/ecco/'
+    var ecco_url = 'http://localhost:8000/ecco/'
+
+
+    requirejs.config({
+        urlArgs: "bust=" + (new Date()).getTime(),
+        paths: {
+            d3: "https://d3js.org/d3.v5.min",
+            jquery: "https://code.jquery.com/jquery-3.5.1.min",
+            ecco: ecco_url + 'ecco',
+            XRegExp: 'https://cdnjs.cloudflare.com/ajax/libs/xregexp/3.2.0/xregexp-all.min'
+        }
+    });
+
+    define('predict_token', ['jquery', 'd3', 'ecco', 'XRegExp'],
+        function ($, d3, ecco, xregexp) {
+            return {
+                predictToken: function (viz_id, data, config) {
+                    const self = this
+                    self.viz_id = viz_id
+                    self.data = data
+                    self.config = config
+                    d3.select('#css').attr('href', ecco_url + 'html/styles.css')
+                    d3.select('#predict-token').attr('id', viz_id)
+
+                    self.visualize = function(){
+                        console.log("Welp")
+
+                        ecco.predictToken(self.viz_id, '#viz', data)
+
+                    }
+
+                    self.visualize()
+
+
+                }
+
+            }
+
+        }, function (err) {
+            console.log(err);
+        }
+    )
+
+
+</script>
+<html lang="en">
+<head>
+    <link href='https://fonts.googleapis.com/css?family=Roboto Mono' rel='stylesheet'>
+    <link id='css' rel="stylesheet" type="text/css">
+    <meta charset="UTF-8">
+    <title>Predict Token</title>
+
+    <style>
+    </style>
+</head>
+<body>
+<div id="predict-token">
+
+    <div id="viz"></div>
+</div>
+</body>
+</html>

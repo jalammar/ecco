@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<script>
+    define('pca_explorable', ['jquery', 'd3', 'oldEcco', 'XRegExp'],
+        // requirejs(['jquery', 'd3', 'ecco', 'XRegExp'],
+        function ($, d3, ecco, xregexp) {
+            return {
+                PCA_Explorable: function (viz_id, data, component=0, config) {
+                    const self = this
+                    self.viz_id = viz_id
+                    self.data = data
+                    self.layer = self.data['layer']
+                    console.log( 'component', component)
+                    self.config = config
+
+                    d3.select('#css').attr('href', ecco_url + 'html/styles.css')
+                    d3.select('#text-explorable').attr('id', viz_id)
+
+                    var current_component = component
+
+                    self.visualize = function () {
+
+                        ecco.pcaNeuronTextExplorable(
+                            self.viz_id,
+                            '#viz',
+                            self.data['tokens'],
+                            self.data['activations'][self.layer],
+                            current_component
+                        )
+
+                        // Update Component Number
+                        d3.select('#' + self.viz_id).select('#neuron-number')
+                            .text((current_component))
+
+
+                        d3.select('#' + self.viz_id).select('#explained-variance')
+                            .text(
+                                (100 * self.data['variances'][self.layer][current_component]).toFixed(2) + "%")
+
+                        // Update Layer Number
+                        d3.select('#' + self.viz_id).select('#layer-number')
+                            .text(self.data['layer'])
+                    }
+
+
+                    // Previous Neuron Button
+                    d3.select('#' + self.viz_id).select('#prev-neuron').on('click', function () {
+                        if (current_component == 0) {
+                            current_component = self.data['activations'][self.layer].length - 1
+                        } else
+                            current_component--
+                        self.visualize()
+                    })
+
+                    // Next Neuron Button
+                    d3.select('#' + self.viz_id).select('#next-neuron').on('click', function () {
+
+                        if (current_component == self.data['activations'][self.layer].length - 1) {
+                            current_component = 0
+                        } else
+                            current_component++
+
+                        self.visualize()
+                    })
+
+                    // Random Neuron Button
+                    d3.select('#' + viz_id).select('#random-neuron').on('click', function () {
+                        const max = self.data['activations'].length - 1
+                        current_component = Math.floor(Math.random() * max)
+                        self.visualize()
+                    })
+
+
+                    self.visualize()
+
+                }
+
+            }
+            // const viz_id = "viz_" + Math.floor(Math.random() * 100000);
+
+            // window.PCA_Explorable = function (viz_id, data) {
+            //     const self = this
+            //     self.viz_id = viz_id
+            //     self.data = data
+            //     self.layer = self.data['layer']
+            //
+            //     d3.select('#css').attr('href', ecco_url + 'html/styles.css')
+            //     d3.select('#text-explorable').attr('id', viz_id)
+            //
+            //     var current_component = 0
+            //
+            //     self.visualize = function () {
+            //         console.log(self.viz_id, self.layer)
+            //
+            //         ecco.pcaNeuronTextExplorable(
+            //             self.viz_id,
+            //             '#viz',
+            //             self.data['tokens'],
+            //             self.data['activations'][self.layer],
+            //             current_component
+            //         )
+            //
+            //
+            //         // Update Neuron Number
+            //         d3.select('#' + self.viz_id).select('#neuron-number')
+            //             .text((1 + current_component))
+            //
+            //
+            //         d3.select('#' + self.viz_id).select('#explained-variance')
+            //             .text(
+            //                 (100 * self.data['variances'][self.layer][current_component]).toFixed(2) + "%")
+            //
+            //         // Update Layer Number
+            //         d3.select('#' + self.viz_id).select('#layer-number')
+            //             .text(self.data['layer'])
+            //     }
+            //
+            //
+            //     // Previous Neuron Button
+            //     d3.select('#' + self.viz_id).select('#prev-neuron').on('click', function () {
+            //         if (current_component == 0) {
+            //             current_component = self.data['activations'][self.layer].length - 1
+            //         } else
+            //             current_component--
+            //         self.visualize()
+            //     })
+            //
+            //     // Next Neuron Button
+            //     d3.select('#' + self.viz_id).select('#next-neuron').on('click', function () {
+            //
+            //         if (current_component == self.data['activations'][self.layer].length - 1) {
+            //             current_component = 0
+            //         } else
+            //             current_component++
+            //
+            //         self.visualize()
+            //     })
+            //
+            //     // Random Neuron Button
+            //     d3.select('#' + viz_id).select('#random-neuron').on('click', function () {
+            //         const max = self.data['activations'].length - 1
+            //         current_component = Math.floor(Math.random() * max)
+            //         self.visualize()
+            //     })
+            //
+            //
+            //     self.visualize()
+            //
+            // }
+            // if (window.pca === undefined) {
+            //
+            //     window.pca = {}
+            // }
+
+            // window.pca[viz_id] = new PCA_Explorable(viz_id, window.params)
+
+
+            // console.log(viz_id, ecco_url)
+            //
+            // d3.select('#css').attr('href', ecco_url + 'html/styles.css')
+            // d3.select('#text-explorable').attr('id', viz_id)
+            //
+            // var current_component = 0
+            // console.log(this)
+            // this.data = window.params
+            // console.log(this.data)
+
+            // function visualize(viz_id) {
+            //     console.log(exp.id, exp.data)
+            //
+            //     ecco.pcaNeuronTextExplorable(
+            //         viz_id,
+            //         '#viz',
+            //         this.data['tokens'],
+            //         this.data['activations'][this.data['layer']],
+            //         current_component
+            //     )
+            //
+            //
+            //     // Update Neuron Number
+            //     d3.select('#'+viz_id).select('#neuron-number')
+            //         .text((1 + current_component))
+            //
+            //
+            //     d3.select('#'+viz_id).select('#explained-variance')
+            //         .text(
+            //             (100 * data['variances'][data['layer']][current_component]).toFixed(2) + "%")
+            //
+            //     // Update Layer Number
+            //     d3.select('#'+viz_id).select('#layer-number')
+            //         .text(this.data['layer'])
+            //
+            // }
+
+            // ecco.single_heatmap('#heatmap',
+            //     window.params['tokens'],
+            //     window.params['activations'][window.params['layer']],
+            //     current_component,
+            //     15)
+
+            //
+            // // Previous Neuron Button
+            // d3.select('#' + viz_id).select('#prev-neuron').on('click', function () {
+            //     console.log(this.data['layer'])
+            //     if (current_component == 0) {
+            //         current_component = window.params['activations'][window.params['layer']].length - 1
+            //     } else
+            //         current_component--
+            //     visualize(viz_id)
+            // })
+            //
+            // // Next Neuron Button
+            // d3.select('#' + viz_id).select('#next-neuron').on('click', function () {
+            //     4
+            //     if (current_component == window.params['activations'][window.params['layer']].length - 1) {
+            //         current_component = 0
+            //     } else
+            //         current_component++
+            //
+            //     visualize(viz_id)
+            // })
+            //
+            // // Random Neuron Button
+            // d3.select('#' + viz_id).select('#random-neuron').on('click', function () {
+            //     const max = window.params['activations'].length - 1
+            //     current_component = Math.floor(Math.random() * max)
+            //     visualize(viz_id)
+            // })
+            //
+            //
+            // visualize(viz_id)
+        }, function (err) {
+            console.log(err);
+        }
+    )
+
+
+</script>
+<html lang="en">
+<head>
+    <link href='https://fonts.googleapis.com/css?family=Roboto Mono' rel='stylesheet'>
+    <link id='css' rel="stylesheet" type="text/css">
+    <meta charset="UTF-8">
+    <title>PCA Neuron activations</title>
+
+    <style>
+    </style>
+</head>
+<body>
+<div id="text-explorable">
+    <button id="prev-neuron" class="exp-btn">Previous Component</button>
+    <button id="next-neuron" class="exp-btn">Next Component</button>
+    <button id="random-neuron" class="exp-btn">Random Component</button>
+
+    <br/>
+    <br/>
+
+    Layer #<span id='layer-number'></span> |
+    <span id="neuron-or-cluster">Component</span>
+    #<span id='neuron-number'></span> |
+    Variance explained by component: <span id="explained-variance"></span>
+
+    <br/>
+    <br/>
+
+    <div id="viz"></div>
+    <div id="heatmap"></div>
+</div>
+</body>
+</html>
