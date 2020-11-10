@@ -206,21 +206,6 @@ class LMActivations(LM):
         #     token = self.tokenizer.decode([i])
         #     self.tokens.append(token)
 
-        # Turn activations from dict to a proper array
-        activations_dict = None
-        activations = []
-        if self.collect_activations_flag:
-            activations_dict = self._all_activations_dict
-        elif self.collect_gen_activations_flag:
-            activations_dict = self._generation_activations_dict
-
-        if activations_dict is not None:
-            for i in range(len(activations_dict)):
-                activations.append(activations_dict[i])
-
-            activations = np.squeeze( np.array(activations) )
-            self.activations = np.swapaxes(activations, 1, 2)
-
         tokens = []
         for i in input_ids:
             token = self.tokenizer.decode([i])

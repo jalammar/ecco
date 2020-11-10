@@ -91,7 +91,7 @@ class OutputSeq:
         else:
             self.interactiveHighlighter(**kwargs)
 
-    def position(self, position, attr_method='saliency'):
+    def position(self, position, attr_method='grad_x_input'):
 
         if (position < self.n_input_tokens) or (position > len(self.tokens) - 1):
             raise ValueError("'position' should indicate a position of a generated token. "
@@ -124,14 +124,14 @@ class OutputSeq:
         js = """
          requirejs(['basic', 'ecco'], function(basic, ecco){{
             const viz_id = basic.init()
-         
+
             ecco.renderSeqHighlightPosition(viz_id, {}, {})
          }}, function (err) {{
             console.log(err);
         }})""".format(position, data)
         d.display(d.Javascript(js))
 
-    def interactiveHighlighter(self, attr_method='saliency', **kwargs):
+    def interactiveHighlighter(self, attr_method='grad_x_input', **kwargs):
 
         position = self.n_input_tokens
 
@@ -163,7 +163,7 @@ class OutputSeq:
         js = """
          requirejs(['basic', 'ecco'], function(basic, ecco){{
             const viz_id = basic.init()
-            
+
             ecco.interactiveTokens(viz_id, {})
          }}, function (err) {{
             console.log(err);

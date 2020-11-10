@@ -37,10 +37,11 @@ def _one_hot(token_ids, vocab_size):
 
 class LM(object):
     """
-
+    Wrapper around language model. Provides saliency for generated tokens and collects neuron activations.
     """
-
-    def __init__(self, model, tokenizer):
+    def __init__(self, model, tokenizer,
+                 collect_activations_flag=False,
+                 collect_gen_activations_flag=False):
         self.model = model
         if torch.cuda.is_available():
             self.model = model.to('cuda')
@@ -50,32 +51,34 @@ class LM(object):
 
         self.device = 'cuda' if torch.cuda.is_available() and self.model.device.type == 'cuda' \
             else 'cpu'
-        # torch.device('cuda' if torch.cuda.is_available() and self.model.device.type =='cuda'
-        #                        else 'cpu')
+
+
+        # Neuron Activation
+        self.collect_activations_flag = collect_activations_flag
+        self.collect_gen_activations_flag = collect_gen_activations_flag
+        self._hooks = {}
+        self._reset()
+        self._attach_hooks(self.model)
+
 
         # If running in Jupyer, outputting setup this in one cell is enough. But for colab
         # we're running it before every d.HTML cell
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
+
+    def _reset(self):
+        self._all_activations_dict = {}
+        self._generation_activations_dict = {}
+        self.activations = []
+        self.all_activations = []
+        self.generation_activations = []
+        self.neurons_to_inhibit = {}
+        self.neurons_to_induce = {}
 
     def to(self, tensor):
         if self.device == 'cuda':
             return tensor.to('cuda')
         return tensor
 
-    def _get_embeddings(self, input_ids):
-        """
-        Takes the token ids of a sequence, returnsa matrix of their embeddings.
-        """
-        embedding_matrix = self.model.transformer.wte.weight
-
-        vocab_size = embedding_matrix.shape[0]
-        one_hot_tensor = self.to(_one_hot(input_ids, vocab_size))
-
-        token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
-        token_ids_tensor_one_hot.requires_grad_(True)
-
-        inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
-        return inputs_embeds, token_ids_tensor_one_hot
 
     def _generate_token(self, input_ids, past,
                         do_sample, temperature, top_k, top_p, attribution_flag):
@@ -105,29 +108,9 @@ class LM(object):
 
         if attribution_flag:
             saliency_scores = saliency(prediction_logit, token_ids_tensor_one_hot)
-            if 'saliency' not in self.attributions:
-                self.attributions['saliency'] = []
-            self.attributions['saliency'].append(saliency_scores.cpu().detach().numpy())
-
-            # saliency_scores_2 = saliency(prediction_logit, token_ids_tensor_one_hot, norm=False)
-            #
-            # if 'saliency_2' not in self.attributions:
-            #     self.attributions['saliency_2'] = []
-            # self.attributions['saliency_2'].append(saliency_scores_2.cpu().detach().numpy())
-            #
-            # saliency_scores_embed = saliency_on_d_embeddings(prediction_logit,
-            #                                                  inputs_embeds,
-            #                                                  aggregation="L2")
-            # if 'saliency_embed' not in self.attributions:
-            #     self.attributions['saliency_embed'] = []
-            # self.attributions['saliency_embed'].append(saliency_scores_embed.cpu().detach().numpy())
-            #
-            # saliency_scores_embed_sum = saliency_on_d_embeddings(prediction_logit,
-            #                                                      inputs_embeds,
-            #                                                      aggregation="sum")
-            # if 'saliency_embed_sum' not in self.attributions:
-            #     self.attributions['saliency_embed_sum'] = []
-            # self.attributions['saliency_embed_sum'].append(saliency_scores_embed_sum.cpu().detach().numpy())
+            if 'gradient' not in self.attributions:
+                self.attributions['gradient'] = []
+            self.attributions['gradient'].append(saliency_scores.cpu().detach().numpy())
 
             grad_x_input = gradient_x_inputs_attribution(prediction_logit,
                                                          inputs_embeds)
@@ -182,6 +165,23 @@ class LM(object):
                 break
 
 
+
+        # Turn activations from dict to a proper array
+        activations_dict = None
+        activations = []
+        if self.collect_activations_flag:
+            activations_dict = self._all_activations_dict
+        elif self.collect_gen_activations_flag:
+            activations_dict = self._generation_activations_dict
+
+        if activations_dict is not None:
+            for i in range(len(activations_dict)):
+                activations.append(activations_dict[i])
+
+            activations = np.squeeze( np.array(activations) )
+            self.activations = np.swapaxes(activations, 1, 2)
+
+
         hidden_states = output[2]
         tokens = []
         for i in input_ids:
@@ -200,7 +200,103 @@ class LM(object):
                             'hidden_states': hidden_states,
                             'attention': attn,
                             'model_outputs': outputs,
-                            'attribution': attributions})
+                            'attribution': attributions,
+                            'activations': self.activations})
+
+
+    def _get_embeddings(self, input_ids):
+        """
+        Takes the token ids of a sequence, returnsa matrix of their embeddings.
+        """
+        embedding_matrix = self.model.transformer.wte.weight
+
+        vocab_size = embedding_matrix.shape[0]
+        one_hot_tensor = self.to(_one_hot(input_ids, vocab_size))
+
+        token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
+        token_ids_tensor_one_hot.requires_grad_(True)
+
+        inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
+        return inputs_embeds, token_ids_tensor_one_hot
+
+
+    def _attach_hooks(self, model):
+        for name, module in model.named_modules():
+            # Add hooks to capture activations in every FFNN
+            if "mlp.c_proj" in name:
+                if self.collect_activations_flag:
+                    self._hooks[name] = module.register_forward_hook(
+                        lambda self_, input_, output,
+                               name=name: self._get_activations_hook(name, input_))
+
+                if self.collect_gen_activations_flag:
+                    self._hooks[name] = module.register_forward_hook(
+                        lambda self_, input_, output,
+                               name=name: self._get_generation_activations_hook(name, input_))
+
+                # Register neuron inhibition hook
+                self._hooks[name+'_inhibit'] = module.register_forward_pre_hook(
+                    lambda self_, input_, name=name: \
+                    self._inhibit_neurons_hook(name, input_)
+                )
+
+
+    def _get_activations_hook(self, name, input_):
+        """
+        Collects the activation for all tokens (input and output)
+        """
+        # print(input_.shape, output.shape)
+        # in distilGPT and GPT2, the layer name is 'transformer.h.0.mlp.c_fc'
+        # Extract the number of the layer from the name
+        layer_number = int(name.split('.')[2])
+
+        if layer_number not in self._all_activations_dict:
+            self._all_activations_dict[layer_number] = [0]
+
+        # Overwrite the previous step activations. This collects all activations in the last step
+        # Assuming all input tokens are presented as input, no "past"
+        # The inputs to c_proj already pass through the gelu activation function
+        self._all_activations_dict[layer_number][0] = input_[0][0].detach().cpu().numpy()
+
+    def _get_generation_activations_hook(self, name, input_):
+        """
+        Collects the activation for the token being generated
+        """
+        # print(input_.shape, output.shape)
+        # in distilGPT and GPT2, the layer name is 'transformer.h.0.mlp.c_fc'
+        # Extract the number of the layer from the name
+        layer_number = int(name.split('.')[2])
+
+        if layer_number not in self._generation_activations_dict:
+            self._generation_activations_dict[layer_number] = []
+
+        # Accumulate in dict
+        # The inputs to c_proj already pass through the gelu activation function
+        self._generation_activations_dict[layer_number].append(input_[0][0][-1].detach().cpu().numpy())
+
+
+    def _inhibit_neurons_hook(self, name, input_tensor):
+        """
+        After being attached as a pre-forward hook, it sets to zero the activation value
+        of the neurons indicated in self.neurons_to_inhibit
+        """
+
+        layer_number = int(name.split('.')[2])
+        if layer_number in self.neurons_to_inhibit.keys():
+            # print('layer_number', layer_number, input_tensor[0].shape)
+
+            for n in self.neurons_to_inhibit[layer_number]:
+                # print('inhibiting', layer_number, n)
+                input_tensor[0][0][-1][n] = 0  # tuple, batch, position
+
+        if layer_number in self.neurons_to_induce.keys():
+            # print('layer_number', layer_number, input_tensor[0].shape)
+
+            for n in self.neurons_to_induce[layer_number]:
+                # print('inhibiting', layer_number, n)
+                input_tensor[0][0][-1][n] = input_tensor[0][0][-1][n] * 10 # tuple, batch, position
+
+        return input_tensor
 
     def trace_tokens(self, output, position=0, topk=10, layer=None):
         """
@@ -260,7 +356,7 @@ class LM(object):
         d.display(d.HTML(filename=os.path.join(self._path, "html", "trace_tokens.html")))
         js = """
         requirejs(['trace_tokens'], function(trace_tokens){{
-        if (window.trace === undefined) 
+        if (window.trace === undefined)
             window.trace = {{}}
         window.trace["{}"] = new trace_tokens.TraceTokens("{}", {})
         }}
@@ -295,7 +391,7 @@ class LM(object):
         d.display(d.HTML(filename=os.path.join(self._path, "html", "predict_token.html")))
         js = """
         requirejs(['predict_token'], function(predict_token){{
-        if (window.predict === undefined) 
+        if (window.predict === undefined)
             window.predict = {{}}
         window.predict["{}"] = new predict_token.predictToken("{}", {})
         }}
