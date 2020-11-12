@@ -3,6 +3,17 @@ from ecco import output
 from ecco.language_model.lm import _one_hot, LM
 import pytest
 import torch
+from unittest.mock import MagicMock
+from unittest.mock import patch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+
+@pytest.fixture
+def mockLM():
+    #setup
+    class mockLM
+    #yield
+
+    #teardown
 
 
 class TestLM:
@@ -12,7 +23,14 @@ class TestLM:
         assert torch.all(torch.eq(expected, actual))
 
 
-    def test_generate_(self):
+    def test_generate_token_no_attribution(self):
+
+        # set up -- mock model
+        lm = LM(model, tokenizer)
+
+        pred_id, output, past = lm._generate_token([0], None, 1,0, 50, 1)
+
+    def test_select_output_token(self):
         pass
 
     def test_activations_dict_to_array(self, act_dict):

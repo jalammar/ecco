@@ -87,7 +87,6 @@ class LM(object):
         """
         inputs_embeds, token_ids_tensor_one_hot = self._get_embeddings(input_ids)
 
-
         # inputs_embeds = inputs_embeds.to('cuda')
         output = self.model(inputs_embeds=inputs_embeds, return_dict=True)
         predict = output[0]
