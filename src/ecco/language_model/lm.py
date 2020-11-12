@@ -35,6 +35,16 @@ def _one_hot(token_ids, vocab_size):
     return torch.zeros(len(token_ids), vocab_size).scatter_(1, token_ids.unsqueeze(1), 1.)
 
 
+def activations_dict_to_array(activations_dict):
+    # print(activations_dict[0].shape)
+    activations = []
+    for i in range(len(activations_dict)):
+        activations.append(activations_dict[i])
+
+    activations = np.squeeze(np.array(activations))
+    return np.swapaxes(activations, 1, 2)
+
+
 class LM(object):
     """
     Wrapper around language model. Provides saliency for generated tokens and collects neuron activations.
@@ -87,14 +97,12 @@ class LM(object):
         """
         inputs_embeds, token_ids_tensor_one_hot = self._get_embeddings(input_ids)
 
-        # inputs_embeds = inputs_embeds.to('cuda')
         output = self.model(inputs_embeds=inputs_embeds, return_dict=True)
         predict = output[0]
         past = output[1]  # We're not using past because by presenting all the past tokens at every
         # step, we can get feature importance attribution. Let me know if it can be done with past
 
         scores = predict[-1, :]
-        # print(torch.topk(predict[inputs_embeds.shape[0] - 1], 2))
 
         prediction_id = sample_output_token(scores, do_sample, temperature, top_k, top_p)
         # Print the sampled token
@@ -164,21 +172,13 @@ class LM(object):
                 break
 
 
-
         # Turn activations from dict to a proper array
-        activations_dict = None
-        activations = []
-        if self.collect_activations_flag:
-            activations_dict = self._all_activations_dict
-        elif self.collect_gen_activations_flag:
-            activations_dict = self._generation_activations_dict
+        activations_dict =  self._all_activations_dict or self._generation_activations_dict
+
 
         if activations_dict is not None:
-            for i in range(len(activations_dict)):
-                activations.append(activations_dict[i])
-
-            activations = np.squeeze( np.array(activations) )
-            self.activations = np.swapaxes(activations, 1, 2)
+            activations=[]
+            self.activations = activations_dict_to_array(activations_dict)
 
 
         hidden_states = output[2]
