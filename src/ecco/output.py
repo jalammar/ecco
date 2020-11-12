@@ -306,7 +306,8 @@ class OutputSeq:
                 # print('hidden state layer', i, 'position', self.n_input_tokens-1+j)
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
-                logits = lmhead(torch.tensor(hidden_state))
+                logits = lmhead(hidden_state)
+                # logits = lmhead(torch.tensor(hidden_state))
                 # Sort by score (ascending)
                 sorted = torch.argsort(logits)
                 # What token was sampled in this position?

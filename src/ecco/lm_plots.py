@@ -361,15 +361,14 @@ def plot_inner_token_rankings_watch(input_tokens,
     # print(rankings.shape)
     start_token = 0
 
-    n_columns = len(input_tokens)
+    n_columns = len(output_tokens)
     n_rows = rankings.shape[0]
-    fsize = (1 + 0.3 * n_columns,  # Make figure wider if more columns
+    fsize = (1 + 0.9 * n_columns,  # Make figure wider if more columns
              1 + 0.4 * n_rows)  # Make taller if more layers
     fig, (ax, cax) = plt.subplots(nrows=1, ncols=2,
                                   figsize=fsize,
-                                  gridspec_kw={"width_ratios": [1, 0.05]})
+                                  gridspec_kw={"width_ratios": [n_columns, 0.4]})
     fig.subplots_adjust(wspace=0.2)
-    # fig = plt.figure(figsize=)
     fig.set_facecolor("w")
 
     cmap_big = get_cmap('GnBu_r', 512)

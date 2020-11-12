@@ -176,7 +176,7 @@ class LM(object):
         activations_dict =  self._all_activations_dict or self._generation_activations_dict
 
 
-        if activations_dict is not None:
+        if activations_dict != {}:
             activations=[]
             self.activations = activations_dict_to_array(activations_dict)
 
