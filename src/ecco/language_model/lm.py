@@ -213,7 +213,7 @@ class LM(object):
         one_hot_tensor = self.to(_one_hot(input_ids, vocab_size))
 
         token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
-        token_ids_tensor_one_hot.requires_grad_(True)
+        # token_ids_tensor_one_hot.requires_grad_(True)
 
         inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
         return inputs_embeds, token_ids_tensor_one_hot

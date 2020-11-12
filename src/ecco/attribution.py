@@ -52,16 +52,22 @@ def saliency_on_d_embeddings(prediction_logit, inputs_embeds, aggregation="L2"):
 def gradient_x_inputs_attribution(prediction_logit, inputs_embeds):
 
     inputs_embeds.retain_grad()
+    # back-prop gradient
     prediction_logit.backward(retain_graph=True)
-
     grad = inputs_embeds.grad
+    # This should be equivalent to
+    # grad = torch.autograd.grad(prediction_logit, inputs_embeds)[0]
 
+    # Grad X Input
     grad_x_input = grad * inputs_embeds
 
     # Turn into a scalar value for each input token by taking L2 norm
     feature_importance = torch.norm(grad_x_input, dim=1)
+
+    # Normalize so we can show scores as percentages
     token_importance_normalized = feature_importance / torch.sum(feature_importance)
-    #
-    # token_ids_tensor_one_hot.grad.data.zero_()
+
+    # Zero the gradient for the tensor so next backward() calls don't have
+    # gradients accumulating
     inputs_embeds.grad.data.zero_()
     return token_importance_normalized
