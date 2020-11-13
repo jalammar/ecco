@@ -442,7 +442,8 @@ def plot_inner_token_rankings2(input_tokens,
                               vmax=5000,
                               # vmin=-200, # range for greedy
                               # vmax=100
-                              show_inputs=False
+                              show_inputs=False,
+                               **kwargs
                               ):
     print(rankings.shape)
     start_token = 0
