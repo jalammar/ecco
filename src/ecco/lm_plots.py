@@ -9,7 +9,7 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 import matplotlib as mpl
 from matplotlib.ticker import FuncFormatter
 from matplotlib import colorbar
-
+from typing import Optional, List
 
 def plot_activations(tokens, activations, vmin=0, vmax=2, height=60,
                      width_scale_per_item=1,
@@ -194,7 +194,7 @@ def token_barplot(tokens, values):
                  .format(tokens[len(values)]))  # repr(
     plt.xticks(rotation=-90)
 
-
+# See: https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens
 def plot_logit_lens(tokens,
                     softmax_scores,
                     predicted_tokens,
@@ -259,104 +259,12 @@ def plot_logit_lens(tokens,
     ax2.set_xticklabels(tokens[start_token:-1], fontsize=18, rotation=-90)
 
 
-def plot_inner_token_rankings(input_tokens,
-                              output_tokens,
-                              rankings,
-                              predicted_tokens,
-                              vmin=2,  # Good range for topk 50
-                              vmax=5000,
-                              # vmin=-200, # range for greedy
-                              # vmax=100
-                              show_inputs=False
-                              ):
-    print(rankings.shape)
-    start_token = 0
-
-    n_columns = len(input_tokens)
-    n_rows = rankings.shape[0]
-    fsize = (6 + 0.7 * n_columns,  # Make figure wider if more columns
-             6 + 0.3 * n_rows)  # Make taller if more layers
-
-    fig, (ax, cax) = plt.subplots(nrows=1, ncols=2,
-                                  figsize=fsize,
-                                  # gridspec_kw={"height_ratios": [1, 0.1]}
-                                  )
-    plt.subplots_adjust( hspace=1.2)
-    fig.set_facecolor("w")
-    # ax = plt.gca()
-
-    cmap_big = get_cmap('RdPu_r', 512)
-
-    newcmp = ListedColormap(cmap_big(np.linspace(0.40, 0.90, 256)))
-    v = copy.copy(newcmp)
-    v.set_under('#9a017b')
-    v.set_over('white')
-
-    v.set_bad('white')
-
-    comma_fmt = FuncFormatter(lambda x, p: format(int(x), ','))
-
-    norm = mpl.colors.LogNorm(vmin=vmin, vmax=vmax)
-    g = sns.heatmap(rankings,
-                    # mask=token_found_mask[:,start_token:],
-                    cmap=v,
-                    fmt="d",
-                    ax=ax,
-                    annot=rankings,
-                    cbar=False,
-                    norm=norm,
-                    linewidths=0.5,
-                    linecolor="#f0f0f0",
-                    annot_kws={"size": 12}
-                    )
-
-
-    fig.colorbar(ax.get_children()[0],
-                 cax=cax,
-                 format=comma_fmt,
-                 extend='both',
-                 orientation="vertical")
-
-    ax.tick_params(axis='x', which='major', labelsize=20)
-
-    plt.tick_params(axis='x',  # changes apply to the x-axis
-                    which='both',  # both major and minor ticks are affected
-                    left=False,  # ticks along the bottom edge are off
-                    bottom=True,  # ticks along the bottom edge are off
-                    top=False,  # ticks along thx top edge are off
-                    labeltop=False,
-                    labelbottom=True)  # labels along the bottom edge are off
-
-    # Output token labels at the bottom
-    ax.set_xticklabels(output_tokens, rotation=-90)
-    ax.set_xlabel('Output Token', fontsize=14)
-
-    # Layer names label at the left
-    ylabels = ["Layer {}".format(n) for n in range(rankings.shape[0])]
-    ax.set_yticklabels(ylabels, fontsize=14, rotation=0)
-    # ax.set_ylabel('Output Token')
-
-    ax2 = ax.twiny()
-    ax2.set_xlim([0, ax.get_xlim()[1]])
-    if show_inputs:
-        # Input token labels at the top
-        ax2.set_xticks(ax.get_xticks())
-        ax2.set_xticklabels(input_tokens, fontsize=14, rotation=-90)
-        ax2.set_xlabel('\nInput Token', fontsize=14)
-    else:
-        ax2.set_xticks([])
-
-    plt.title('How did previous layers rank the sampled output token\n', fontsize=28)
-
-
 def plot_inner_token_rankings_watch(input_tokens,
                                     output_tokens,
                                     rankings,
-                                    vmin=2,  # Good range for topk 50
-                                    vmax=5000,
-                                    # vmin=-200, # range for greedy
-                                    # vmax=100
-                                    show_inputs=False
+                                    vmin: Optional[int] = 2,  # Good range for topk 50
+                                    vmax: Optional[int] = 5000,
+                                    show_inputs: Optional[bool] = False
                                     ):
     # print(rankings.shape)
     start_token = 0
@@ -434,16 +342,13 @@ def plot_inner_token_rankings_watch(input_tokens,
     plt.title(' '.join(input_tokens[:-1]) + ' ____\n', fontsize=14)
 
 
-def plot_inner_token_rankings2(input_tokens,
+def plot_inner_token_rankings(input_tokens,
                               output_tokens,
                               rankings,
-                              predicted_tokens,
-                              vmin=2,  # Good range for topk 50
-                              vmax=5000,
-                              # vmin=-200, # range for greedy
-                              # vmax=100
-                              show_inputs=False,
-                               **kwargs
+                              vmin:int = 2,
+                              vmax:int = 5000,
+                              show_inputs: Optional[bool] =False,
+                              **kwargs
                               ):
     print(rankings.shape)
     start_token = 0
@@ -457,7 +362,7 @@ def plot_inner_token_rankings2(input_tokens,
                                   figsize=fsize,
                                   gridspec_kw={"width_ratios": [n_columns, 0.5]}
                                   )
-    plt.subplots_adjust( wspace =0.1)
+    plt.subplots_adjust(wspace=0.1)
     fig.set_facecolor("w")
     # ax = plt.gca()
 
@@ -472,6 +377,7 @@ def plot_inner_token_rankings2(input_tokens,
 
     comma_fmt = FuncFormatter(lambda x, p: format(int(x), ','))
 
+    print(vmin, vmax)
     norm = mpl.colors.LogNorm(vmin=vmin, vmax=vmax)
     g = sns.heatmap(rankings,
                     # mask=token_found_mask[:,start_token:],
@@ -491,7 +397,6 @@ def plot_inner_token_rankings2(input_tokens,
                     #     format=comma_fmt,
                     #     label='Ranking of token (by score)')
                     )
-
 
     fig.colorbar(ax.get_children()[0],
                  cax=cax,

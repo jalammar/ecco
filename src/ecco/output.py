@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 from sklearn import decomposition
+from typing import Optional, List
 
 
 class OutputSeq:
@@ -38,18 +39,18 @@ class OutputSeq:
         self.model_outputs = model_outputs
         self.attention_values = attention
         self.lm_head = lm_head
-        self.device=device
+        self.device = device
         self._path = os.path.dirname(ecco.__file__)
 
     def __str__(self):
         return "<LMOutput '{}' # of lm outputs: {}>".format(self.output_text, len(self.hidden_states))
 
-    def to(self, tensor):
+    def to(self, tensor: torch.Tensor):
         if self.device == 'cuda':
             return tensor.to('cuda')
         return tensor
 
-    def explorable(self, printJson=False):
+    def explorable(self, printJson: Optional[bool] = False):
 
         tokens = []
         for idx, token in enumerate(self.tokens):
@@ -76,17 +77,6 @@ class OutputSeq:
          }}, function (err) {{
             console.log(err);
         }})""".format(data)
-        #
-        # d.display(d.HTML(filename=os.path.join(self._path, "html", "output_sequence.html")))
-        #
-        # viz_id = 'viz_{}'.format(round(random.random() * 1000000))
-        # js = """
-        # requirejs(['output_sequence'], function(output_sequence){{
-        # if (window.ecco === undefined)
-        #     window.ecco = {{}}
-        #
-        # window.ecco["{}"] = new output_sequence.outputSequence("{}", {})
-        # }})""".format(viz_id, viz_id, json.dumps(data))
         d.display(d.Javascript(js))
 
         if printJson:
@@ -99,7 +89,6 @@ class OutputSeq:
 
         else:
             self.saliency(**kwargs)
-
 
     def position(self, position, attr_method='grad_x_input'):
 
@@ -141,12 +130,11 @@ class OutputSeq:
         }})""".format(position, data)
         d.display(d.Javascript(js))
 
-
     def sal(self, **kwargs):
         """Alias for saliency()"""
         self.saliency(**kwargs)
 
-    def saliency(self, attr_method='grad_x_input', **kwargs):
+    def saliency(self, attr_method: Optional[str] = 'grad_x_input', **kwargs):
         """
         Explorable showing saliency of each token generation step.
         Hovering-over or tapping an output token imposes a saliency map on other tokens
@@ -217,42 +205,41 @@ class OutputSeq:
             # print(i.numpy())
             plt.show()
 
-    def plot_inner_predictions(self, lmhead):
-        # Take the hidden state from each output
-        hidden_states = self.hidden_states
-        # n_layers = len(self.outputs[0][-2]) - 1 # number of layers (excluding inputs)
-        # hidden_states = np.zeros((n_layers,len(self.outputs))) # (n_layers X # of generation steps (tokens in output seq)
-        # for output_position_id, output in enumerate(self.outputs):
-        #     step_hidden_states = output[-2][1:]
-        #     hidden_states[:, output_position_id] = [hs[-1] for hs in step_hidden_states]
+    # def plot_inner_predictions(self, lmhead):
+    #     # Take the hidden state from each output
+    #     hidden_states = self.hidden_states
+    #     # n_layers = len(self.outputs[0][-2]) - 1 # number of layers (excluding inputs)
+    #     # hidden_states = np.zeros((n_layers,len(self.outputs))) # (n_layers X # of generation steps (tokens in output seq)
+    #     # for output_position_id, output in enumerate(self.outputs):
+    #     #     step_hidden_states = output[-2][1:]
+    #     #     hidden_states[:, output_position_id] = [hs[-1] for hs in step_hidden_states]
+    #
+    #     # layers X steps
+    #     n_layers, position = len(hidden_states), hidden_states[0].shape[0]
+    #
+    #     predicted_tokens = np.empty((n_layers - 1, position), dtype='U25')
+    #     softmax_scores = np.zeros((n_layers - 1, position))
+    #     token_found_mask = np.ones((n_layers - 1, position))
+    #
+    #     for i, level in enumerate(hidden_states[1:]):  # loop through layer levels
+    #         for j, logits in enumerate(level):  # Loop through positions
+    #             scores = lmhead(logits)
+    #             sm = F.softmax(scores, dim=-1)
+    #             token_id = torch.argmax(sm)
+    #             token = self.tokenizer.decode([token_id])
+    #             predicted_tokens[i, j] = token
+    #             softmax_scores[i, j] = sm[token_id]
+    #             #         print('layer', i, 'position', j, 'top1', token_id, 'actual label', output['token_ids'][j]+1)
+    #             if token_id == self.token_ids[j + 1]:
+    #                 token_found_mask[i, j] = 0
+    #
+    #     lm_plots.plot_logit_lens(self.tokens, softmax_scores, predicted_tokens,
+    #                              token_found_mask=token_found_mask,
+    #                              show_input_tokens=False,
+    #                              n_input_tokens=self.n_input_tokens
+    #                              )
 
-        # layers X steps
-        n_layers, position = len(hidden_states), hidden_states[0].shape[0]
-
-        predicted_tokens = np.empty((n_layers - 1, position), dtype='U25')
-        softmax_scores = np.zeros((n_layers - 1, position))
-        token_found_mask = np.ones((n_layers - 1, position))
-
-        for i, level in enumerate(hidden_states[1:]):  # loop through layer levels
-            for j, logits in enumerate(level):  # Loop through positions
-                scores = lmhead(logits)
-                sm = F.softmax(scores, dim=-1)
-                token_id = torch.argmax(sm)
-                token = self.tokenizer.decode([token_id])
-                predicted_tokens[i, j] = token
-                softmax_scores[i, j] = sm[token_id]
-                #         print('layer', i, 'position', j, 'top1', token_id, 'actual label', output['token_ids'][j]+1)
-                if token_id == self.token_ids[j + 1]:
-                    token_found_mask[i, j] = 0
-
-        lm_plots.plot_logit_lens(self.tokens, softmax_scores, predicted_tokens,
-                                 token_found_mask=token_found_mask,
-                                 show_input_tokens=False,
-                                 n_input_tokens=self.n_input_tokens
-                                 )
-
-
-    def layer_predictions(self, position=0, topk=10, layer=None, **kwargs):
+    def layer_predictions(self, position: int = 0, topk: Optional[int] = 10, layer: Optional[int] = None, **kwargs):
         """
         Visualization plotting the topk predicted tokens after each layer (using its hidden state).
         :param output: OutputSeq object generated by LM.generate()
@@ -265,7 +252,7 @@ class OutputSeq:
         # There is one lm output per generated token. To get the index
         output_index = position - self.n_input_tokens
         if layer is not None:
-            hidden_states = self.hidden_states[layer+1].unsqueeze(0)
+            hidden_states = self.hidden_states[layer + 1].unsqueeze(0)
         else:
             hidden_states = self.hidden_states[1:]  # Ignore the first element (embedding)
 
@@ -317,11 +304,9 @@ class OutputSeq:
         """.format(viz_id, viz_id, json.dumps(data))
         d.display(d.Javascript(js))
 
-
         if 'printJson' in kwargs and kwargs['printJson']:
             print(data)
             return data
-
 
     def rankings(self, **kwargs):
         """
@@ -368,28 +353,26 @@ class OutputSeq:
         input_tokens = [repr(t) for t in self.tokens[self.n_input_tokens - 1:-1]]
         output_tokens = [repr(t) for t in self.tokens[self.n_input_tokens:]]
         # print('in out', input_tokens, output_tokens)
-        lm_plots.plot_inner_token_rankings2(input_tokens,
+        lm_plots.plot_inner_token_rankings(input_tokens,
                                            output_tokens,
                                            rankings,
-                                           predicted_tokens,
                                            **kwargs)
-
 
         if 'printJson' in kwargs and kwargs['printJson']:
             data = {'input_tokens': input_tokens,
-                    'output_tokens':output_tokens,
+                    'output_tokens': output_tokens,
                     'rankings': rankings,
                     'predicted_tokens': predicted_tokens}
             print(data)
             return data
 
-    def rankings_watch(self, watch=None, position=-1, **kwargs):
+    def rankings_watch(self, watch: List[int] = None, position: int = -1, **kwargs):
         """
         Plots the rankings of the tokens whose ids are supplied in the watch list.
         Only considers one position.
         """
         if position != -1:
-            position = position-1 # e.g. position 5 corresponds to activation 4
+            position = position - 1  # e.g. position 5 corresponds to activation 4
 
         hidden_states = self.hidden_states
 
@@ -400,7 +383,7 @@ class OutputSeq:
         rankings = np.zeros((n_layers - 1, n_tokens_to_watch), dtype=np.int32)
 
         # loop through layer levels
-        for i, level in enumerate(hidden_states[1:]): # Skip the embedding layer
+        for i, level in enumerate(hidden_states[1:]):  # Skip the embedding layer
             # Loop through generated/output positions
             for j, token_id in enumerate(watch):
                 hidden_state = level[position]
@@ -433,67 +416,24 @@ class OutputSeq:
                                                  output_tokens,
                                                  rankings)
 
-
         if 'printJson' in kwargs and kwargs['printJson']:
             data = {'input_tokens': input_tokens,
-                    'output_tokens':output_tokens,
+                    'output_tokens': output_tokens,
                     'rankings': rankings}
             print(data)
             return data
 
-    def run_nmf(self):
+    def run_nmf(self, **kwargs):
         """
         Run Non-negative Matrix Factorization on network activations of FFNN.
         Saves the components in self.components
 
         """
-        return NMF(self.activations, self.tokens[self.n_input_tokens:])
-
-    def factors(self, components, **kwargs):
-        position = self.n_input_tokens + 1
-
-        tokens = []
-        attribution = components
-        for idx, token in enumerate(self.tokens): #self.tokens[:-1]
-            type = "input" if idx < self.n_input_tokens else 'output'
-            tokens.append({'token': token,
-                           'token_id': int(self.token_ids[idx]),
-                           'type': type,
-                           # 'value': str(components[0][comp_num][idx]),  # because json complains of floats
-                           'position': idx
-                           })
-
-        # Duplicate the factor at index 'n_input_tokens'. THis way
-        # each token has an activation value (instead of having one activation less than tokens)
-        # But with different meanings: For inputs, the activation is a response
-        # For outputs, the activation is a cause
-        print('shape', components.shape)
-        # for i, comp in enumerate(components[0]):
-        #     print(i, comp, '\nconcat:', np.concatenate([comp[:self.n_input_tokens], comp[self.n_input_tokens-1:]]))
-        factors = np.array([[np.concatenate([comp[:self.n_input_tokens], comp[self.n_input_tokens-1:]]) for comp in components[0]]])
-        factors = [comp.tolist() for comp in factors]
-
-
-        data = {
-            'tokens': tokens,
-            'factors': factors
-        }
-
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
-        viz_id = 'viz_{}'.format(round(random.random() * 1000000))
-        # print(data)
-        js = """
-         requirejs(['basic', 'ecco'], function(basic, ecco){{
-            const viz_id = basic.init()
-            ecco.interactiveTokensAndFactorSparklines(viz_id, {})
-         }}, function (err) {{
-            console.log(err);
-        }})""".format(data)
-        d.display(d.Javascript(js))
-
-        if 'printJson' in kwargs and kwargs['printJson']:
-            print(data)
+        return NMF(self.activations,
+                   n_input_tokens=self.n_input_tokens,
+                   token_ids=self.token_ids,
+                   _path=self._path,
+                   tokens=self.tokens, **kwargs)
 
     def attention(self, attention_values=None, layer=0, **kwargs):
 
@@ -501,7 +441,7 @@ class OutputSeq:
 
         # importance_id = position - self.n_input_tokens
 
-        importance_id = self.n_input_tokens-1 # Sete first values to first output token
+        importance_id = self.n_input_tokens - 1  # Sete first values to first output token
         tokens = []
         if attention_values:
             attn = attention_values
@@ -509,7 +449,7 @@ class OutputSeq:
 
             attn = self.attention_values[layer]
             # normalize attention heads
-            attn = attn.sum(axis=1)/attn.shape[1]
+            attn = attn.sum(axis=1) / attn.shape[1]
 
         for idx, token in enumerate(self.tokens):
             # print(idx, attn.shape)
@@ -551,7 +491,36 @@ class OutputSeq:
 class NMF:
     " Conducts NMF and holds the models and components "
 
-    def __init__(self, activations, tokens, n_components=10, **kwargs):
+    def __init__(self, activations: np.ndarray,
+                 n_input_tokens: int = 0,
+                 token_ids: torch.Tensor = torch.Tensor(0),
+                 _path: str = '',
+                 n_components: int = 10,
+                 from_layer: Optional[int] = None,
+                 to_layer: Optional[int] = None,
+                 tokens: Optional[List[str]] = None, **kwargs):
+        self._path = _path
+        self.token_ids = token_ids
+        self.n_input_tokens = n_input_tokens
+
+        if len(activations.shape) != 3:
+            raise ValueError(f"The 'activations' parameter should have three dimensions: (layers, neurons, positions). "
+                             f"Supplied dimensions: {activations.shape}", 'activations')
+
+        if from_layer is not None or to_layer is not None:
+            from_layer = from_layer if from_layer is not None else 0
+            to_layer = to_layer if to_layer is not None else activations.shape[0]
+
+            if from_layer == to_layer:
+                raise ValueError(f"from_layer ({from_layer}) and to_layer ({to_layer}) cannot be the same value. "
+                                 "They must be apart by at least one to allow for a layer of activations.")
+
+            if from_layer > to_layer:
+                raise ValueError(f"from_layer ({from_layer}) cannot be larger than to_layer ({to_layer}).")
+
+            merged_act = np.concatenate(activations[from_layer: to_layer], axis=0)
+            activations = np.expand_dims(merged_act, axis=0)
+
         self.tokens = tokens
         " Run NMF. Activations is neuron activations shaped (layers, neurons, positions)"
         n_output_tokens = activations.shape[-1]
@@ -577,6 +546,52 @@ class NMF:
         self.models = models
         self.components = components
 
+    def explore(self, **kwargs):
+        # position = self.n_input_tokens + 1
+
+        tokens = []
+        for idx, token in enumerate(self.tokens):  # self.tokens[:-1]
+            type = "input" if idx < self.n_input_tokens else 'output'
+            tokens.append({'token': token,
+                           'token_id': int(self.token_ids[idx]),
+                           'type': type,
+                           # 'value': str(components[0][comp_num][idx]),  # because json complains of floats
+                           'position': idx
+                           })
+
+        # Duplicate the factor at index 'n_input_tokens'. THis way
+        # each token has an activation value (instead of having one activation less than tokens)
+        # But with different meanings: For inputs, the activation is a response
+        # For outputs, the activation is a cause
+        # print('shape', components.shape)
+        # for i, comp in enumerate(components[0]):
+        #     print(i, comp, '\nconcat:', np.concatenate([comp[:self.n_input_tokens], comp[self.n_input_tokens-1:]]))
+        factors = np.array(
+            [[np.concatenate([comp[:self.n_input_tokens], comp[self.n_input_tokens - 1:]]) for comp in
+              self.components[0]]])
+        factors = [comp.tolist() for comp in factors]
+
+        data = {
+            'tokens': tokens,
+            'factors': factors
+        }
+
+        d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
+        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        viz_id = 'viz_{}'.format(round(random.random() * 1000000))
+        # print(data)
+        js = """
+         requirejs(['basic', 'ecco'], function(basic, ecco){{
+            const viz_id = basic.init()
+            ecco.interactiveTokensAndFactorSparklines(viz_id, {})
+         }}, function (err) {{
+            console.log(err);
+        }})""".format(data)
+        d.display(d.Javascript(js))
+
+        if 'printJson' in kwargs and kwargs['printJson']:
+            print(data)
+
     def plot(self, n_components=3):
 
         for idx, comp in enumerate(self.components):
@@ -598,4 +613,3 @@ class NMF:
                        bbox_to_anchor=(1.01, 0.5))
 
             plt.show()
-

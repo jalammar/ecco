@@ -9,6 +9,7 @@ from IPython import display as d
 import os
 import json
 from ..attribution import *
+from typing import Optional
 
 
 def sample_output_token(scores, do_sample, temperature, top_k, top_p):
@@ -49,6 +50,7 @@ class LM(object):
     """
     Wrapper around language model. Provides saliency for generated tokens and collects neuron activations.
     """
+
     def __init__(self, model, tokenizer,
                  collect_activations_flag=False,
                  collect_gen_activations_flag=False):
@@ -62,14 +64,12 @@ class LM(object):
         self.device = 'cuda' if torch.cuda.is_available() and self.model.device.type == 'cuda' \
             else 'cpu'
 
-
         # Neuron Activation
         self.collect_activations_flag = collect_activations_flag
         self.collect_gen_activations_flag = collect_gen_activations_flag
         self._hooks = {}
         self._reset()
         self._attach_hooks(self.model)
-
 
         # If running in Jupyer, outputting setup this in one cell is enough. But for colab
         # we're running it before every d.HTML cell
@@ -84,14 +84,13 @@ class LM(object):
         self.neurons_to_inhibit = {}
         self.neurons_to_induce = {}
 
-    def to(self, tensor):
+    def to(self, tensor: torch.Tensor):
         if self.device == 'cuda':
             return tensor.to('cuda')
         return tensor
 
-
-    def _generate_token(self, input_ids, past,
-                        do_sample, temperature, top_k, top_p, attribution_flag):
+    def _generate_token(self, input_ids, past, do_sample: bool, temperature: float, top_k: int, top_p: float,
+                        attribution_flag: Optional[bool]):
         """
         Run a forward pass through the model and sample a token.
         """
@@ -127,9 +126,14 @@ class LM(object):
 
         return prediction_id, output, past
 
-    def generate(self, input_str: str, max_length=128,
-                 temperature=None, top_k=None, top_p=None, get_model_output=False,
-                 do_sample=None, attribution=True, generate=None):
+    def generate(self, input_str: str, max_length: Optional[int] = 128,
+                 temperature: Optional[float] = None,
+                 top_k: Optional[int] = None,
+                 top_p: Optional[float] = None,
+                 get_model_output: Optional[bool] = False,
+                 do_sample: Optional[bool] = None,
+                 attribution: Optional[bool] =True,
+                 generate: Optional[int]=None):
 
         top_k = top_k if top_k is not None else self.model.config.top_k
         top_p = top_p if top_p is not None else self.model.config.top_p
@@ -146,8 +150,6 @@ class LM(object):
         past = None
         self.attributions = {}
         outputs = []
-        importances = []
-        gradientXinputs = []
 
         cur_len = len(input_ids)
 
@@ -164,22 +166,18 @@ class LM(object):
                                                                  do_sample=do_sample,
                                                                  attribution_flag=attribution)
 
-            if(get_model_output):
+            if (get_model_output):
                 outputs.append(output)
             input_ids = torch.cat([input_ids, torch.tensor([output_token_id])])
             cur_len = cur_len + 1
             if output_token_id == self.model.config.eos_token_id:
                 break
 
-
         # Turn activations from dict to a proper array
-        activations_dict =  self._all_activations_dict or self._generation_activations_dict
-
+        activations_dict = self._all_activations_dict or self._generation_activations_dict
 
         if activations_dict != {}:
-            activations=[]
             self.activations = activations_dict_to_array(activations_dict)
-
 
         hidden_states = output[2]
         tokens = []
@@ -202,8 +200,7 @@ class LM(object):
                             'attribution': attributions,
                             'activations': self.activations,
                             'lm_head': self.model.lm_head,
-                            'device':self.device})
-
+                            'device': self.device})
 
     def _get_embeddings(self, input_ids):
         """
@@ -220,7 +217,6 @@ class LM(object):
         inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
         return inputs_embeds, token_ids_tensor_one_hot
 
-
     def _attach_hooks(self, model):
         for name, module in model.named_modules():
             # Add hooks to capture activations in every FFNN
@@ -236,13 +232,12 @@ class LM(object):
                                name=name: self._get_generation_activations_hook(name, input_))
 
                 # Register neuron inhibition hook
-                self._hooks[name+'_inhibit'] = module.register_forward_pre_hook(
+                self._hooks[name + '_inhibit'] = module.register_forward_pre_hook(
                     lambda self_, input_, name=name: \
-                    self._inhibit_neurons_hook(name, input_)
+                        self._inhibit_neurons_hook(name, input_)
                 )
 
-
-    def _get_activations_hook(self, name, input_):
+    def _get_activations_hook(self, name:str, input_):
         """
         Collects the activation for all tokens (input and output)
         """
@@ -259,7 +254,7 @@ class LM(object):
         # The inputs to c_proj already pass through the gelu activation function
         self._all_activations_dict[layer_number][0] = input_[0][0].detach().cpu().numpy()
 
-    def _get_generation_activations_hook(self, name, input_):
+    def _get_generation_activations_hook(self, name:str, input_):
         """
         Collects the activation for the token being generated
         """
@@ -275,8 +270,7 @@ class LM(object):
         # The inputs to c_proj already pass through the gelu activation function
         self._generation_activations_dict[layer_number].append(input_[0][0][-1].detach().cpu().numpy())
 
-
-    def _inhibit_neurons_hook(self, name, input_tensor):
+    def _inhibit_neurons_hook(self, name:str, input_tensor):
         """
         After being attached as a pre-forward hook, it sets to zero the activation value
         of the neurons indicated in self.neurons_to_inhibit
@@ -295,7 +289,7 @@ class LM(object):
 
             for n in self.neurons_to_induce[layer_number]:
                 # print('inhibiting', layer_number, n)
-                input_tensor[0][0][-1][n] = input_tensor[0][0][-1][n] * 10 # tuple, batch, position
+                input_tensor[0][0][-1][n] = input_tensor[0][0][-1][n] * 10  # tuple, batch, position
 
         return input_tensor
 
@@ -364,9 +358,6 @@ class LM(object):
     #     )
     #     """.format(viz_id, viz_id, json.dumps(data))
     #     d.display(d.Javascript(js))
-
-
-
 
     def predict_token(self, inputs, topk=50, temperature=1.0):
 
