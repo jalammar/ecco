@@ -496,13 +496,16 @@ class NMF:
                  token_ids: torch.Tensor = torch.Tensor(0),
                  _path: str = '',
                  n_components: int = 10,
-                 from_layer: Optional[int] = None,
-                 to_layer: Optional[int] = None,
-                 tokens: Optional[List[str]] = None, **kwargs):
+                 # from_layer: Optional[int] = None,
+                 # to_layer: Optional[int] = None,
+                 tokens: Optional[List[str]] = None,
+                 **kwargs):
         self._path = _path
         self.token_ids = token_ids
         self.n_input_tokens = n_input_tokens
 
+        from_layer = kwargs['from_layer'] if 'from_layer' in kwargs else None
+        to_layer = kwargs['to_layer'] if 'to_layer' in kwargs else None
         if len(activations.shape) != 3:
             raise ValueError(f"The 'activations' parameter should have three dimensions: (layers, neurons, positions). "
                              f"Supplied dimensions: {activations.shape}", 'activations')
@@ -517,9 +520,12 @@ class NMF:
 
             if from_layer > to_layer:
                 raise ValueError(f"from_layer ({from_layer}) cannot be larger than to_layer ({to_layer}).")
+        else:
+            from_layer = 0
+            to_layer = activations.shape[0]
 
-            merged_act = np.concatenate(activations[from_layer: to_layer], axis=0)
-            activations = np.expand_dims(merged_act, axis=0)
+        merged_act = np.concatenate(activations[from_layer: to_layer], axis=0)
+        activations = np.expand_dims(merged_act, axis=0)
 
         self.tokens = tokens
         " Run NMF. Activations is neuron activations shaped (layers, neurons, positions)"
@@ -532,14 +538,14 @@ class NMF:
         # Get rid of negative activation values
         # (There are some, because GPT2 uses GLEU, which allow small negative values)
         activations = np.maximum(activations, 0)
+        # print(activations.shape)
 
         for idx, layer in enumerate(activations):
             #     print(layer.shape)
             model = decomposition.NMF(n_components=n_components,
                                       init='random',
                                       random_state=0,
-                                      max_iter=500,
-                                      **kwargs)
+                                      max_iter=500)
             components[idx] = model.fit_transform(layer.T).T
             models.append(model)
 

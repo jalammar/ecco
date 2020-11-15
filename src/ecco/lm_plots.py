@@ -350,7 +350,7 @@ def plot_inner_token_rankings(input_tokens,
                               show_inputs: Optional[bool] =False,
                               **kwargs
                               ):
-    print(rankings.shape)
+    # print(rankings.shape)
     start_token = 0
 
     n_columns = len(input_tokens)
@@ -377,7 +377,7 @@ def plot_inner_token_rankings(input_tokens,
 
     comma_fmt = FuncFormatter(lambda x, p: format(int(x), ','))
 
-    print(vmin, vmax)
+    # print(vmin, vmax)
     norm = mpl.colors.LogNorm(vmin=vmin, vmax=vmax)
     g = sns.heatmap(rankings,
                     # mask=token_found_mask[:,start_token:],
