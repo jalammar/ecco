@@ -1,4 +1,4 @@
-
+-f https://download.pytorch.org/whl/torch_stable.html
 matplotlib~=3.3.1
 numpy~=1.19.1
 ipython~=7.16.1
@@ -7,7 +7,6 @@ seaborn~=0.11.0
 transformers~=3.1.0
 pytest~=6.1.2
 setuptools~=49.6.0
---find-links https://download.pytorch.org/whl/torch_stable.html
 torch~=1.6.0
 torchvision~=0.7.0
 
