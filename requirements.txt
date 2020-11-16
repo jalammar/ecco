@@ -8,6 +8,6 @@ transformers~=3.1.0
 pytest~=6.1.2
 setuptools~=49.6.0
 --find-links https://download.pytorch.org/whl/torch_stable.html
-torch==0.1.6
-torchvision==0.7.0
+torch~=1.6.0
+torchvision~=0.7.0
 
