@@ -1,12 +1,14 @@
 <script>
-    console.log('defining basic')
+    // console.log('defining basic')
     define('basic', ['d3'],
         function (d3) {
             return {
-                init: function () {
+                init: function (viz_id = null) {
 
-                    console.log('basic init')
-                    const viz_id = "viz_" + Math.round(Math.random() * 10000000)
+                    // console.log('basic init')
+                    if (viz_id == null){
+                        viz_id = "viz_" + Math.round(Math.random() * 10000000)
+                    }
                     const div = d3.select('#basic').attr('id', viz_id),
                         div_parent = d3.select('#' + viz_id).node().parentNode
 
@@ -19,16 +21,9 @@
                     return viz_id
                 }
             }
-
-        }, function (err) {
-            console.log(err);
-        }
-
+        }, function (err) {console.log(err);}
     )
-
-    console.log('after defining basic')
-
+    // console.log('after defining basic')
 
 </script>
-
 <div id="basic"></div>

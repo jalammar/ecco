@@ -66,7 +66,6 @@ class OutputSeq:
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-
         d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         viz_id = 'viz_{}'.format(round(random.random() * 1000000))
         js = """

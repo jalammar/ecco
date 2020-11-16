@@ -153,9 +153,14 @@ class LM(object):
 
         cur_len = len(input_ids)
 
-        assert cur_len < max_length, \
+        if cur_len >= max_length:
+            raise(ValueError,
             "max_length set to {} while input token has more tokens ({}). Consider increasing max_length" \
-                .format(max_length, cur_len)
+                .format(max_length, cur_len))
+
+        # Print output
+        viz_id = self.display_input_sequence(input_ids)
+
 
         while cur_len < max_length:
             output_token_id, output, past = self._generate_token(input_ids,
@@ -169,7 +174,12 @@ class LM(object):
             if (get_model_output):
                 outputs.append(output)
             input_ids = torch.cat([input_ids, torch.tensor([output_token_id])])
+
+            self.display_token(viz_id,
+                               output_token_id.cpu().numpy(),
+                               cur_len )
             cur_len = cur_len + 1
+
             if output_token_id == self.model.config.eos_token_id:
                 break
 
@@ -293,6 +303,47 @@ class LM(object):
 
         return input_tensor
 
+    def display_input_sequence(self, input_ids):
+
+        tokens = []
+        for idx, token_id in enumerate(input_ids):
+            type = "input"
+            tokens.append({'token': self.tokenizer.decode([token_id]),
+                           'position': idx,
+                           'token_id': int(token_id),
+                           'type': type })
+        data = {'tokens': tokens}
+
+        d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
+        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        viz_id = 'viz_{}'.format(round(random.random() * 1000000))
+        js = f"""
+         requirejs(['basic', 'ecco'], function(basic, ecco){{
+            basic.init('{viz_id}')
+
+            window.ecco['{viz_id}'] = ecco.renderOutputSequence('{viz_id}', {data})
+         }}, function (err) {{
+            console.log(err);
+        }})"""
+        # print(js)
+        d.display(d.Javascript(js))
+        return viz_id
+
+    def display_token(self, viz_id, token_id, position):
+        token = {
+            'token': self.tokenizer.decode([token_id]),
+            'token_id': int(token_id),
+            'position': position,
+            'type': 'output'
+        }
+        js = f"""
+        window.ecco['{viz_id}'].addToken({json.dumps(token)})
+        window.ecco['{viz_id}'].redraw()
+        """
+        # print(js)
+        d.display(d.Javascript(js))
+
+
     # Moved to OutputSeq
     # def layer_predictions(self, output, position=0, topk=10, layer=None):
     #     """
@@ -393,3 +444,6 @@ class LM(object):
         )
         """.format(viz_id, viz_id, json.dumps(params))
         d.display(d.Javascript(js))
+
+
+
