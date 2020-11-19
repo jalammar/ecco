@@ -4,13 +4,26 @@ orbs:
   python: circleci/python@0.2.1
 
 executors:
-  my-executor:
+  py38-executor:
     docker:
       - image: circleci/python:3.8.6
+  py37-executor:
+    docker:
+        - image: circleci/python:3.7.9
 
 jobs:
-  build-and-test:
-    executor: my-executor
+  build-and-test-py38:
+    executor: py38-executor
+    steps:
+      - checkout
+      - python/load-cache
+      - python/install-deps
+      - python/save-cache
+      - run:
+          command: ./pytest
+          name: Test
+  build-and-test-py37:
+    executor: py37-executor
     steps:
       - checkout
       - python/load-cache
