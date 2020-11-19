@@ -20,7 +20,9 @@ jobs:
       - python/install-deps
       - python/save-cache
       - run:
-          command: ./pytest
+          command: |
+            pip install -e .
+            python -m pytest
           name: Test
   build-and-test-py37:
     executor: py37-executor
