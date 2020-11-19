@@ -30,7 +30,9 @@ jobs:
       - python/install-deps
       - python/save-cache
       - run:
-          command: ./pytest
+          command: |
+            pip install -e .
+            python -m pytest
           name: Test
 
 workflows:
