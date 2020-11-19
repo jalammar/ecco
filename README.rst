@@ -8,23 +8,11 @@ Overview
     :stub-columns: 1
 
     * - tests
-      - | |travis| |appveyor| |requires|
+      - | |requires|
         | |codecov|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
         | |commits-since|
-
-.. |travis| image:: https://api.travis-ci.org/jalammar/ecco.svg?branch=master
-    :alt: Travis-CI Build Status
-    :target: https://travis-ci.org/jalammar/ecco
-
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/jalammar/ecco?branch=master&svg=true
-    :alt: AppVeyor Build Status
-    :target: https://ci.appveyor.com/project/jalammar/ecco
-
-.. |requires| image:: https://requires.io/github/jalammar/ecco/requirements.svg?branch=master
-    :alt: Requirements Status
-    :target: https://requires.io/github/jalammar/ecco/requirements/?branch=master
 
 .. |codecov| image:: https://codecov.io/gh/jalammar/ecco/branch/master/graphs/badge.svg?branch=master
     :alt: Coverage Status
@@ -81,27 +69,3 @@ To use the project:
     import ecco
     ecco.longest()
 
-
-Development
-===========
-
-To run all the tests run::
-
-    tox
-
-Note, to combine the coverage data from all the tox environments run:
-
-.. list-table::
-    :widths: 10 90
-    :stub-columns: 1
-
-    - - Windows
-      - ::
-
-            set PYTEST_ADDOPTS=--cov-append
-            tox
-
-    - - Other
-      - ::
-
-            PYTEST_ADDOPTS=--cov-append tox

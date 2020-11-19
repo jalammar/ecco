@@ -23,7 +23,7 @@ jobs:
           command: |
             pip install -e .
             python -m pytest
-          name: Test
+          name: Install & Test
   build-and-test-py37:
     executor: py37-executor
     steps:
@@ -35,7 +35,7 @@ jobs:
           command: |
             pip install -e .
             python -m pytest
-          name: Test
+          name: Install & Test
 
 workflows:
   main:
