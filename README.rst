@@ -17,7 +17,6 @@ Overview
 .. |supported-versions| image:: https://img.shields.io/pypi/pyversions/ecco.svg
     :alt: Supported versions
     :target: https://pypi.org/project/ecco
-
 .. end-badges
 
 [Work in progress. Not yet ready for public consumption]
