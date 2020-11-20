@@ -42,5 +42,7 @@ To use the project:
 .. code-block:: python
 
     import ecco
-    ecco.longest()
+    lm = ecco.from_pretrained('distilgpt2')
+    text= "The countries of the European Union are:\n1. Austria\n2. Belgium\n3. Bulgaria\n4."
 
+    output = lm.generate(text, generate=20, do_sample=True)
