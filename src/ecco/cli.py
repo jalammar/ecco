@@ -15,6 +15,7 @@ Why does this file exist, and why not put this in __main__?
   Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
 import sys
+import ecco
 
 
 def main(argv=sys.argv):
@@ -27,5 +28,9 @@ def main(argv=sys.argv):
 
     Does stuff.
     """
+    lm = ecco.from_pretrained("mockGPT")
+
+    print("Loaded lm")
+    lm.generate('', generate=1)
     print(argv)
     return 0

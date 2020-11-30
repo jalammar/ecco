@@ -64,7 +64,7 @@ setup(
     ],
     python_requires='!=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
     install_requires=[
-        "transformers < 3.5",
+        "transformers ~= 3.5",
         "seaborn ~= 0.11",
         "scikit-learn~=0.23"
     ],

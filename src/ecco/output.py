@@ -204,40 +204,6 @@ class OutputSeq:
             # print(i.numpy())
             plt.show()
 
-    # def plot_inner_predictions(self, lmhead):
-    #     # Take the hidden state from each output
-    #     hidden_states = self.hidden_states
-    #     # n_layers = len(self.outputs[0][-2]) - 1 # number of layers (excluding inputs)
-    #     # hidden_states = np.zeros((n_layers,len(self.outputs))) # (n_layers X # of generation steps (tokens in output seq)
-    #     # for output_position_id, output in enumerate(self.outputs):
-    #     #     step_hidden_states = output[-2][1:]
-    #     #     hidden_states[:, output_position_id] = [hs[-1] for hs in step_hidden_states]
-    #
-    #     # layers X steps
-    #     n_layers, position = len(hidden_states), hidden_states[0].shape[0]
-    #
-    #     predicted_tokens = np.empty((n_layers - 1, position), dtype='U25')
-    #     softmax_scores = np.zeros((n_layers - 1, position))
-    #     token_found_mask = np.ones((n_layers - 1, position))
-    #
-    #     for i, level in enumerate(hidden_states[1:]):  # loop through layer levels
-    #         for j, logits in enumerate(level):  # Loop through positions
-    #             scores = lmhead(logits)
-    #             sm = F.softmax(scores, dim=-1)
-    #             token_id = torch.argmax(sm)
-    #             token = self.tokenizer.decode([token_id])
-    #             predicted_tokens[i, j] = token
-    #             softmax_scores[i, j] = sm[token_id]
-    #             #         print('layer', i, 'position', j, 'top1', token_id, 'actual label', output['token_ids'][j]+1)
-    #             if token_id == self.token_ids[j + 1]:
-    #                 token_found_mask[i, j] = 0
-    #
-    #     lm_plots.plot_logit_lens(self.tokens, softmax_scores, predicted_tokens,
-    #                              token_found_mask=token_found_mask,
-    #                              show_input_tokens=False,
-    #                              n_input_tokens=self.n_input_tokens
-    #                              )
-
     def layer_predictions(self, position: int = 0, topk: Optional[int] = 10, layer: Optional[int] = None, **kwargs):
         """
         Visualization plotting the topk predicted tokens after each layer (using its hidden state).
@@ -290,18 +256,41 @@ class OutputSeq:
 
             data.append(layer_data)
 
-        viz_id = 'viz_{}'.format(round(random.random() * 1000000))
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "trace_tokens.html")))
-        js = """
-        requirejs(['trace_tokens'], function(trace_tokens){{
-        if (window.trace === undefined)
-            window.trace = {{}}
-        window.trace["{}"] = new trace_tokens.TraceTokens("{}", {})
-        }}
-        )
-        """.format(viz_id, viz_id, json.dumps(data))
+        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        viz_id = 'viz_{}'.format(round(random.random() * 1000000))
+        js = f"""
+         requirejs(['basic', 'ecco'], function(basic, ecco){{
+            const viz_id = basic.init()
+            
+
+            let pred = new ecco.LayerPredictions({{
+                parentDiv: viz_id,
+                data:{json.dumps(data)}
+            }})
+            pred.init()
+         }}, function (err) {{
+            console.log(viz_id, err);
+        }})"""
         d.display(d.Javascript(js))
+        # print(js)
+        # viz_id = 'viz_{}'.format(round(random.random() * 1000000))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "trace_tokens.html")))
+        # js = f"""
+        # requirejs(['basic', 'ecco', 'trace_tokens'], function(basic, ecco, trace_tokens){{
+        # if (window.trace === undefined)
+        #     window.trace = {{}}
+        # window.trace["{viz_id}"] = new trace_tokens.TraceTokens("{viz_id}", {json.dumps(data)})
+        #
+        #
+        #     const viz_id = basic.init()
+        #     ecco.interactiveTokens(viz_id, {json.dumps(data)})
+        #
+        # }}
+        # )
+        # """
+        # d.display(d.Javascript(js))
 
         if 'printJson' in kwargs and kwargs['printJson']:
             print(data)
