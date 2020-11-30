@@ -28,9 +28,9 @@ def main(argv=sys.argv):
 
     Does stuff.
     """
-    lm = ecco.from_pretrained("mockGPT")
+    # lm = ecco.from_pretrained("mockGPT")
 
     print("Loaded lm")
-    lm.generate('', generate=1)
+    # lm.generate('', generate=1)
     print(argv)
     return 0
