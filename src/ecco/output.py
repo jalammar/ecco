@@ -273,24 +273,6 @@ class OutputSeq:
             console.log(viz_id, err);
         }})"""
         d.display(d.Javascript(js))
-        # print(js)
-        # viz_id = 'viz_{}'.format(round(random.random() * 1000000))
-        # d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        # d.display(d.HTML(filename=os.path.join(self._path, "html", "trace_tokens.html")))
-        # js = f"""
-        # requirejs(['basic', 'ecco', 'trace_tokens'], function(basic, ecco, trace_tokens){{
-        # if (window.trace === undefined)
-        #     window.trace = {{}}
-        # window.trace["{viz_id}"] = new trace_tokens.TraceTokens("{viz_id}", {json.dumps(data)})
-        #
-        #
-        #     const viz_id = basic.init()
-        #     ecco.interactiveTokens(viz_id, {json.dumps(data)})
-        #
-        # }}
-        # )
-        # """
-        # d.display(d.Javascript(js))
 
         if 'printJson' in kwargs and kwargs['printJson']:
             print(data)

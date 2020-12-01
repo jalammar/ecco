@@ -33,3 +33,8 @@ jobs:
     - name: Test with pytest
       run: |
         python -m pytest
+    - name: Save artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: plot-screenshots
+          path: tmp/
