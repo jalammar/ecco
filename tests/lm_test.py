@@ -1,12 +1,7 @@
-
-from ecco import output
-from ecco.language_model.lm import _one_hot, LM, sample_output_token, activations_dict_to_array
-import pytest
+from ecco.lm import _one_hot, sample_output_token, activations_dict_to_array
 import torch
 import numpy as np
-from unittest.mock import MagicMock
-from unittest.mock import patch
-from transformers import AutoTokenizer, AutoModelForCausalLM
+
 
 # @pytest.fixture
 # def mockLM():
@@ -28,7 +23,7 @@ class TestLM:
         assert result == torch.tensor(1)
 
     def test_select_output_token_sample(self):
-        result = sample_output_token(torch.tensor([0., 0.5, 1.]), True, 1, 1, 1)
+        result = sample_output_token(torch.tensor([[0., 0.5, 1.]]), True, 1, 1, 1.0)
         assert result == torch.tensor(2)
 
     def test_activations_dict_to_array(self):
