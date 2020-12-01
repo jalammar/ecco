@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.0.0 (2020-11-07)
+0.0.8 (2020-11-20)
 ------------------
 
-* First release on PyPI.
+* Allowing the project some fresh air.

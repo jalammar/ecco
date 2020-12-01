@@ -10,6 +10,7 @@ import matplotlib as mpl
 from matplotlib.ticker import FuncFormatter
 from matplotlib import colorbar
 from typing import Optional, List
+import sys
 
 def plot_activations(tokens, activations, vmin=0, vmax=2, height=60,
                      width_scale_per_item=1,
@@ -194,6 +195,7 @@ def token_barplot(tokens, values):
                  .format(tokens[len(values)]))  # repr(
     plt.xticks(rotation=-90)
 
+
 # See: https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens
 def plot_logit_lens(tokens,
                     softmax_scores,
@@ -264,7 +266,8 @@ def plot_inner_token_rankings_watch(input_tokens,
                                     rankings,
                                     vmin: Optional[int] = 2,  # Good range for topk 50
                                     vmax: Optional[int] = 5000,
-                                    show_inputs: Optional[bool] = False
+                                    show_inputs: Optional[bool] = False,
+                                    save_file_path: Optional[str] = None
                                     ):
     # print(rankings.shape)
     start_token = 0
@@ -341,13 +344,22 @@ def plot_inner_token_rankings_watch(input_tokens,
     # print(input_tokens)
     plt.title(' '.join(input_tokens[:-1]) + ' ____\n', fontsize=14)
 
+    if save_file_path is not None:
+        try:
+            plt.savefig(save_file_path)
+        except:
+            e = sys.exc_info()[0]
+            print("<p>Error: (likely ./tmp/ folder does not exist or can't be created). %s</p>" % e)
+            raise
+
 
 def plot_inner_token_rankings(input_tokens,
                               output_tokens,
                               rankings,
-                              vmin:int = 2,
-                              vmax:int = 5000,
-                              show_inputs: Optional[bool] =False,
+                              vmin: int = 2,
+                              vmax: int = 5000,
+                              show_inputs: Optional[bool] = False,
+                              save_file_path: Optional[str] = None,
                               **kwargs
                               ):
     # print(rankings.shape)
@@ -390,12 +402,6 @@ def plot_inner_token_rankings(input_tokens,
                     linewidths=0.5,
                     linecolor="#f0f0f0",
                     annot_kws={"size": 12}
-                    # cbar_kws=dict(
-                    #     # use_gridspec=True,
-                    #     orientation='horizontal',
-                    #     extend='both',
-                    #     format=comma_fmt,
-                    #     label='Ranking of token (by score)')
                     )
 
     fig.colorbar(ax.get_children()[0],
@@ -434,4 +440,12 @@ def plot_inner_token_rankings(input_tokens,
     else:
         ax2.set_xticks([])
 
-    # plt.title('How did previous layers rank the sampled output token\n', fontsize=28)
+    if save_file_path is not None:
+        try:
+            plt.savefig(save_file_path)
+        except:
+            e = sys.exc_info()[0]
+            print("<p>Error: (likely ./tmp/ folder does not exist or can't be created). %s</p>" % e)
+            raise
+
+# plt.title('How did previous layers rank the sampled output token\n', fontsize=28)

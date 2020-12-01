@@ -31,7 +31,7 @@
     float:left;
     margin: 2px 1px;
     padding: 0px 1px 0px 0px;
-    border: 1px solid #e6e6e6;
+    /*border: 1px solid #e6e6e6;*/
     font-family: 'Roboto Mono', monospace;
 }
 .factor{
@@ -110,6 +110,8 @@ svg.scrollable{
 }
 .inputs-indicator{
     color:#7CB342;
+
+    text-align:left;
 }
 
 .outputs-indicator{
@@ -119,7 +121,7 @@ svg.scrollable{
 }
 
 .input-token{
-    color: #999 !important;
+    /*color: #999 !important;*/
 }
 
 .output-token{
