@@ -24,10 +24,12 @@ Gallery
 
          <div class="col-lg-6 col-md-6 col-sm-6">
 
-            <strong>Input and output sequences</strong>
+            <strong>Input and Output Sequences</strong>
             <a target="_blank" href="">
             <img src="_static/input-output.PNG" style="border: 1px solid #ddd" />
             </a>
+         View the inputs and outputs (generated text) of language models broken down into tokens.
+
          </div>
 
          <div class="col-lg-6 col-md-6 col-sm-6">
@@ -48,7 +50,7 @@ Gallery
             <a target="_blank" href="">
             <img src="_static/layer_predictions.PNG" />
             </a>
-            <p>The model prediction for the next token (with probability scores).</p>
+            <p>View the model's prediction for the next token (with probability scores). See how the predictions evolved through the model's layers.</p>
          </div>
 
 
@@ -58,36 +60,23 @@ Gallery
             <a target="_blank" href="">
             <img src="_static/rankings.PNG" />
             </a>
-            <p>After the model picks a token, let's look back at how each layer ranked the output token.</p>
+            <p>After the model picks an output token, Look back at how each layer ranked that token.</p>
          </div>
 
 
 
          <div class="col-lg-6 col-md-6 col-sm-6">
-            <strong>Hidden State Evolution - watched tokens</strong>
+            <strong>Hidden State Evolution - Watch</strong>
             <a target="_blank" href="">
             <img src="_static/rankings_watch.PNG" />
             </a>
             <p>Compare the rankings of multiple tokens as candidates for a certain position in the sequence.</p>
-         </div>
-
-
-
-         <div class="col-lg-6 col-md-6 col-sm-6">
-            <strong>Neuron activations</strong>
-            <a target="_blank" href="">
-            <img src="https://via.placeholder.com/400x200" />
-            </a>
-            <p>View the firing patterns of neurons as the model generates output tokens.<p>
-         </div>
-
-
 
 
          <div class="col-lg-6 col-md-6 col-sm-6">
             <strong>Neuron factors</strong>
             <a target="_blank" href="">
-            <img src="https://via.placeholder.com/400x200" />
+            <img src="_static/activation-factors.PNG" />
             </a>
             <p>Extracting underlying behaviour of neurons in a small number of factors with dimensionality reduction.</p>
          </div>
