@@ -19,21 +19,23 @@ Gallery
 ------------
 .. raw:: html
 
-   <div class="container">
+   <div class="container gallery">
       <div class="row">
 
          <div class="col-lg-6 col-md-6 col-sm-6">
+
+            <strong>Input and output sequences</strong>
             <a target="_blank" href="">
-            <img src="https://via.placeholder.com/400x200" />
+            <img src="_static/input-output.PNG" style="border: 1px solid #ddd" />
             </a>
-            <p>Input and output sequences</p>
          </div>
 
          <div class="col-lg-6 col-md-6 col-sm-6">
+
+            <strong>Input Saliency</strong>
             <a target="_blank" href="">
-            <img src="https://via.placeholder.com/400x200" />
+            <img src="_static/input-saliency.PNG" />
             </a>
-            <p>Input Saliency</p>
 
             <p>How much did each input token contribute to producing the output token?</p>
          </div>
@@ -41,40 +43,41 @@ Gallery
 
 
          <div class="col-lg-6 col-md-6 col-sm-6">
+
+            <strong>Predicted Tokens</strong>
             <a target="_blank" href="">
-            <img src="https://via.placeholder.com/400x200" />
+            <img src="_static/layer_predictions.PNG" />
             </a>
-            <p>Predicted Tokens</p>
             <p>The model prediction for the next token (with probability scores).</p>
          </div>
 
 
 
          <div class="col-lg-6 col-md-6 col-sm-6">
+            <strong>Hidden State Evolution</strong>
             <a target="_blank" href="">
-            <img src="https://via.placeholder.com/400x200" />
+            <img src="_static/rankings.PNG" />
             </a>
-            <p>Hidden State Evolution</p>
             <p>After the model picks a token, let's look back at how each layer ranked the output token.</p>
          </div>
 
 
 
          <div class="col-lg-6 col-md-6 col-sm-6">
+            <strong>Hidden State Evolution - watched tokens</strong>
             <a target="_blank" href="">
-            <img src="https://via.placeholder.com/400x200" />
+            <img src="_static/rankings_watch.PNG" />
             </a>
-            <p>Hidden State Evolution - watched tokens</p>
             <p>Compare the rankings of multiple tokens as candidates for a certain position in the sequence.</p>
          </div>
 
 
 
          <div class="col-lg-6 col-md-6 col-sm-6">
+            <strong>Neuron activations</strong>
             <a target="_blank" href="">
             <img src="https://via.placeholder.com/400x200" />
             </a>
-            <p>Neuron activations</p>
             <p>View the firing patterns of neurons as the model generates output tokens.<p>
          </div>
 
@@ -82,30 +85,30 @@ Gallery
 
 
          <div class="col-lg-6 col-md-6 col-sm-6">
+            <strong>Neuron factors</strong>
             <a target="_blank" href="">
             <img src="https://via.placeholder.com/400x200" />
             </a>
-            <p>Neuron factors</p>
             <p>Extracting underlying behaviour of neurons in a small number of factors with dimensionality reduction.</p>
          </div>
 
 
 
          <div class="col-lg-6 col-md-6 col-sm-6">
+            <strong>Attention</strong>
             <a target="_blank" href="">
             <img src="https://via.placeholder.com/400x200" />
             </a>
-            <p>Attention</p>
             <p>Where did the model pay attention when it was generating/processing each token?</p>
          </div>
 
 
 
          <div class="col-lg-6 col-md-6 col-sm-6">
+            <strong>Attention Flow</strong>
             <a target="_blank" href="">
             <img src="https://via.placeholder.com/400x200" />
             </a>
-            <p>Attention Flow</p>
             <p>A more complete view of attention which incorporates residual connections and how previous layers mixed the data from various tokens.</p>
          </div>
 
