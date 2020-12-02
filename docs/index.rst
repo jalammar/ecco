@@ -71,6 +71,7 @@ Gallery
             <img src="_static/rankings_watch.PNG" />
             </a>
             <p>Compare the rankings of multiple tokens as candidates for a certain position in the sequence.</p>
+         </div>
 
 
          <div class="col-lg-6 col-md-6 col-sm-6">
