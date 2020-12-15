@@ -4,11 +4,7 @@ Overview
 
 .. start-badges
 
-|circleci| |version| |supported-versions|
-
-.. |circleci|  image:: https://circleci.com/gh/jalammar/ecco.svg?style=shield
-    :target: https://circleci.com/gh/jalammar/ecco
-    :alt: testing status
+|version| |supported-versions|
 
 .. |version| image:: https://img.shields.io/pypi/v/ecco.svg
     :alt: PyPI Package latest release
