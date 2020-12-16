@@ -39,7 +39,7 @@ Gallery
 
             <strong>Input and Output Sequences</strong>
             <a target="_blank" href="">
-            <img src="_static/input-output.PNG" style="border: 1px solid #ddd" />
+            <img src="docs/_static/input-output.PNG" style="border: 1px solid #ddd" />
             </a>
          View the inputs and outputs (generated text) of language models broken down into tokens.
 
@@ -49,7 +49,7 @@ Gallery
 
             <strong>Input Saliency</strong>
             <a target="_blank" href="">
-            <img src="_static/input-saliency.PNG" />
+            <img src="docs/_static/input-saliency.PNG" />
             </a>
 
             <p>How much did each input token contribute to producing the output token?</p>
@@ -59,7 +59,7 @@ Gallery
          <div class="col-lg-6 col-md-6 col-sm-6">
             <strong>Neuron factors</strong>
             <a target="_blank" href="">
-            <img src="_static/activation-factors.PNG" />
+            <img src="docs/_static/activation-factors.PNG" />
             </a>
             <p>Extracting underlying behaviour of neurons in a small number of factors with dimensionality reduction.</p>
          </div>
