@@ -165,14 +165,22 @@ class OutputSeq:
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
         d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
-        viz_id = 'viz_{}'.format(round(random.random() * 1000000))
-        js = """
+        # viz_id = 'viz_{}'.format(round(random.random() * 1000000))
+        js = f"""
          requirejs(['basic', 'ecco'], function(basic, ecco){{
             const viz_id = basic.init()
-            ecco.interactiveTokens(viz_id, {})
+            // ecco.interactiveTokens(viz_id, {{}})
+            window.ecco[viz_id] = new ecco.MinimalHighlighter({{
+            parentDiv: viz_id,
+            data: {data},
+            preset: 'viridis'
+         }})
+        
+         window.ecco[viz_id].init();
+
          }}, function (err) {{
             console.log(err);
-        }})""".format(data)
+        }})"""
         d.display(d.Javascript(js))
 
         if 'printJson' in kwargs and kwargs['printJson']:

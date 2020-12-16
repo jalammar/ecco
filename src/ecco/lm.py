@@ -317,15 +317,23 @@ class LM(object):
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
         d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         viz_id = f'viz_{round(random.random() * 1000000)}'
+#         html = f"""
+# <div id='{viz_id}_output'></div>
+# <script>
+# """
+
         js = f"""
-         requirejs(['basic', 'ecco'], function(basic, ecco){{
+
+         requirejs( ['basic', 'ecco'], function(basic, ecco){{
             basic.init('{viz_id}')
 
             window.ecco['{viz_id}'] = ecco.renderOutputSequence('{viz_id}', {data})
          }}, function (err) {{
             console.log(err);
-        }})"""
+        }})
+"""
         # print(js)
+        # d.display(d.HTML(html))
         d.display(d.Javascript(js))
         return viz_id
 
@@ -337,8 +345,13 @@ class LM(object):
             'type': 'output'
         }
         js = f"""
-        window.ecco['{viz_id}'].addToken({json.dumps(token)})
-        window.ecco['{viz_id}'].redraw()
+        // We don't really need these require scripts. But this is to avert 
+        //this code from running before display_input_sequence which DOES require external files
+        requirejs(['basic', 'ecco'], function(basic, ecco){{ 
+                console.log('addToken viz_id', '{viz_id}');
+                window.ecco['{viz_id}'].addToken({json.dumps(token)})
+                window.ecco['{viz_id}'].redraw()
+        }})
         """
         # print(js)
         d.display(d.Javascript(js))

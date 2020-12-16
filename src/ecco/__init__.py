@@ -12,6 +12,8 @@ def from_pretrained(hf_model_id, activations=False, attention=False):
                                                      output_hidden_states=True,
                                                      output_attentions=attention)
     if activations:
-        return LM(model, tokenizer, collect_activations_flag=True)
+        lm = LM(model, tokenizer, collect_activations_flag=True)
+        return lm
     else:
-        return LM(model, tokenizer)
+        lm = LM(model, tokenizer)
+        return lm
