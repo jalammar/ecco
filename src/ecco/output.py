@@ -129,11 +129,7 @@ class OutputSeq:
         }})""".format(position, data)
         d.display(d.Javascript(js))
 
-    def sal(self, **kwargs):
-        """Alias for saliency()"""
-        self.saliency(**kwargs)
-
-    def saliency(self, attr_method: Optional[str] = 'grad_x_input', **kwargs):
+    def saliency(self, attr_method: Optional[str] = 'grad_x_input', style="minimal", **kwargs):
         """
         Explorable showing saliency of each token generation step.
         Hovering-over or tapping an output token imposes a saliency map on other tokens
@@ -166,22 +162,39 @@ class OutputSeq:
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
         d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         # viz_id = 'viz_{}'.format(round(random.random() * 1000000))
-        js = f"""
-         requirejs(['basic', 'ecco'], function(basic, ecco){{
-            const viz_id = basic.init()
-            // ecco.interactiveTokens(viz_id, {{}})
-            window.ecco[viz_id] = new ecco.MinimalHighlighter({{
-            parentDiv: viz_id,
-            data: {data},
-            preset: 'viridis'
-         }})
-        
-         window.ecco[viz_id].init();
 
-         }}, function (err) {{
-            console.log(err);
-        }})"""
+        if( style == "minimal"):
+            js = f"""
+             requirejs(['basic', 'ecco'], function(basic, ecco){{
+                const viz_id = basic.init()
+                // ecco.interactiveTokens(viz_id, {{}})
+                window.ecco[viz_id] = new ecco.MinimalHighlighter({{
+                parentDiv: viz_id,
+                data: {data},
+                preset: 'viridis'
+             }})
+            
+             window.ecco[viz_id].init();
+             window.ecco[viz_id].selectFirstToken();
+    
+             }}, function (err) {{
+                console.log(err);
+            }})"""
+        elif (style == "detailed"):
+
+            js = f"""
+             requirejs(['basic', 'ecco'], function(basic, ecco){{
+                const viz_id = basic.init()
+                window.ecco[viz_id] = ecco.interactiveTokens(viz_id, {data})
+
+             }}, function (err) {{
+                console.log(err);
+            }})"""
+
         d.display(d.Javascript(js))
+
+
+
 
         if 'printJson' in kwargs and kwargs['printJson']:
             print(data)

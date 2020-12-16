@@ -33,6 +33,7 @@
     padding: 0px 1px 0px 0px;
     /*border: 1px solid #e6e6e6;*/
     font-family: 'Roboto Mono', monospace;
+    background-color: #e7e7e7;
 }
 .factor{
     width:100%
@@ -96,8 +97,8 @@ svg.scrollable{
     font-family: 'Roboto Mono', monospace;
     text-align: right;
     /*margin-top: 10px;*/
-    margin-right: 5px;
-    padding: 0px 3px 5px 2px;
+    margin:  0 5px;
+    padding: 6px 3px 5px 2px;
 }
 
 .position_in_seq{
@@ -117,15 +118,18 @@ svg.scrollable{
 .outputs-indicator{
     color:#F48FB1;
     /*margin-left: 10px;*/
-    clear:left;
+    /*clear:left;*/
 }
 
 .input-token{
+    /*color:#444;*/
+    /*font-weight:bold;*/
     /*color: #999 !important;*/
 }
 
-.output-token{
+.output-token span{
 
+    font-weight:bold;
 }
 
 
@@ -169,7 +173,7 @@ svg.scrollable{
 .minimal .input-token span{
     color: #000;
     /*padding:1px;*/
-    font-weight:bold;
+    /*font-weight:bold;*/
 
 }
 
