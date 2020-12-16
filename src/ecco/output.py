@@ -529,7 +529,7 @@ class NMF:
         # Get rid of negative activation values
         # (There are some, because GPT2 uses GLEU, which allow small negative values)
         activations = np.maximum(activations, 0)
-        print(activations.shape)
+        # print(activations.shape)
 
         for idx, layer in enumerate(activations):
             #     print(layer.shape)

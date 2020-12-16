@@ -1,7 +1,8 @@
-graft docs
 graft src
 graft ci
 graft tests
+
+prune docs
 
 include .bumpversion.cfg
 include .coveragerc
