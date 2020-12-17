@@ -28,48 +28,6 @@ Ecco runs inside Jupyter notebooks. It is built on top of `pytorch
 <https://github.com/huggingface/transformers>`_.
 
 
-Gallery
-------------
-.. raw:: html
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-   <div class="container gallery">
-      <div class="row">
-
-         <div class="col-lg-6 col-md-6 col-sm-6">
-
-            <strong>Input and Output Sequences</strong>
-            <a target="_blank" href="">
-            <img src="docs/_static/input-output.PNG" style="border: 1px solid #ddd" />
-            </a>
-         View the inputs and outputs (generated text) of language models broken down into tokens.
-
-         </div>
-
-         <div class="col-lg-6 col-md-6 col-sm-6">
-
-            <strong>Input Saliency</strong>
-            <a target="_blank" href="">
-            <img src="docs/_static/input-saliency.PNG" />
-            </a>
-
-            <p>How much did each input token contribute to producing the output token?</p>
-         </div>
-
-
-         <div class="col-lg-6 col-md-6 col-sm-6">
-            <strong>Neuron factors</strong>
-            <a target="_blank" href="">
-            <img src="docs/_static/activation-factors.PNG" />
-            </a>
-            <p>Extracting underlying behaviour of neurons in a small number of factors with dimensionality reduction.</p>
-         </div>
-
-
-
-
-      </div>
-   </div>
-
 * Free software: BSD 3-Clause License
 
 Installation
