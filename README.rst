@@ -60,5 +60,5 @@ This does the following:
 4. ``output`` can now produce various interactive explorables. Examples include:
 
 - ``saliency()`` to generate input saliency explorable [`Input Saliency Colab Notebook <https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb>`_]
-- ``run_nmf()`` to to explore non-negative matrix factorization of neuron activations  [`Neuron Activation Colab Notebook <https://colab.research.google.com/github/jalammar/ecco/blob/main/Ecco_Neuron_Factors.ipynb>`_]
+- ``run_nmf()`` to to explore non-negative matrix factorization of neuron activations  [`Neuron Activation Colab Notebook <https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Neuron_Factors.ipynb>`_]
 
