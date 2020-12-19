@@ -25,8 +25,6 @@ Ecco runs inside Jupyter notebooks. It is built on top of `pytorch
 <https://github.com/huggingface/transformers>`_.
 
 
-* Free software: BSD 3-Clause License
-
 Installation
 ============
 
