@@ -47,12 +47,12 @@ To use the project:
 .. code-block:: python
 
     import ecco
-    // Load pre-trained language model.
+    # Load pre-trained language model.
     lm = ecco.from_pretrained('distilgpt2')
-    // Input text
-    text= "The countries of the European Union are:\n1. Austria\n2. Belgium\n3. Bulgaria\n4."
-    // Generate 20 tokens to complete the input text.
-    output = lm.generate(text, generate=20, do_sample=True)
+    # Input text
+    text = "The countries of the European Union are:\n1. Austria\n2. Belgium\n3. Bulgaria\n4."
+    # Generate 20 tokens to complete the input text.
+    output = lm.generate(text, generate = 20, do_sample = True)
 
 This does the following:
 
