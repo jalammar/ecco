@@ -1,7 +1,8 @@
 
-.. |Ecco-logo| image:: https://ar.pegg.io/img/ecco-logo.png
-.. start-badges
+..  image:: https://ar.pegg.io/img/ecco-logo-w-800.png
+    :alt: Ecco Logo
 
+.. start-badges
 |version| |supported-versions|
 
 .. |version| image:: https://img.shields.io/pypi/v/ecco.svg
