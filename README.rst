@@ -1,7 +1,5 @@
-========
-Overview
-========
 
+.. |Ecco-logo| image:: https://ar.pegg.io/img/ecco-logo.png
 .. start-badges
 
 |version| |supported-versions|
@@ -16,12 +14,10 @@ Overview
 .. end-badges
 
 
-Ecco
-================================
-Ecco is a python library for creating interactive visualizations for Natural Language Processing models.
+Ecco is a python library for creating interactive visualizations to explain Natural Language Processing models.
 
 It provides multiple interfaces to aid the explanation and intuition of `Transformer
-<https://example.com/>`_-based language models.
+<https://jalammar.github.io/illustrated-transformer/>`_-based language models.
 
 Ecco runs inside Jupyter notebooks. It is built on top of `pytorch
 <https://pytorch.org/>`_ and `transformers
