@@ -18,7 +18,7 @@
 Ecco is a python library for creating interactive visualizations to explain Natural Language Processing models.
 
 It provides multiple interfaces to aid the explanation and intuition of `Transformer
-<https://jalammar.github.io/illustrated-transformer/>`_-based language models.
+<https://jalammar.github.io/illustrated-transformer/>`_-based language models. Read: `Interfaces for Explaining Transformer Language Models <https://jalammar.github.io/explaining-transformers/>`_.
 
 Ecco runs inside Jupyter notebooks. It is built on top of `pytorch
 <https://pytorch.org/>`_ and `transformers
