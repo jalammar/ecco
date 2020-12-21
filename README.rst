@@ -29,8 +29,9 @@ The library is currently an alpha release of a research project. You're welcome 
 Installation
 ============
 
-::
-    // Assuming you had PyTorch previously installed
+
+.. code-block:: python
+    # Assuming you had PyTorch previously installed
     pip install ecco
 
 
