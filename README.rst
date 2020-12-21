@@ -24,7 +24,7 @@ Ecco runs inside Jupyter notebooks. It is built on top of `pytorch
 <https://pytorch.org/>`_ and `transformers
 <https://github.com/huggingface/transformers>`_.
 
-The library is currently an alpha release of a research project. You're welcome to contribute to make it better. 
+The library is currently an alpha release of a research project. Not production ready. You're welcome to contribute to make it better!
 
 Installation
 ============
