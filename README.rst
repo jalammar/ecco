@@ -15,7 +15,7 @@
 .. end-badges
 
 
-Ecco is a python library for creating interactive visualizations to explain Natural Language Processing models.
+Ecco is a python library for explaining Natural Language Processing models using interactive visualizations.
 
 It provides multiple interfaces to aid the explanation and intuition of `Transformer
 <https://jalammar.github.io/illustrated-transformer/>`_-based language models. Read: `Interfaces for Explaining Transformer Language Models <https://jalammar.github.io/explaining-transformers/>`_.
