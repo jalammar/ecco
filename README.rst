@@ -31,6 +31,7 @@ Installation
 
 
 .. code-block:: python
+
     # Assuming you had PyTorch previously installed
     pip install ecco
 
