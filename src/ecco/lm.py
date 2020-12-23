@@ -131,7 +131,7 @@ class LM(object):
 
         # detach(): don't need grads here
         # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
-        if hasattr(output, "hidden_states"):
+        if getattr(output, "hidden_states", None) is not None:
             output.hidden_states = tuple([h.cpu().detach() for h in output.hidden_states])
 
         return prediction_id, output
