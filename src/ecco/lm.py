@@ -43,7 +43,7 @@ def activations_dict_to_array(activations_dict):
     for i in range(len(activations_dict)):
         activations.append(activations_dict[i])
 
-    activations = np.squeeze(np.array(activations))
+    activations = np.concatenate(activations, axis=0)
     return np.swapaxes(activations, 1, 2)
 
 
