@@ -97,7 +97,7 @@ class LM(object):
         """
         inputs_embeds, token_ids_tensor_one_hot = self._get_embeddings(input_ids)
 
-        output = self.model(inputs_embeds=inputs_embeds, return_dict=True)
+        output = self.model(inputs_embeds=inputs_embeds, return_dict=True, use_cache=False)
         predict = output[0]
         past = output[1]  # We're not using past because by presenting all the past tokens at every
         # step, we can get feature importance attribution. Let me know if it can be done with past
@@ -345,9 +345,9 @@ class LM(object):
             'type': 'output'
         }
         js = f"""
-        // We don't really need these require scripts. But this is to avert 
+        // We don't really need these require scripts. But this is to avert
         //this code from running before display_input_sequence which DOES require external files
-        requirejs(['basic', 'ecco'], function(basic, ecco){{ 
+        requirejs(['basic', 'ecco'], function(basic, ecco){{
                 console.log('addToken viz_id', '{viz_id}');
                 window.ecco['{viz_id}'].addToken({json.dumps(token)})
                 window.ecco['{viz_id}'].redraw()
