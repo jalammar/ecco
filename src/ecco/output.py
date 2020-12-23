@@ -173,10 +173,10 @@ class OutputSeq:
                 data: {data},
                 preset: 'viridis'
              }})
-
+            
              window.ecco[viz_id].init();
              window.ecco[viz_id].selectFirstToken();
-
+    
              }}, function (err) {{
                 console.log(err);
             }})"""
@@ -283,7 +283,7 @@ class OutputSeq:
         js = f"""
          requirejs(['basic', 'ecco'], function(basic, ecco){{
             const viz_id = basic.init()
-
+            
 
             let pred = new ecco.LayerPredictions({{
                 parentDiv: viz_id,

@@ -358,9 +358,9 @@ class LM(object):
             'type': 'output'
         }
         js = f"""
-        // We don't really need these require scripts. But this is to avert
+        // We don't really need these require scripts. But this is to avert 
         //this code from running before display_input_sequence which DOES require external files
-        requirejs(['basic', 'ecco'], function(basic, ecco){{
+        requirejs(['basic', 'ecco'], function(basic, ecco){{ 
                 console.log('addToken viz_id', '{viz_id}');
                 window.ecco['{viz_id}'].addToken({json.dumps(token)})
                 window.ecco['{viz_id}'].redraw()
