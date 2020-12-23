@@ -527,7 +527,11 @@ class NMF:
             from_layer = 0
             to_layer = activations.shape[0]
 
-        row_ixs = [layer_nums_to_row_ixs[layer_num] for layer_num in range(from_layer, to_layer)]
+        layer_nums = list(range(from_layer, to_layer))
+        if any([num not in layer_nums_to_row_ixs for num in layer_nums]):
+            available = sorted(layer_nums_to_row_ixs.keys())
+            raise ValueError(f"Not all layers between from_layer ({from_layer}) and to_layer ({to_layer}) have recorded activations. Layers with recorded activations are: {available}")
+        row_ixs = [layer_nums_to_row_ixs[layer_num] for layer_num in layer_nums]
         activation_rows = [activations[row_ix] for row_ix in row_ixs]
         merged_act = np.concatenate(activation_rows, axis=0)
         activations = np.expand_dims(merged_act, axis=0)
