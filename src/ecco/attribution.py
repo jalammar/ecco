@@ -44,7 +44,6 @@ def saliency_on_d_embeddings(prediction_logit, inputs_embeds, aggregation="L2"):
         token_importance_raw = torch.mean(inputs_embeds.grad, dim=1)
         token_importance = token_importance_raw  # Hmmm, how to normalize if it includes negative values
 
-    inputs_embeds.grad.data.zero_()
     return token_importance
 
 
@@ -62,7 +61,4 @@ def gradient_x_inputs_attribution(prediction_logit, inputs_embeds):
     # Normalize so we can show scores as percentages
     token_importance_normalized = feature_importance / torch.sum(feature_importance)
 
-    # Zero the gradient for the tensor so next backward() calls don't have
-    # gradients accumulating
-    inputs_embeds.grad.data.zero_()
     return token_importance_normalized
