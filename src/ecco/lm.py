@@ -30,6 +30,7 @@ def sample_output_token(scores, do_sample, temperature, top_k, top_p):
     else:
         # Greedy decoding
         prediction_id = torch.argmax(scores, dim=-1)
+    prediction_id = prediction_id.squeeze()
     return prediction_id
 
 
@@ -100,7 +101,7 @@ class LM(object):
         output = self.model(inputs_embeds=inputs_embeds, return_dict=True, use_cache=False)
         predict = output.logits
 
-        scores = predict[-1, :]
+        scores = predict[-1:, :]
 
         prediction_id = sample_output_token(scores, do_sample, temperature, top_k, top_p)
         # Print the sampled token
