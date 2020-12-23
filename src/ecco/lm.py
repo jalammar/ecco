@@ -98,9 +98,7 @@ class LM(object):
         inputs_embeds, token_ids_tensor_one_hot = self._get_embeddings(input_ids)
 
         output = self.model(inputs_embeds=inputs_embeds, return_dict=True, use_cache=False)
-        predict = output[0]
-        past = output[1]  # We're not using past because by presenting all the past tokens at every
-        # step, we can get feature importance attribution. Let me know if it can be done with past
+        predict = output.logits
 
         scores = predict[-1, :]
 
@@ -125,7 +123,7 @@ class LM(object):
                 self.attributions['grad_x_input'] = []
             self.attributions['grad_x_input'].append(grad_x_input.cpu().detach().numpy())
 
-        return prediction_id, output, past
+        return prediction_id, output
 
     def generate(self, input_str: str, max_length: Optional[int] = 128,
                  temperature: Optional[float] = None,
@@ -163,13 +161,13 @@ class LM(object):
         viz_id = self.display_input_sequence(input_ids)
 
         while cur_len < max_length:
-            output_token_id, output, past = self._generate_token(input_ids,
-                                                                 past,
-                                                                 # Note, this is not currently used
-                                                                 temperature=temperature,
-                                                                 top_k=top_k, top_p=top_p,
-                                                                 do_sample=do_sample,
-                                                                 attribution_flag=attribution)
+            output_token_id, output = self._generate_token(input_ids,
+                                                           past,
+                                                           # Note, this is not currently used
+                                                           temperature=temperature,
+                                                           top_k=top_k, top_p=top_p,
+                                                           do_sample=do_sample,
+                                                           attribution_flag=attribution)
 
             if (get_model_output):
                 outputs.append(output)
@@ -189,16 +187,14 @@ class LM(object):
         if activations_dict != {}:
             self.activations = activations_dict_to_array(activations_dict)
 
-        hidden_states = output[2]
+        hidden_states = output.hidden_states
         tokens = []
         for i in input_ids:
             token = self.tokenizer.decode([i])
             tokens.append(token)
 
         attributions = self.attributions
-        attn = None
-        if len(output) == 4:
-            attn = output[-1]
+        attn = getattr(output, "attentions", None)
         return OutputSeq(**{'tokenizer': self.tokenizer,
                             'token_ids': input_ids,
                             'n_input_tokens': n_input_tokens,
