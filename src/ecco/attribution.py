@@ -80,12 +80,14 @@ def compute_saliency_scores(prediction_logit,
                             ):
     results = {}
 
-    results['gradient'] = saliency(prediction_logit,
-                                   token_ids_tensor_one_hot,
-                                   retain_graph=True,
-                                   **gradient_kwargs)
     results['grad_x_input'] = gradient_x_inputs_attribution(prediction_logit,
                                                             inputs_embeds,
-                                                            retain_graph=False,
+                                                            retain_graph=True,
                                                             **gradient_x_input_kwargs)
+
+    results['gradient'] = saliency(prediction_logit,
+                                   token_ids_tensor_one_hot,
+                                   retain_graph=False,
+                                   **gradient_kwargs)
+
     return results
