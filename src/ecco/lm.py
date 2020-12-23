@@ -128,7 +128,8 @@ class LM(object):
 
         # detach(): don't need grads here
         # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
-        output.hidden_states = tuple([h.cpu().detach() for h in output.hidden_states])
+        if hasattr(output, "hidden_states"):
+            output.hidden_states = tuple([h.cpu().detach() for h in output.hidden_states])
 
         return prediction_id, output
 
@@ -194,7 +195,7 @@ class LM(object):
         if activations_dict != {}:
             self.activations = activations_dict_to_array(activations_dict)
 
-        hidden_states = output.hidden_states
+        hidden_states = getattr(output, "hidden_states", None)
         tokens = []
         for i in input_ids:
             token = self.tokenizer.decode([i])
