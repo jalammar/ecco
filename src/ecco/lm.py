@@ -123,6 +123,7 @@ class LM(object):
                 self.attributions['grad_x_input'] = []
             self.attributions['grad_x_input'].append(grad_x_input.cpu().detach().numpy())
 
+        del output.logits  # free tensor memory we won't use again
         return prediction_id, output
 
     def generate(self, input_str: str, max_length: Optional[int] = 128,
