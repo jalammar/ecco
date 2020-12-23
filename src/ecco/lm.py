@@ -41,7 +41,7 @@ def _one_hot(token_ids, vocab_size):
 def activations_dict_to_array(activations_dict):
     # print(activations_dict[0].shape)
     activations = []
-    for i in range(len(activations_dict)):
+    for i in sorted(activations_dict.keys()):
         activations.append(activations_dict[i])
 
     activations = np.concatenate(activations, axis=0)
@@ -359,9 +359,9 @@ class LM(object):
             'type': 'output'
         }
         js = f"""
-        // We don't really need these require scripts. But this is to avert 
+        // We don't really need these require scripts. But this is to avert
         //this code from running before display_input_sequence which DOES require external files
-        requirejs(['basic', 'ecco'], function(basic, ecco){{ 
+        requirejs(['basic', 'ecco'], function(basic, ecco){{
                 console.log('addToken viz_id', '{viz_id}');
                 window.ecco['{viz_id}'].addToken({json.dumps(token)})
                 window.ecco['{viz_id}'].redraw()
