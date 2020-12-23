@@ -116,16 +116,15 @@ class LM(object):
         prediction_logit = predict[inputs_embeds.shape[0] - 1][prediction_id]
 
         if attribution_flag:
-            saliency_scores = saliency(prediction_logit, token_ids_tensor_one_hot)
+            saliency_results = compute_saliency_scores(prediction_logit, token_ids_tensor_one_hot, inputs_embeds)
+
             if 'gradient' not in self.attributions:
                 self.attributions['gradient'] = []
-            self.attributions['gradient'].append(saliency_scores.cpu().detach().numpy())
+            self.attributions['gradient'].append(saliency_results['gradient'].cpu().detach().numpy())
 
-            grad_x_input = gradient_x_inputs_attribution(prediction_logit,
-                                                         inputs_embeds)
             if 'grad_x_input' not in self.attributions:
                 self.attributions['grad_x_input'] = []
-            self.attributions['grad_x_input'].append(grad_x_input.cpu().detach().numpy())
+            self.attributions['grad_x_input'].append(saliency_results['grad_x_input'].cpu().detach().numpy())
 
         del output.logits  # free tensor memory we won't use again
 
