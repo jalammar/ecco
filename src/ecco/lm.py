@@ -55,7 +55,9 @@ class LM(object):
 
     def __init__(self, model, tokenizer,
                  collect_activations_flag=False,
-                 collect_gen_activations_flag=False):
+                 collect_gen_activations_flag=False,
+                 collect_activations_layer_nums=None,  # None --> collect for all layers
+                 ):
         self.model = model
         if torch.cuda.is_available():
             self.model = model.to('cuda')
@@ -69,6 +71,7 @@ class LM(object):
         # Neuron Activation
         self.collect_activations_flag = collect_activations_flag
         self.collect_gen_activations_flag = collect_gen_activations_flag
+        self.collect_activations_layer_nums = collect_activations_layer_nums
         self._hooks = {}
         self._reset()
         self._attach_hooks(self.model)
@@ -260,13 +263,16 @@ class LM(object):
         # Extract the number of the layer from the name
         layer_number = int(name.split('.')[2])
 
-        if layer_number not in self._all_activations_dict:
-            self._all_activations_dict[layer_number] = [0]
+        collecting_this_layer = (self.collect_activations_layer_nums is None) or (layer_number in self.collect_activations_layer_nums)
 
-        # Overwrite the previous step activations. This collects all activations in the last step
-        # Assuming all input tokens are presented as input, no "past"
-        # The inputs to c_proj already pass through the gelu activation function
-        self._all_activations_dict[layer_number][0] = input_[0][0].detach().cpu().numpy()
+        if collecting_this_layer:
+            if layer_number not in self._all_activations_dict:
+                self._all_activations_dict[layer_number] = [0]
+
+            # Overwrite the previous step activations. This collects all activations in the last step
+            # Assuming all input tokens are presented as input, no "past"
+            # The inputs to c_proj already pass through the gelu activation function
+            self._all_activations_dict[layer_number][0] = input_[0][0].detach().cpu().numpy()
 
     def _get_generation_activations_hook(self, name: str, input_):
         """
@@ -277,12 +283,15 @@ class LM(object):
         # Extract the number of the layer from the name
         layer_number = int(name.split('.')[2])
 
-        if layer_number not in self._generation_activations_dict:
-            self._generation_activations_dict[layer_number] = []
+        collecting_this_layer = (self.collect_activations_layer_nums is None) or (layer_number in self.collect_activations_layer_nums)
 
-        # Accumulate in dict
-        # The inputs to c_proj already pass through the gelu activation function
-        self._generation_activations_dict[layer_number].append(input_[0][0][-1].detach().cpu().numpy())
+        if collecting_this_layer:
+            if layer_number not in self._generation_activations_dict:
+                self._generation_activations_dict[layer_number] = []
+
+            # Accumulate in dict
+            # The inputs to c_proj already pass through the gelu activation function
+            self._generation_activations_dict[layer_number].append(input_[0][0][-1].detach().cpu().numpy())
 
     def _inhibit_neurons_hook(self, name: str, input_tensor):
         """
