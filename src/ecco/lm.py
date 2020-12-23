@@ -216,6 +216,7 @@ class LM(object):
                             'model_outputs': outputs,
                             'attribution': attributions,
                             'activations': self.activations,
+                            'collect_activations_layer_nums': self.collect_activations_layer_nums,
                             'lm_head': self.model.lm_head,
                             'device': self.device})
 

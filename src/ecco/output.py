@@ -23,6 +23,7 @@ class OutputSeq:
                  attribution=None,
                  activations=None,
                  activations_type=None,
+                 collect_activations_layer_nums=None,
                  attention=None,
                  model_outputs=None,
                  lm_head=None,
@@ -36,6 +37,7 @@ class OutputSeq:
         self.attribution = attribution
         self.activations = activations
         self.activations_type = activations_type
+        self.collect_activations_layer_nums = collect_activations_layer_nums
         self.model_outputs = model_outputs
         self.attention_values = attention
         self.lm_head = lm_head
@@ -173,10 +175,10 @@ class OutputSeq:
                 data: {data},
                 preset: 'viridis'
              }})
-            
+
              window.ecco[viz_id].init();
              window.ecco[viz_id].selectFirstToken();
-    
+
              }}, function (err) {{
                 console.log(err);
             }})"""
@@ -283,7 +285,7 @@ class OutputSeq:
         js = f"""
          requirejs(['basic', 'ecco'], function(basic, ecco){{
             const viz_id = basic.init()
-            
+
 
             let pred = new ecco.LayerPredictions({{
                 parentDiv: viz_id,
@@ -424,7 +426,9 @@ class OutputSeq:
                    n_input_tokens=self.n_input_tokens,
                    token_ids=self.token_ids,
                    _path=self._path,
-                   tokens=self.tokens, **kwargs)
+                   tokens=self.tokens,
+                   collect_activations_layer_nums=self.collect_activations_layer_nums,
+                   **kwargs)
 
     def attention(self, attention_values=None, layer=0, **kwargs):
 
@@ -490,6 +494,7 @@ class NMF:
                  # from_layer: Optional[int] = None,
                  # to_layer: Optional[int] = None,
                  tokens: Optional[List[str]] = None,
+                 collect_activations_layer_nums: Optional[List[int]]=None,
                  **kwargs):
         self._path = _path
         self.token_ids = token_ids
@@ -497,6 +502,13 @@ class NMF:
 
         from_layer = kwargs['from_layer'] if 'from_layer' in kwargs else None
         to_layer = kwargs['to_layer'] if 'to_layer' in kwargs else None
+
+        if collect_activations_layer_nums is None:
+            collect_activations_layer_nums = list(range(activations.shape[0]))
+
+        layer_nums_to_row_ixs = {layer_num: i
+                                 for i, layer_num in enumerate(collect_activations_layer_nums)}
+
         if len(activations.shape) != 3:
             raise ValueError(f"The 'activations' parameter should have three dimensions: (layers, neurons, positions). "
                              f"Supplied dimensions: {activations.shape}", 'activations')
@@ -515,7 +527,9 @@ class NMF:
             from_layer = 0
             to_layer = activations.shape[0]
 
-        merged_act = np.concatenate(activations[from_layer: to_layer], axis=0)
+        row_ixs = [layer_nums_to_row_ixs[layer_num] for layer_num in range(from_layer, to_layer)]
+        activation_rows = [activations[row_ix] for row_ix in row_ixs]
+        merged_act = np.concatenate(activation_rows, axis=0)
         activations = np.expand_dims(merged_act, axis=0)
 
         self.tokens = tokens
