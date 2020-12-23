@@ -124,7 +124,10 @@ class LM(object):
             self.attributions['grad_x_input'].append(grad_x_input.cpu().detach().numpy())
 
         del output.logits  # free tensor memory we won't use again
-        output.hidden_states = tuple([h.detach() for h in output.hidden_states])  # don't need grads here
+
+        # detach(): don't need grads here
+        # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
+        output.hidden_states = tuple([h.cpu().detach() for h in output.hidden_states])
 
         return prediction_id, output
 

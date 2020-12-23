@@ -173,10 +173,10 @@ class OutputSeq:
                 data: {data},
                 preset: 'viridis'
              }})
-            
+
              window.ecco[viz_id].init();
              window.ecco[viz_id].selectFirstToken();
-    
+
              }}, function (err) {{
                 console.log(err);
             }})"""
@@ -252,7 +252,7 @@ class OutputSeq:
             # print(h.shape)
             hidden_state = h[position - 1]
             # Use lm_head to project the layer's hidden state to output vocabulary
-            logits = self.lm_head(hidden_state)
+            logits = self.lm_head(self.to(hidden_state))
             softmax = F.softmax(logits, dim=-1)
             sorted_softmax = self.to(torch.argsort(softmax))
 
@@ -283,7 +283,7 @@ class OutputSeq:
         js = f"""
          requirejs(['basic', 'ecco'], function(basic, ecco){{
             const viz_id = basic.init()
-            
+
 
             let pred = new ecco.LayerPredictions({{
                 parentDiv: viz_id,
@@ -321,7 +321,7 @@ class OutputSeq:
                 # print('hidden state layer', i, 'position', self.n_input_tokens-1+j)
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
-                logits = self.lm_head(hidden_state)
+                logits = self.lm_head(self.to(hidden_state))
                 # logits = self.lm_head(torch.tensor(hidden_state))
                 # Sort by score (ascending)
                 sorted = torch.argsort(logits)
@@ -380,7 +380,7 @@ class OutputSeq:
                 hidden_state = level[position]
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
-                logits = self.lm_head(hidden_state)
+                logits = self.lm_head(self.to(hidden_state))
                 # logits = lmhead(torch.tensor(hidden_state))
                 # Sort by score (ascending)
                 sorted = torch.argsort(logits)
