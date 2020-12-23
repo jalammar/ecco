@@ -18,7 +18,6 @@ def saliency(prediction_logit, token_ids_tensor_one_hot, norm=True):
     else:
         token_importance = torch.sum(grad, dim=1)  # Only one value, all others are zero
 
-    token_ids_tensor_one_hot.grad.data.zero_()
     return token_importance
 
 
