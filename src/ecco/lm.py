@@ -126,7 +126,7 @@ class LM(object):
                 self.attributions['grad_x_input'] = []
             self.attributions['grad_x_input'].append(saliency_results['grad_x_input'].cpu().detach().numpy())
 
-        del output.logits  # free tensor memory we won't use again
+        del output['logits']  # free tensor memory we won't use again
 
         # detach(): don't need grads here
         # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
