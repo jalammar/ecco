@@ -23,6 +23,7 @@ class OutputSeq:
                  attribution=None,
                  activations=None,
                  activations_type=None,
+                 collect_activations_layer_nums=None,
                  attention=None,
                  model_outputs=None,
                  lm_head=None,
@@ -36,6 +37,7 @@ class OutputSeq:
         self.attribution = attribution
         self.activations = activations
         self.activations_type = activations_type
+        self.collect_activations_layer_nums = collect_activations_layer_nums
         self.model_outputs = model_outputs
         self.attention_values = attention
         self.lm_head = lm_head
@@ -173,10 +175,10 @@ class OutputSeq:
                 data: {data},
                 preset: 'viridis'
              }})
-            
+
              window.ecco[viz_id].init();
              window.ecco[viz_id].selectFirstToken();
-    
+
              }}, function (err) {{
                 console.log(err);
             }})"""
@@ -252,7 +254,7 @@ class OutputSeq:
             # print(h.shape)
             hidden_state = h[position - 1]
             # Use lm_head to project the layer's hidden state to output vocabulary
-            logits = self.lm_head(hidden_state)
+            logits = self.lm_head(self.to(hidden_state))
             softmax = F.softmax(logits, dim=-1)
             sorted_softmax = self.to(torch.argsort(softmax))
 
@@ -283,7 +285,7 @@ class OutputSeq:
         js = f"""
          requirejs(['basic', 'ecco'], function(basic, ecco){{
             const viz_id = basic.init()
-            
+
 
             let pred = new ecco.LayerPredictions({{
                 parentDiv: viz_id,
@@ -321,7 +323,7 @@ class OutputSeq:
                 # print('hidden state layer', i, 'position', self.n_input_tokens-1+j)
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
-                logits = self.lm_head(hidden_state)
+                logits = self.lm_head(self.to(hidden_state))
                 # logits = self.lm_head(torch.tensor(hidden_state))
                 # Sort by score (ascending)
                 sorted = torch.argsort(logits)
@@ -380,7 +382,7 @@ class OutputSeq:
                 hidden_state = level[position]
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
-                logits = self.lm_head(hidden_state)
+                logits = self.lm_head(self.to(hidden_state))
                 # logits = lmhead(torch.tensor(hidden_state))
                 # Sort by score (ascending)
                 sorted = torch.argsort(logits)
@@ -424,7 +426,9 @@ class OutputSeq:
                    n_input_tokens=self.n_input_tokens,
                    token_ids=self.token_ids,
                    _path=self._path,
-                   tokens=self.tokens, **kwargs)
+                   tokens=self.tokens,
+                   collect_activations_layer_nums=self.collect_activations_layer_nums,
+                   **kwargs)
 
     def attention(self, attention_values=None, layer=0, **kwargs):
 
@@ -490,6 +494,7 @@ class NMF:
                  # from_layer: Optional[int] = None,
                  # to_layer: Optional[int] = None,
                  tokens: Optional[List[str]] = None,
+                 collect_activations_layer_nums: Optional[List[int]]=None,
                  **kwargs):
         self._path = _path
         self.token_ids = token_ids
@@ -497,6 +502,13 @@ class NMF:
 
         from_layer = kwargs['from_layer'] if 'from_layer' in kwargs else None
         to_layer = kwargs['to_layer'] if 'to_layer' in kwargs else None
+
+        if collect_activations_layer_nums is None:
+            collect_activations_layer_nums = list(range(activations.shape[0]))
+
+        layer_nums_to_row_ixs = {layer_num: i
+                                 for i, layer_num in enumerate(collect_activations_layer_nums)}
+
         if len(activations.shape) != 3:
             raise ValueError(f"The 'activations' parameter should have three dimensions: (layers, neurons, positions). "
                              f"Supplied dimensions: {activations.shape}", 'activations')
@@ -511,11 +523,17 @@ class NMF:
 
             if from_layer > to_layer:
                 raise ValueError(f"from_layer ({from_layer}) cannot be larger than to_layer ({to_layer}).")
-        else:
-            from_layer = 0
-            to_layer = activations.shape[0]
 
-        merged_act = np.concatenate(activations[from_layer: to_layer], axis=0)
+            layer_nums = list(range(from_layer, to_layer))
+        else:
+            layer_nums = sorted(layer_nums_to_row_ixs.keys())
+
+        if any([num not in layer_nums_to_row_ixs for num in layer_nums]):
+            available = sorted(layer_nums_to_row_ixs.keys())
+            raise ValueError(f"Not all layers between from_layer ({from_layer}) and to_layer ({to_layer}) have recorded activations. Layers with recorded activations are: {available}")
+        row_ixs = [layer_nums_to_row_ixs[layer_num] for layer_num in layer_nums]
+        activation_rows = [activations[row_ix] for row_ix in row_ixs]
+        merged_act = np.concatenate(activation_rows, axis=0)
         activations = np.expand_dims(merged_act, axis=0)
 
         self.tokens = tokens
