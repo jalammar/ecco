@@ -27,8 +27,8 @@ class TestLM:
         assert result == torch.tensor(2)
 
     def test_activations_dict_to_array(self):
-        dict = {0:[[np.zeros((3,4))]],
-                1:[[np.zeros((3,4))]]}
+        dict = {0:[np.zeros((3,4))],
+                1:[np.zeros((3,4))]}
         activations = activations_dict_to_array(dict)
         assert activations.shape == (2,4,3)
 
