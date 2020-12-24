@@ -25,7 +25,7 @@ def read(*names, **kwargs):
 
 setup(
     name='ecco',
-    version='0.0.10',
+    version='0.0.11',
     license='BSD-3-Clause',
     description='Visualization tools for NLP machine learning models.',
     long_description='%s\n%s' % (
