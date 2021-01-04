@@ -30,6 +30,7 @@ def sample_output_token(scores, do_sample, temperature, top_k, top_p):
     else:
         # Greedy decoding
         prediction_id = torch.argmax(scores, dim=-1)
+    prediction_id = prediction_id.squeeze()
     return prediction_id
 
 
@@ -40,10 +41,10 @@ def _one_hot(token_ids, vocab_size):
 def activations_dict_to_array(activations_dict):
     # print(activations_dict[0].shape)
     activations = []
-    for i in range(len(activations_dict)):
+    for i in sorted(activations_dict.keys()):
         activations.append(activations_dict[i])
 
-    activations = np.squeeze(np.array(activations))
+    activations = np.concatenate(activations, axis=0)
     return np.swapaxes(activations, 1, 2)
 
 
@@ -54,7 +55,9 @@ class LM(object):
 
     def __init__(self, model, tokenizer,
                  collect_activations_flag=False,
-                 collect_gen_activations_flag=False):
+                 collect_gen_activations_flag=False,
+                 collect_activations_layer_nums=None,  # None --> collect for all layers
+                 ):
         self.model = model
         if torch.cuda.is_available():
             self.model = model.to('cuda')
@@ -68,6 +71,7 @@ class LM(object):
         # Neuron Activation
         self.collect_activations_flag = collect_activations_flag
         self.collect_gen_activations_flag = collect_gen_activations_flag
+        self.collect_activations_layer_nums = collect_activations_layer_nums
         self._hooks = {}
         self._reset()
         self._attach_hooks(self.model)
@@ -97,12 +101,10 @@ class LM(object):
         """
         inputs_embeds, token_ids_tensor_one_hot = self._get_embeddings(input_ids)
 
-        output = self.model(inputs_embeds=inputs_embeds, return_dict=True)
-        predict = output[0]
-        past = output[1]  # We're not using past because by presenting all the past tokens at every
-        # step, we can get feature importance attribution. Let me know if it can be done with past
+        output = self.model(inputs_embeds=inputs_embeds, return_dict=True, use_cache=False)
+        predict = output.logits
 
-        scores = predict[-1, :]
+        scores = predict[-1:, :]
 
         prediction_id = sample_output_token(scores, do_sample, temperature, top_k, top_p)
         # Print the sampled token
@@ -114,18 +116,24 @@ class LM(object):
         prediction_logit = predict[inputs_embeds.shape[0] - 1][prediction_id]
 
         if attribution_flag:
-            saliency_scores = saliency(prediction_logit, token_ids_tensor_one_hot)
+            saliency_results = compute_saliency_scores(prediction_logit, token_ids_tensor_one_hot, inputs_embeds)
+
             if 'gradient' not in self.attributions:
                 self.attributions['gradient'] = []
-            self.attributions['gradient'].append(saliency_scores.cpu().detach().numpy())
+            self.attributions['gradient'].append(saliency_results['gradient'].cpu().detach().numpy())
 
-            grad_x_input = gradient_x_inputs_attribution(prediction_logit,
-                                                         inputs_embeds)
             if 'grad_x_input' not in self.attributions:
                 self.attributions['grad_x_input'] = []
-            self.attributions['grad_x_input'].append(grad_x_input.cpu().detach().numpy())
+            self.attributions['grad_x_input'].append(saliency_results['grad_x_input'].cpu().detach().numpy())
 
-        return prediction_id, output, past
+        output['logits'] = None  # free tensor memory we won't use again
+
+        # detach(): don't need grads here
+        # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
+        if getattr(output, "hidden_states", None) is not None:
+            output.hidden_states = tuple([h.cpu().detach() for h in output.hidden_states])
+
+        return prediction_id, output
 
     def generate(self, input_str: str, max_length: Optional[int] = 128,
                  temperature: Optional[float] = None,
@@ -163,13 +171,13 @@ class LM(object):
         viz_id = self.display_input_sequence(input_ids)
 
         while cur_len < max_length:
-            output_token_id, output, past = self._generate_token(input_ids,
-                                                                 past,
-                                                                 # Note, this is not currently used
-                                                                 temperature=temperature,
-                                                                 top_k=top_k, top_p=top_p,
-                                                                 do_sample=do_sample,
-                                                                 attribution_flag=attribution)
+            output_token_id, output = self._generate_token(input_ids,
+                                                           past,
+                                                           # Note, this is not currently used
+                                                           temperature=temperature,
+                                                           top_k=top_k, top_p=top_p,
+                                                           do_sample=do_sample,
+                                                           attribution_flag=attribution)
 
             if (get_model_output):
                 outputs.append(output)
@@ -189,16 +197,14 @@ class LM(object):
         if activations_dict != {}:
             self.activations = activations_dict_to_array(activations_dict)
 
-        hidden_states = output[2]
+        hidden_states = getattr(output, "hidden_states", None)
         tokens = []
         for i in input_ids:
             token = self.tokenizer.decode([i])
             tokens.append(token)
 
         attributions = self.attributions
-        attn = None
-        if len(output) == 4:
-            attn = output[-1]
+        attn = getattr(output, "attentions", None)
         return OutputSeq(**{'tokenizer': self.tokenizer,
                             'token_ids': input_ids,
                             'n_input_tokens': n_input_tokens,
@@ -209,6 +215,7 @@ class LM(object):
                             'model_outputs': outputs,
                             'attribution': attributions,
                             'activations': self.activations,
+                            'collect_activations_layer_nums': self.collect_activations_layer_nums,
                             'lm_head': self.model.lm_head,
                             'device': self.device})
 
@@ -256,13 +263,16 @@ class LM(object):
         # Extract the number of the layer from the name
         layer_number = int(name.split('.')[2])
 
-        if layer_number not in self._all_activations_dict:
-            self._all_activations_dict[layer_number] = [0]
+        collecting_this_layer = (self.collect_activations_layer_nums is None) or (layer_number in self.collect_activations_layer_nums)
 
-        # Overwrite the previous step activations. This collects all activations in the last step
-        # Assuming all input tokens are presented as input, no "past"
-        # The inputs to c_proj already pass through the gelu activation function
-        self._all_activations_dict[layer_number][0] = input_[0][0].detach().cpu().numpy()
+        if collecting_this_layer:
+            if layer_number not in self._all_activations_dict:
+                self._all_activations_dict[layer_number] = [0]
+
+            # Overwrite the previous step activations. This collects all activations in the last step
+            # Assuming all input tokens are presented as input, no "past"
+            # The inputs to c_proj already pass through the gelu activation function
+            self._all_activations_dict[layer_number][0] = input_[0][0].detach().cpu().numpy()
 
     def _get_generation_activations_hook(self, name: str, input_):
         """
@@ -273,12 +283,15 @@ class LM(object):
         # Extract the number of the layer from the name
         layer_number = int(name.split('.')[2])
 
-        if layer_number not in self._generation_activations_dict:
-            self._generation_activations_dict[layer_number] = []
+        collecting_this_layer = (self.collect_activations_layer_nums is None) or (layer_number in self.collect_activations_layer_nums)
 
-        # Accumulate in dict
-        # The inputs to c_proj already pass through the gelu activation function
-        self._generation_activations_dict[layer_number].append(input_[0][0][-1].detach().cpu().numpy())
+        if collecting_this_layer:
+            if layer_number not in self._generation_activations_dict:
+                self._generation_activations_dict[layer_number] = []
+
+            # Accumulate in dict
+            # The inputs to c_proj already pass through the gelu activation function
+            self._generation_activations_dict[layer_number].append(input_[0][0][-1].detach().cpu().numpy())
 
     def _inhibit_neurons_hook(self, name: str, input_tensor):
         """
@@ -345,9 +358,9 @@ class LM(object):
             'type': 'output'
         }
         js = f"""
-        // We don't really need these require scripts. But this is to avert 
+        // We don't really need these require scripts. But this is to avert
         //this code from running before display_input_sequence which DOES require external files
-        requirejs(['basic', 'ecco'], function(basic, ecco){{ 
+        requirejs(['basic', 'ecco'], function(basic, ecco){{
                 console.log('addToken viz_id', '{viz_id}');
                 window.ecco['{viz_id}'].addToken({json.dumps(token)})
                 window.ecco['{viz_id}'].redraw()
