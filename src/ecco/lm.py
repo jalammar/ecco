@@ -10,7 +10,9 @@ import os
 import json
 from ecco.attribution import *
 from typing import Optional, Any
-from transformers.modeling_gpt2 import GPT2Model
+from pprint import pprint
+
+from transformers import GPT2Model
 
 
 def sample_output_token(scores, do_sample, temperature, top_k, top_p):
@@ -39,13 +41,22 @@ def _one_hot(token_ids, vocab_size):
 
 
 def activations_dict_to_array(activations_dict):
+    """
+    Converts the dict used to collect activations into an array of the
+    shape (batch, layers, neurons, token position)
+    """
     # print(activations_dict[0].shape)
     activations = []
     for i in sorted(activations_dict.keys()):
         activations.append(activations_dict[i])
 
     activations = np.concatenate(activations, axis=0)
-    return np.swapaxes(activations, 1, 2)
+    # 'activations' now is in the shape (layer, batch, position, neurons)
+    print(activations.shape)
+    activations = np.swapaxes(activations, 2, 3)
+    activations = np.swapaxes(activations, 0, 1)
+    print('after swapping: ', activations.shape)
+    return activations
 
 
 class LM(object):
@@ -219,9 +230,64 @@ class LM(object):
                             'lm_head': self.model.lm_head,
                             'device': self.device})
 
+    def __call__(self,
+                 # input_str: Optional[str] = '',
+                 input_ids: torch.Tensor,
+                 # attribution: Optional[bool] = True,
+                 ):
+        """
+        Run a forward pass through the model. For when we don't care about output tokens.
+        Currently only support activations collection. No attribution/saliency.
+        Args:
+            input_ids: tensor with input token ids. Shape is (batch_size, sequence_length)
+            attribution: Flag indicating whether to calculate attribution/saliency
+        """
+
+        # Verify we don't have both input_str and input _ids
+
+        ## Potentially later: support inputting batches of strings.
+        # if input_str != '':
+        #     input_ids = self.tokenizer(input_str, return_tensors="pt")['input_ids'][0]
+
+        n_input_tokens = len(input_ids)
+        # self.attributions = {}
+
+        # model
+        # inputs_embeds, token_ids_tensor_one_hot = self._get_embeddings(input_ids)
+        # print(inputs_embeds.shape)
+        output = self.model(**input_ids, return_dict=True, use_cache=False)
+        predict = output.logits
+        scores = predict[-1:, :]
+
+        # Turn activations from dict to a proper array
+        activations_dict = self._all_activations_dict or self._generation_activations_dict
+        if activations_dict != {}:
+            self.activations = activations_dict_to_array(activations_dict)
+
+        hidden_states = getattr(output, "hidden_states", None)
+        tokens = []
+        # for i in input_ids:
+        #     token = self.tokenizer.decode([i])
+        #     tokens.append(token)
+
+        attn = getattr(output, "attentions", None)
+        return OutputSeq(**{'tokenizer': self.tokenizer,
+                            'token_ids': input_ids,
+                            'n_input_tokens': n_input_tokens,
+                            # 'output_text': self.tokenizer.decode(input_ids),
+                            'tokens': tokens,
+                            'hidden_states': hidden_states,
+                            'attention': attn,
+                            # 'model_outputs': outputs,
+                            # 'attribution': attributions,
+                            'activations': self.activations,
+                            'collect_activations_layer_nums': self.collect_activations_layer_nums,
+                            'lm_head': self.model.lm_head,
+                            'device': self.device})
+
     def _get_embeddings(self, input_ids):
         """
-        Takes the token ids of a sequence, returnsa matrix of their embeddings.
+        Takes the token ids of a sequence, returns a matrix of their embeddings.
         """
         embedding_matrix = self.model.transformer.wte.weight
 
@@ -229,7 +295,6 @@ class LM(object):
         one_hot_tensor = self.to(_one_hot(input_ids, vocab_size))
 
         token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
-        # token_ids_tensor_one_hot.requires_grad_(True)
 
         inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
         return inputs_embeds, token_ids_tensor_one_hot
@@ -256,23 +321,32 @@ class LM(object):
 
     def _get_activations_hook(self, name: str, input_):
         """
-        Collects the activation for all tokens (input and output)
+        Collects the activation for all tokens (input and output).
+        The default activations collection method.
+
+        Args:
+            input_: activation tuple to capture. A tuple containing one tensor of
+            dimensions (batch_size, sequence_length, neurons)
         """
-        # print(input_.shape, output.shape)
+        print('_get_activations_hook', name)
+        # pprint(input_)
+        print(type(input_), len(input_), type(input_[0]), input_[0].shape, len(input_[0]), input_[0][0].shape)
         # in distilGPT and GPT2, the layer name is 'transformer.h.0.mlp.c_fc'
         # Extract the number of the layer from the name
         layer_number = int(name.split('.')[2])
 
-        collecting_this_layer = (self.collect_activations_layer_nums is None) or (layer_number in self.collect_activations_layer_nums)
+        collecting_this_layer = (self.collect_activations_layer_nums is None) or (
+                    layer_number in self.collect_activations_layer_nums)
 
         if collecting_this_layer:
+
             if layer_number not in self._all_activations_dict:
                 self._all_activations_dict[layer_number] = [0]
 
             # Overwrite the previous step activations. This collects all activations in the last step
             # Assuming all input tokens are presented as input, no "past"
             # The inputs to c_proj already pass through the gelu activation function
-            self._all_activations_dict[layer_number][0] = input_[0][0].detach().cpu().numpy()
+            self._all_activations_dict[layer_number][0] = input_[0].detach().cpu().numpy()
 
     def _get_generation_activations_hook(self, name: str, input_):
         """
@@ -283,7 +357,8 @@ class LM(object):
         # Extract the number of the layer from the name
         layer_number = int(name.split('.')[2])
 
-        collecting_this_layer = (self.collect_activations_layer_nums is None) or (layer_number in self.collect_activations_layer_nums)
+        collecting_this_layer = (self.collect_activations_layer_nums is None) or (
+                    layer_number in self.collect_activations_layer_nums)
 
         if collecting_this_layer:
             if layer_number not in self._generation_activations_dict:
@@ -298,7 +373,7 @@ class LM(object):
         After being attached as a pre-forward hook, it sets to zero the activation value
         of the neurons indicated in self.neurons_to_inhibit
         """
-
+        print('_inhibit_neurons_hook', name)
         layer_number = int(name.split('.')[2])
         if layer_number in self.neurons_to_inhibit.keys():
             # print('layer_number', layer_number, input_tensor[0].shape)
@@ -330,10 +405,10 @@ class LM(object):
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
         d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         viz_id = f'viz_{round(random.random() * 1000000)}'
-#         html = f"""
-# <div id='{viz_id}_output'></div>
-# <script>
-# """
+        #         html = f"""
+        # <div id='{viz_id}_output'></div>
+        # <script>
+        # """
 
         js = f"""
 
@@ -410,35 +485,37 @@ class MockGPT(GPT2Model):
         print('Mock tokenizer init')
         config = transformers.GPT2Config.from_pretrained("gpt2")
         super().__init__(config)
-        self.transformer ={'wte':{'weight':  torch.Tensor([])}}
+        self.transformer = {'wte': {'weight': torch.Tensor([])},
+                            'h': {
+                                0: {
+                                    'mlp': {'c_proj': torch.nn.Linear(10,20) }
+                                    }
+                                }
+                            }
 
     def _forward_unimplemented(self, *input: Any) -> None:
         pass
 
     def __call__(self, **kwargs):
         print('calling model', kwargs)
-        return OutputSeq(**{'tokenizer': MockGPTTokenizer(),
-                            'token_ids': [352, 11, 352, 11, 362],
-                            'n_input_tokens': 4,
-                            'output_text': ' 1, 1, 2',
-                            'tokens': [' 1', ',', ' 1', ',', ' 2'],
-                            'hidden_states': [torch.rand(4, 768) for i in range(7)],
-                            'attention': None,
-                            'model_outputs': None,
-                            'attribution': {'gradient': [
-                                np.array([0.41861308, 0.13054065, 0.23851791, 0.21232839], dtype=np.float32)],
-                                'grad_x_input': [
-                                    np.array([0.31678662, 0.18056837, 0.37555906, 0.12708597],
-                                             dtype=np.float32)]},
-                            'activations': [],
-                            'lm_head': torch.nn.Linear(768, 50257, bias=False),
-                            'device': 'cpu'})
+        super().__call__(**kwargs)
+        # self._all_activations_dict
+        # return {'logits':}
+        # return OutputSeq(**{'tokenizer': MockGPTTokenizer(),
+        #                     'token_ids': [352, 11, 352, 11, 362],
+        #                     'n_input_tokens': 4,
+        #                     'output_text': ' 1, 1, 2',
+        #                     'tokens': [' 1', ',', ' 1', ',', ' 2'],
+        #                     'hidden_states': [torch.rand(4, 768) for i in range(7)],
+        #                     'attention': None,
+        #                     'model_outputs': None,
+        #                     'attribution': {'gradient': [
+        #                         np.array([0.41861308, 0.13054065, 0.23851791, 0.21232839], dtype=np.float32)],
+        #                         'grad_x_input': [
+        #                             np.array([0.31678662, 0.18056837, 0.37555906, 0.12708597],
+        #                                      dtype=np.float32)]},
+        #                     'activations': [],
+        #                     'lm_head': torch.nn.Linear(768, 50257, bias=False),
+        #                     'device': 'cpu'})
 
     # def generate(self, input_str, generate=1, **kwargs):
-
-
-class MockGPTTokenizer(transformers.PreTrainedTokenizer):
-    def __init__(self):
-        super().__init__()
-
-        print('Mock model init')

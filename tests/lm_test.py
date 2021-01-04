@@ -1,15 +1,7 @@
-from ecco.lm import _one_hot, sample_output_token, activations_dict_to_array
+from ecco.lm import LM, _one_hot, sample_output_token, activations_dict_to_array
+import ecco
 import torch
 import numpy as np
-
-
-# @pytest.fixture
-# def mockLM():
-#     #setup
-#     class mockLM
-#     #yield
-#
-#     #teardown
 
 
 class TestLM:
@@ -27,10 +19,19 @@ class TestLM:
         assert result == torch.tensor(2)
 
     def test_activations_dict_to_array(self):
-        dict = {0:[[np.zeros((3,4))]],
-                1:[[np.zeros((3,4))]]}
-        activations = activations_dict_to_array(dict)
-        assert activations.shape == (2,4,3)
+        batch, position, neurons = 1, 3, 4
+        actual_dict = {0: [np.zeros((batch, position, neurons))],
+                       1: [np.zeros((batch, position, neurons))]}
+        activations = activations_dict_to_array(actual_dict)
+        assert activations.shape == (batch, 2, neurons, position)
+
+    def test_mock_gpt_call(self):
+        lm = ecco.from_pretrained('mockGPT', activations=True)
+        lm.tokenizer.pad_token = lm.tokenizer.eos_token
+        input_tokens_1 = lm.tokenizer('hi there', padding=True,
+                          truncation=True, return_tensors="pt")
+
+        output = lm(input_tokens_1.to(lm.device))
 
     # def test_generate_token_no_attribution(self, mocker):
     #     pass

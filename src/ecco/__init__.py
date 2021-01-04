@@ -1,5 +1,5 @@
 __version__ = '0.0.11'
-from ecco.lm import LM, MockGPT, MockGPTTokenizer
+from ecco.lm import LM, MockGPT
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 def from_pretrained(hf_model_id,
@@ -9,7 +9,7 @@ def from_pretrained(hf_model_id,
                     activations_layer_nums=None,
                     ):
     if hf_model_id == "mockGPT":
-        tokenizer = MockGPTTokenizer()
+        tokenizer = AutoTokenizer.from_pretrained("gpt2")
         model = MockGPT()
     else:
         tokenizer = AutoTokenizer.from_pretrained(hf_model_id)

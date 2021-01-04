@@ -61,23 +61,43 @@ class TestOutput:
         assert isinstance(int(actual['rankings'][0][0]), int)
 
     def test_nmf_raises_activations_dimension_value_error(self):
-        with pytest.raises(ValueError, match=r".* three dimensions.*") as ex:
+        with pytest.raises(ValueError, match=r".* four dimensions.*") as ex:
             NMF(np.zeros(0),
                 n_components=2)
 
     def test_nmf_raises_value_error_same_layer(self):
         with pytest.raises(ValueError, match=r".* same value.*") as ex:
-            NMF(np.zeros((1, 1, 1)),
+            NMF(np.zeros((1, 1, 1, 1)),
                 n_components=2,
                 from_layer=0,
                 to_layer=0)
 
     def test_nmf_raises_value_error_layer_bounds(self):
         with pytest.raises(ValueError, match=r".* larger.*"):
-            NMF(np.zeros((1, 1, 1)),
+            NMF(np.zeros((1, 1, 1, 1)),
                 n_components=2,
                 from_layer=1,
                 to_layer=0)
+
+    # NMF properly deals with collect_activations_layer_nums
+    def test_nmf_reshape_activations_1(self):
+        batch, layers, neurons, position = 1, 6, 128, 10
+        activations = np.ones((batch, layers, neurons, position))
+        merged_activations = NMF.reshape_activations(activations,
+                                                     None, None, None)
+        assert merged_activations.shape == (layers*neurons, batch*position)
+
+    # NMF properly deals with collect_activations_layer_nums
+    def test_nmf_reshape_activations_2(self):
+        batch, layers, neurons, position = 2, 6, 128, 10
+        activations = np.ones((batch, layers, neurons, position))
+        merged_activations = NMF.reshape_activations(activations,
+                                                     None, None, None)
+        assert merged_activations.shape == (layers*neurons, batch*position)
+
+    # 4d activations to 2d activations: one batch
+    # multiple batches
+    # one batch collect_activations_layer_nums
 
 
 @pytest.fixture

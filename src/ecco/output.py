@@ -484,7 +484,7 @@ class OutputSeq:
 
 
 class NMF:
-    " Conducts NMF and holds the models and components "
+    """ Conducts NMF and holds the models and components """
 
     def __init__(self, activations: np.ndarray,
                  n_input_tokens: int = 0,
@@ -494,8 +494,13 @@ class NMF:
                  # from_layer: Optional[int] = None,
                  # to_layer: Optional[int] = None,
                  tokens: Optional[List[str]] = None,
-                 collect_activations_layer_nums: Optional[List[int]]=None,
+                 collect_activations_layer_nums: Optional[List[int]] = None,
                  **kwargs):
+
+        if activations == []:
+            raise ValueError(f"No activation data found. Make sure 'activations=True' was passed to "
+                             f"ecco.from_pretrained().")
+
         self._path = _path
         self.token_ids = token_ids
         self.n_input_tokens = n_input_tokens
@@ -503,15 +508,72 @@ class NMF:
         from_layer = kwargs['from_layer'] if 'from_layer' in kwargs else None
         to_layer = kwargs['to_layer'] if 'to_layer' in kwargs else None
 
+
+        merged_act = self.reshape_activations(activations,
+                                              from_layer,
+                                              to_layer,
+                                              collect_activations_layer_nums)
+        # 'merged_act' is now ( neuron (and layer), position (and batch) )
+
+        # This dimension was added back when we wanted a model for each layer.
+        # Should delete from both here and eccojs
+        activations = np.expand_dims(merged_act, axis=0)
+        print('nmf activations: ', activations.shape)
+
+        self.tokens = tokens
+        # Run NMF. 'activations' is neuron activations shaped (neurons (and layers), positions (and batches))
+        n_output_tokens = activations.shape[-1]
+        n_layers = activations.shape[0]
+        n_components = min([n_components, n_output_tokens])
+        components = np.zeros((n_layers, n_components, n_output_tokens))
+        models = []
+
+        # Get rid of negative activation values
+        # (There are some, because GPT2 uses GELU, which allow small negative values)
+        activations = np.maximum(activations, 0)
+        # print(activations.shape)
+
+        for idx, layer in enumerate(activations):
+            #     print(layer.shape)
+            model = decomposition.NMF(n_components=n_components,
+                                      init='random',
+                                      random_state=0,
+                                      max_iter=500)
+            components[idx] = model.fit_transform(layer.T).T
+            models.append(model)
+
+        self.models = models
+        self.components = components
+
+    @staticmethod
+    def reshape_activations(activations,
+                            from_layer: Optional[int],
+                            to_layer: Optional[int],
+                            collect_activations_layer_nums: Optional[List[int]]):
+        """Prepares the activations tensor for NMF by reshaping it from four dimensions
+        (batch, layer, neuron, position) down to two:
+        ( neuron (and layer), position (and batch) ).
+
+        Args:
+            activations (tensor): activations tensors of shape (batch, layers, neurons, positions) and float values
+            from_layer (int or None): Start value. Used to indicate a range of layers whose activations are to
+                be processed
+            to_layer (int or None): End value. Used to indicate a range of layers
+            collect_activations_layer_nums (list of ints or None): A list of layer IDs. Used to indicate specific
+                layers whose activations are to be processed
+        """
+
+        if len(activations.shape) != 4:
+            raise ValueError(f"The 'activations' parameter should have four dimensions: "
+                             f"(batch, layers, neurons, positions). "
+                             f"Supplied dimensions: {activations.shape}", 'activations')
+
         if collect_activations_layer_nums is None:
-            collect_activations_layer_nums = list(range(activations.shape[0]))
+            collect_activations_layer_nums = list(range(activations.shape[1]))
 
         layer_nums_to_row_ixs = {layer_num: i
                                  for i, layer_num in enumerate(collect_activations_layer_nums)}
 
-        if len(activations.shape) != 3:
-            raise ValueError(f"The 'activations' parameter should have three dimensions: (layers, neurons, positions). "
-                             f"Supplied dimensions: {activations.shape}", 'activations')
 
         if from_layer is not None or to_layer is not None:
             from_layer = from_layer if from_layer is not None else 0
@@ -530,36 +592,25 @@ class NMF:
 
         if any([num not in layer_nums_to_row_ixs for num in layer_nums]):
             available = sorted(layer_nums_to_row_ixs.keys())
-            raise ValueError(f"Not all layers between from_layer ({from_layer}) and to_layer ({to_layer}) have recorded activations. Layers with recorded activations are: {available}")
+            raise ValueError(f"Not all layers between from_layer ({from_layer}) and to_layer ({to_layer}) "
+                             f"have recorded activations. Layers with recorded activations are: {available}")
         row_ixs = [layer_nums_to_row_ixs[layer_num] for layer_num in layer_nums]
-        activation_rows = [activations[row_ix] for row_ix in row_ixs]
-        merged_act = np.concatenate(activation_rows, axis=0)
-        activations = np.expand_dims(merged_act, axis=0)
+        activation_rows = [activations[:, row_ix] for row_ix in row_ixs]
+        # Merge 'layers' and 'neuron' dimensions. Sending activations down from
+        # (batch, layer, neuron, position) to (batch, neuron, position)
 
-        self.tokens = tokens
-        " Run NMF. Activations is neuron activations shaped (layers, neurons, positions)"
-        n_output_tokens = activations.shape[-1]
-        n_layers = activations.shape[0]
-        n_components = min([n_components, n_output_tokens])
-        components = np.zeros((n_layers, n_components, n_output_tokens))
-        models = []
+        print('nmf activations: ', activations.shape)
+        merged_act = np.concatenate(activation_rows, axis=1)
+        # merged_act = np.stack(activation_rows, axis=1)
+        print('nmf merged_act: ', merged_act.shape)
+        # 'merged_act' is now (batch, neuron (and layer), position)
+        merged_act = merged_act.swapaxes(0, 1)
+        print('nmf merged_act 2: ', merged_act.shape)
+        # 'merged_act' is now (neuron (and layer), batch, position)
+        merged_act = merged_act.reshape(merged_act.shape[0], -1)
+        print('nmf merged_act 3: ', merged_act.shape)
 
-        # Get rid of negative activation values
-        # (There are some, because GPT2 uses GLEU, which allow small negative values)
-        activations = np.maximum(activations, 0)
-        # print(activations.shape)
-
-        for idx, layer in enumerate(activations):
-            #     print(layer.shape)
-            model = decomposition.NMF(n_components=n_components,
-                                      init='random',
-                                      random_state=0,
-                                      max_iter=500)
-            components[idx] = model.fit_transform(layer.T).T
-            models.append(model)
-
-        self.models = models
-        self.components = components
+        return merged_act
 
     def explore(self, **kwargs):
         # position = self.n_input_tokens + 1
