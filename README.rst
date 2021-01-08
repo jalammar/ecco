@@ -74,9 +74,6 @@ This does the following:
 - ``output.run_nmf()`` to to explore non-negative matrix factorization of neuron activations  [`Neuron Activation Colab Notebook <https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Neuron_Factors.ipynb>`_]
 
 
-
-To use the project:
-
 .. code-block:: python
 
     # To view the input saliency explorable
