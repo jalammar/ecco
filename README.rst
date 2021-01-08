@@ -79,7 +79,6 @@ This does the following:
     # To view the input saliency explorable
     output.saliency()
     
-    
     # to view input saliency with more details (a bar and % value for each token)
     output.saliency(style="detailed")
     
