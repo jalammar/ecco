@@ -52,10 +52,10 @@ def activations_dict_to_array(activations_dict):
 
     activations = np.concatenate(activations, axis=0)
     # 'activations' now is in the shape (layer, batch, position, neurons)
-    print(activations.shape)
+    # print(activations.shape)
     activations = np.swapaxes(activations, 2, 3)
     activations = np.swapaxes(activations, 0, 1)
-    print('after swapping: ', activations.shape)
+    # print('after swapping: ', activations.shape)
     return activations
 
 
@@ -68,8 +68,10 @@ class LM(object):
                  collect_activations_flag=False,
                  collect_gen_activations_flag=False,
                  collect_activations_layer_nums=None,  # None --> collect for all layers
+                 model_name=None
                  ):
         self.model = model
+        self.model_name = model_name
         if torch.cuda.is_available():
             self.model = model.to('cuda')
 
@@ -83,9 +85,22 @@ class LM(object):
         self.collect_activations_flag = collect_activations_flag
         self.collect_gen_activations_flag = collect_gen_activations_flag
         self.collect_activations_layer_nums = collect_activations_layer_nums
+
+        # For each model, this indicates the layer whose activations
+        # we will collect
+        self.model_layers = {
+            'gpt2': 'mlp.c_proj',
+            'gpt2-medium': 'mlp.c_proj',
+            'gpt2-xl': 'mlp.c_proj',
+            'distilgpt2': 'mlp.c_proj',
+            'distilbert-base-uncased': 'ffn.lin2',
+            'bert-base-uncased': 'output.dense'
+        }
+
         self._hooks = {}
         self._reset()
         self._attach_hooks(self.model)
+
 
         # If running in Jupyer, outputting setup this in one cell is enough. But for colab
         # we're running it before every d.HTML cell
@@ -244,8 +259,6 @@ class LM(object):
         """
 
         # Verify we don't have both input_str and input _ids
-
-        ## Potentially later: support inputting batches of strings.
         # if input_str != '':
         #     input_ids = self.tokenizer(input_str, return_tensors="pt")['input_ids'][0]
 
@@ -255,9 +268,14 @@ class LM(object):
         # model
         # inputs_embeds, token_ids_tensor_one_hot = self._get_embeddings(input_ids)
         # print(inputs_embeds.shape)
-        output = self.model(**input_ids, return_dict=True, use_cache=False)
-        predict = output.logits
-        scores = predict[-1:, :]
+        if 'bert' in self.model_name:
+            output = self.model(**input_ids, return_dict=True)
+            lm_head = None
+        else:
+            output = self.model(**input_ids, return_dict=True, use_cache=False)
+            predict = output.logits
+            scores = predict[-1:, :]
+            lm_head = self.model.lm_head
 
         # Turn activations from dict to a proper array
         activations_dict = self._all_activations_dict or self._generation_activations_dict
@@ -282,7 +300,7 @@ class LM(object):
                             # 'attribution': attributions,
                             'activations': self.activations,
                             'collect_activations_layer_nums': self.collect_activations_layer_nums,
-                            'lm_head': self.model.lm_head,
+                            'lm_head': lm_head,
                             'device': self.device})
 
     def _get_embeddings(self, input_ids):
@@ -302,7 +320,9 @@ class LM(object):
     def _attach_hooks(self, model):
         for name, module in model.named_modules():
             # Add hooks to capture activations in every FFNN
-            if "mlp.c_proj" in name:
+
+            if self.model_layers[self.model_name] in name:
+                # print("mlp.c_proj", self.collect_activations_flag , name)
                 if self.collect_activations_flag:
                     self._hooks[name] = module.register_forward_hook(
                         lambda self_, input_, output,
@@ -328,9 +348,9 @@ class LM(object):
             input_: activation tuple to capture. A tuple containing one tensor of
             dimensions (batch_size, sequence_length, neurons)
         """
-        print('_get_activations_hook', name)
+        # print('_get_activations_hook', name)
         # pprint(input_)
-        print(type(input_), len(input_), type(input_[0]), input_[0].shape, len(input_[0]), input_[0][0].shape)
+        # print(type(input_), len(input_), type(input_[0]), input_[0].shape, len(input_[0]), input_[0][0].shape)
         # in distilGPT and GPT2, the layer name is 'transformer.h.0.mlp.c_fc'
         # Extract the number of the layer from the name
         layer_number = int(name.split('.')[2])
@@ -373,7 +393,8 @@ class LM(object):
         After being attached as a pre-forward hook, it sets to zero the activation value
         of the neurons indicated in self.neurons_to_inhibit
         """
-        print('_inhibit_neurons_hook', name)
+        # print('_inhibit_neurons_hook', name)
+
         layer_number = int(name.split('.')[2])
         if layer_number in self.neurons_to_inhibit.keys():
             # print('layer_number', layer_number, input_tensor[0].shape)

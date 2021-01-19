@@ -1,6 +1,6 @@
-__version__ = '0.0.11'
+__version__ = '0.0.13'
 from ecco.lm import LM, MockGPT
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel
 
 def from_pretrained(hf_model_id,
                     activations=False,
@@ -11,6 +11,11 @@ def from_pretrained(hf_model_id,
     if hf_model_id == "mockGPT":
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         model = MockGPT()
+    elif 'bert' in hf_model_id:
+        tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
+        model = AutoModel.from_pretrained(hf_model_id,
+                                                     output_hidden_states=hidden_states,
+                                                     output_attentions=attention)
     else:
         tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
         model = AutoModelForCausalLM.from_pretrained(hf_model_id,
@@ -18,6 +23,7 @@ def from_pretrained(hf_model_id,
                                                      output_attentions=attention)
 
     lm_kwargs = {
+        'model_name': hf_model_id,
         'collect_activations_flag': activations,
         'collect_activations_layer_nums': activations_layer_nums}
     lm = LM(model, tokenizer, **lm_kwargs)

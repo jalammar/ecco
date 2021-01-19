@@ -25,13 +25,17 @@ class TestLM:
         activations = activations_dict_to_array(actual_dict)
         assert activations.shape == (batch, 2, neurons, position)
 
-    def test_mock_gpt_call(self):
-        lm = ecco.from_pretrained('mockGPT', activations=True)
-        lm.tokenizer.pad_token = lm.tokenizer.eos_token
-        input_tokens_1 = lm.tokenizer('hi there', padding=True,
-                          truncation=True, return_tensors="pt")
-
-        output = lm(input_tokens_1.to(lm.device))
+    # def test_mock_gpt_call(self):
+    #     lm = ecco.from_pretrained('mockGPT', activations=True)
+    #     print(lm.model)
+    #
+    #     lm2 = ecco.from_pretrained('distilgpt2', activations=True)
+    #     print(lm2.model)
+    #     lm.tokenizer.pad_token = lm.tokenizer.eos_token
+    #     input_tokens_1 = lm.tokenizer('hi there', padding=True,
+    #                       truncation=True, return_tensors="pt")
+    #
+    #     output = lm(input_tokens_1.to(lm.device))
 
     # def test_generate_token_no_attribution(self, mocker):
     #     pass
