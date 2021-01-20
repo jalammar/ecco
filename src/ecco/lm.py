@@ -247,14 +247,17 @@ class LM(object):
 
     def __call__(self,
                  # input_str: Optional[str] = '',
-                 input_ids: torch.Tensor,
+                 input_tokens: torch.Tensor,
                  # attribution: Optional[bool] = True,
                  ):
         """
         Run a forward pass through the model. For when we don't care about output tokens.
         Currently only support activations collection. No attribution/saliency.
         Args:
-            input_ids: tensor with input token ids. Shape is (batch_size, sequence_length)
+            input_tokens: tuple returned by tokenizer.encode().
+                contains key 'input_ids', its value tensor with input token ids.
+                Shape is (batch_size, sequence_length).
+                Also a key for masked tokens
             attribution: Flag indicating whether to calculate attribution/saliency
         """
 
@@ -262,17 +265,18 @@ class LM(object):
         # if input_str != '':
         #     input_ids = self.tokenizer(input_str, return_tensors="pt")['input_ids'][0]
 
-        n_input_tokens = len(input_ids)
+        # Remove downstream. For now setting to batch length
+        n_input_tokens = len(input_tokens['input_ids'][0])
         # self.attributions = {}
 
         # model
         # inputs_embeds, token_ids_tensor_one_hot = self._get_embeddings(input_ids)
-        # print(inputs_embeds.shape)
+        # print(input_ids)
         if 'bert' in self.model_name:
-            output = self.model(**input_ids, return_dict=True)
+            output = self.model(**input_tokens, return_dict=True)
             lm_head = None
         else:
-            output = self.model(**input_ids, return_dict=True, use_cache=False)
+            output = self.model(**input_tokens, return_dict=True, use_cache=False)
             predict = output.logits
             scores = predict[-1:, :]
             lm_head = self.model.lm_head
@@ -284,13 +288,13 @@ class LM(object):
 
         hidden_states = getattr(output, "hidden_states", None)
         tokens = []
-        # for i in input_ids:
-        #     token = self.tokenizer.decode([i])
-        #     tokens.append(token)
+        for i in input_tokens['input_ids']:
+            token = self.tokenizer.convert_ids_to_tokens(i)
+            tokens.append(token)
 
         attn = getattr(output, "attentions", None)
         return OutputSeq(**{'tokenizer': self.tokenizer,
-                            'token_ids': input_ids,
+                            'token_ids': input_tokens,
                             'n_input_tokens': n_input_tokens,
                             # 'output_text': self.tokenizer.decode(input_ids),
                             'tokens': tokens,

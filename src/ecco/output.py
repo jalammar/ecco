@@ -165,7 +165,7 @@ class OutputSeq:
         d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         # viz_id = 'viz_{}'.format(round(random.random() * 1000000))
 
-        if( style == "minimal"):
+        if (style == "minimal"):
             js = f"""
              requirejs(['basic', 'ecco'], function(basic, ecco){{
                 const viz_id = basic.init()
@@ -194,9 +194,6 @@ class OutputSeq:
             }})"""
 
         d.display(d.Javascript(js))
-
-
-
 
         if 'printJson' in kwargs and kwargs['printJson']:
             print(data)
@@ -508,16 +505,16 @@ class NMF:
         from_layer = kwargs['from_layer'] if 'from_layer' in kwargs else None
         to_layer = kwargs['to_layer'] if 'to_layer' in kwargs else None
 
-
         merged_act = self.reshape_activations(activations,
                                               from_layer,
                                               to_layer,
                                               collect_activations_layer_nums)
         # 'merged_act' is now ( neuron (and layer), position (and batch) )
 
-        # This dimension was added back when we wanted a model for each layer.
+        # DELETE: This dimension was added back when we wanted a model for each layer.
         # Should delete from both here and eccojs
-        activations = np.expand_dims(merged_act, axis=0)
+        # activations = np.expand_dims(merged_act, axis=0)
+        activations = merged_act
         print('nmf activations: ', activations.shape)
 
         self.tokens = tokens
@@ -533,17 +530,23 @@ class NMF:
         activations = np.maximum(activations, 0)
         # print(activations.shape)
 
-        for idx, layer in enumerate(activations):
-            #     print(layer.shape)
-            model = decomposition.NMF(n_components=n_components,
-                                      init='random',
-                                      random_state=0,
-                                      max_iter=500)
-            components[idx] = model.fit_transform(layer.T).T
-            models.append(model)
+        model = decomposition.NMF(n_components=n_components,
+                                  init='random',
+                                  random_state=0,
+                                  max_iter=500)
+        self.components = model.fit_transform(activations.T).T
 
-        self.models = models
-        self.components = components
+        # Delete:
+        # for idx, layer in enumerate(activations):
+        #     #     print(layer.shape)
+        #     model = decomposition.NMF(n_components=n_components,
+        #                               init='random',
+        #                               random_state=0,
+        #                               max_iter=500)
+        #     components[idx] = model.fit_transform(layer.T).T
+        #     models.append(model)
+        # self.models = models
+        # self.components = components
 
     @staticmethod
     def reshape_activations(activations,
@@ -574,7 +577,6 @@ class NMF:
         layer_nums_to_row_ixs = {layer_num: i
                                  for i, layer_num in enumerate(collect_activations_layer_nums)}
 
-
         if from_layer is not None or to_layer is not None:
             from_layer = from_layer if from_layer is not None else 0
             to_layer = to_layer if to_layer is not None else activations.shape[0]
@@ -599,47 +601,51 @@ class NMF:
         # Merge 'layers' and 'neuron' dimensions. Sending activations down from
         # (batch, layer, neuron, position) to (batch, neuron, position)
 
-        print('nmf activations: ', activations.shape)
         merged_act = np.concatenate(activation_rows, axis=1)
         # merged_act = np.stack(activation_rows, axis=1)
-        print('nmf merged_act: ', merged_act.shape)
         # 'merged_act' is now (batch, neuron (and layer), position)
         merged_act = merged_act.swapaxes(0, 1)
-        print('nmf merged_act 2: ', merged_act.shape)
         # 'merged_act' is now (neuron (and layer), batch, position)
         merged_act = merged_act.reshape(merged_act.shape[0], -1)
-        print('nmf merged_act 3: ', merged_act.shape)
 
         return merged_act
 
-    def explore(self, **kwargs):
-        # position = self.n_input_tokens + 1
-
+    def explore(self, input_sequence: int = 0, **kwargs):
+        """
+        Show interactive explorable for a single sequence with sparklines to isolate factors.
+        Args:
+            input_sequence: Which sequence in the batch to show.
+        """
         tokens = []
-        for idx, token in enumerate(self.tokens):  # self.tokens[:-1]
+        for idx, token in enumerate(self.tokens[input_sequence]):  # self.tokens[:-1]
             type = "input" if idx < self.n_input_tokens else 'output'
             tokens.append({'token': token,
-                           'token_id': int(self.token_ids[idx]),
+                           'token_id': int(self.token_ids['input_ids'][input_sequence][idx]),
                            'type': type,
                            # 'value': str(components[0][comp_num][idx]),  # because json complains of floats
                            'position': idx
                            })
 
+        # If the sequence contains both input and generated tokens:
         # Duplicate the factor at index 'n_input_tokens'. THis way
         # each token has an activation value (instead of having one activation less than tokens)
         # But with different meanings: For inputs, the activation is a response
         # For outputs, the activation is a cause
         # print('shape', components.shape)
-        # for i, comp in enumerate(components[0]):
-        #     print(i, comp, '\nconcat:', np.concatenate([comp[:self.n_input_tokens], comp[self.n_input_tokens-1:]]))
-        factors = np.array(
-            [[np.concatenate([comp[:self.n_input_tokens], comp[self.n_input_tokens - 1:]]) for comp in
-              self.components[0]]])
-        factors = [comp.tolist() for comp in factors]
+        if len(self.token_ids['input_ids'][input_sequence]) != self.n_input_tokens:
+            factors = np.array(
+                [[np.concatenate([comp[:self.n_input_tokens], comp[self.n_input_tokens - 1:]]) for comp in
+                  self.components]])
+            factors = [comp.tolist() for comp in factors]  # the json conversion needs this
+        else:
+            factors = [comp.tolist() for comp in self.components]  # the json conversion needs this
 
         data = {
+            # A list of dicts. Each in the shape {
+            # Example: [{'token': 'by', 'token_id': 2011, 'type': 'input', 'position': 235}]
             'tokens': tokens,
-            'factors': factors
+            # Three-dimensional list. Shape: (1, factors, sequence length)
+            'factors': [factors]
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
