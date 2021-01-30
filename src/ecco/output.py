@@ -235,6 +235,12 @@ class OutputSeq:
         :param topk: Number of tokens to show for each layer
         :param layer: None shows all layers. Can also pass an int with the layer id to show only that layer
         """
+        # Starting from huggingface transformers v4, the shape
+        # 3 dimensional instead of 2
+        if self.hidden_states.shape == 3:
+            hidden_states = self.hidden_states[0]
+        else: # To support huggingface transformers v. 3
+            hidden_states = self.hidden_states
 
         if position == 0:
             raise ValueError(f"'position' is set to 0. There is never a hidden state associated with this position."
@@ -243,9 +249,9 @@ class OutputSeq:
         # There is one lm output per generated token. To get the index
         output_index = position - self.n_input_tokens
         if layer is not None:
-            hidden_states = self.hidden_states[layer + 1].unsqueeze(0)
+            hidden_states = hidden_states[layer + 1].unsqueeze(0)
         else:
-            hidden_states = self.hidden_states[1:]  # Ignore the first element (embedding)
+            hidden_states = hidden_states[1:]  # Ignore the first element (embedding)
 
         k = topk
         top_tokens = []
@@ -309,7 +315,12 @@ class OutputSeq:
         Plots the rankings (across layers) of the tokens the model selected.
         Each column is a position in the sequence. Each row is a layer.
         """
-        hidden_states = self.hidden_states
+        # Starting from huggingface transformers v4, the shape
+        # 3 dimensional instead of 2
+        if self.hidden_states.shape == 3:
+            hidden_states = self.hidden_states[0]
+        else: # To support huggingface transformers v. 3
+            hidden_states = self.hidden_states
 
         n_layers = len(hidden_states)
         position = hidden_states[0].shape[0] - self.n_input_tokens + 1
@@ -370,12 +381,16 @@ class OutputSeq:
         if position != -1:
             position = position - 1  # e.g. position 5 corresponds to activation 4
 
-        hidden_states = self.hidden_states
+        # Starting from huggingface transformers v4, the shape
+        # 3 dimensional instead of 2
+        if self.hidden_states.shape == 3:
+            hidden_states = self.hidden_states[0]
+        else: # To support huggingface transformers v. 3
+            hidden_states = self.hidden_states
 
         n_layers = len(hidden_states)
         n_tokens_to_watch = len(watch)
 
-        # predicted_tokens = np.empty((n_layers - 1, n_tokens_to_watch), dtype='U25')
         rankings = np.zeros((n_layers - 1, n_tokens_to_watch), dtype=np.int32)
 
         # loop through layer levels
