@@ -10,7 +10,7 @@ import os
 import json
 from ecco.attribution import *
 from typing import Optional, Any
-from transformers.modeling_gpt2 import GPT2Model
+from transformers import GPT2Model
 
 
 def sample_output_token(scores, do_sample, temperature, top_k, top_p):
