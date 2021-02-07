@@ -349,7 +349,9 @@ class OutputSeq:
                 # Sort by score (ascending)
                 sorted = torch.argsort(logits)
                 # What token was sampled in this position?
-                token_id = self.token_ids[self.n_input_tokens + j].clone().detach()
+
+                token_id = torch.tensor(self.token_ids[self.n_input_tokens + j])
+                # token_id = self.token_ids.clone().detach()[self.n_input_tokens + j]
                 # What's the index of the sampled token in the sorted list?
                 r = torch.nonzero((sorted == token_id)).flatten()
                 # subtract to get ranking (where 1 is the top scoring, because sorting was in ascending order)
