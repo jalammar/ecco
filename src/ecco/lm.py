@@ -10,7 +10,7 @@ import os
 import json
 from ecco.attribution import *
 from typing import Optional, Any
-from transformers.modeling_gpt2 import GPT2Model
+from transformers import GPT2Model
 
 
 def sample_output_token(scores, do_sample, temperature, top_k, top_p):
@@ -131,7 +131,20 @@ class LM(object):
         # detach(): don't need grads here
         # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
         if getattr(output, "hidden_states", None) is not None:
-            output.hidden_states = tuple([h.cpu().detach() for h in output.hidden_states])
+            hs_list = []
+            for idx, layer_hs in enumerate(output.hidden_states):
+                # in Hugging Face Transformers v4, there's an extra index for batch
+                if len(layer_hs.shape) == 3: # If there's a batch dimension, pick the first oen
+                    hs = layer_hs.cpu().detach()[0].unsqueeze(0) # Adding a dimension to concat to later
+                # Earlier versions are only 2 dimensional
+                # But also, in v4, for GPT2, all except the last one would have 3 dims, the last layer
+                # would only have two dims
+                else:
+                    hs = layer_hs.cpu().detach().unsqueeze(0)
+
+                hs_list.append(hs)
+
+            output.hidden_states = torch.cat(hs_list, dim=0)
 
         return prediction_id, output
 
