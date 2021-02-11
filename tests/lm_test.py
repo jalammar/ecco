@@ -4,6 +4,15 @@ import torch
 import numpy as np
 
 
+# @pytest.fixture
+# def mockLM():
+#     #setup
+#     class mockLM
+#     #yield
+#
+#     #teardown
+
+
 class TestLM:
     def test_one_hot(self):
         expected = torch.tensor([[1., 0., 0.], [0., 1., 0.]])

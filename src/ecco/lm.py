@@ -68,10 +68,8 @@ class LM(object):
                  collect_activations_flag=False,
                  collect_gen_activations_flag=False,
                  collect_activations_layer_nums=None,  # None --> collect for all layers
-                 model_name=None
                  ):
         self.model = model
-        self.model_name = model_name
         if torch.cuda.is_available():
             self.model = model.to('cuda')
 
@@ -100,7 +98,6 @@ class LM(object):
         self._hooks = {}
         self._reset()
         self._attach_hooks(self.model)
-
 
         # If running in Jupyer, outputting setup this in one cell is enough. But for colab
         # we're running it before every d.HTML cell
@@ -157,7 +154,20 @@ class LM(object):
         # detach(): don't need grads here
         # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
         if getattr(output, "hidden_states", None) is not None:
-            output.hidden_states = tuple([h.cpu().detach() for h in output.hidden_states])
+            hs_list = []
+            for idx, layer_hs in enumerate(output.hidden_states):
+                # in Hugging Face Transformers v4, there's an extra index for batch
+                if len(layer_hs.shape) == 3: # If there's a batch dimension, pick the first oen
+                    hs = layer_hs.cpu().detach()[0].unsqueeze(0) # Adding a dimension to concat to later
+                # Earlier versions are only 2 dimensional
+                # But also, in v4, for GPT2, all except the last one would have 3 dims, the last layer
+                # would only have two dims
+                else:
+                    hs = layer_hs.cpu().detach().unsqueeze(0)
+
+                hs_list.append(hs)
+
+            output.hidden_states = torch.cat(hs_list, dim=0)
 
         return prediction_id, output
 
@@ -317,6 +327,7 @@ class LM(object):
         one_hot_tensor = self.to(_one_hot(input_ids, vocab_size))
 
         token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
+        # token_ids_tensor_one_hot.requires_grad_(True)
 
         inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
         return inputs_embeds, token_ids_tensor_one_hot
@@ -363,14 +374,13 @@ class LM(object):
                     layer_number in self.collect_activations_layer_nums)
 
         if collecting_this_layer:
-
             if layer_number not in self._all_activations_dict:
                 self._all_activations_dict[layer_number] = [0]
 
             # Overwrite the previous step activations. This collects all activations in the last step
             # Assuming all input tokens are presented as input, no "past"
             # The inputs to c_proj already pass through the gelu activation function
-            self._all_activations_dict[layer_number][0] = input_[0].detach().cpu().numpy()
+            self._all_activations_dict[layer_number][0] = input_[0][0].detach().cpu().numpy()
 
     def _get_generation_activations_hook(self, name: str, input_):
         """
@@ -397,7 +407,6 @@ class LM(object):
         After being attached as a pre-forward hook, it sets to zero the activation value
         of the neurons indicated in self.neurons_to_inhibit
         """
-        # print('_inhibit_neurons_hook', name)
 
         layer_number = int(name.split('.')[2])
         if layer_number in self.neurons_to_inhibit.keys():
@@ -430,10 +439,10 @@ class LM(object):
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
         d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         viz_id = f'viz_{round(random.random() * 1000000)}'
-        #         html = f"""
-        # <div id='{viz_id}_output'></div>
-        # <script>
-        # """
+#         html = f"""
+# <div id='{viz_id}_output'></div>
+# <script>
+# """
 
         js = f"""
 

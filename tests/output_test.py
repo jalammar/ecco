@@ -30,6 +30,11 @@ class TestOutput:
 
         assert actual == expected
 
+
+    def test_layer_position_zero_raises_valueerror(self, output_seq_1):
+        with pytest.raises(ValueError, match=r".* set to 0*") as ex:
+            actual = output_seq_1.layer_predictions(position=0)
+
     def test_layer_predictions_all_layers(self, output_seq_1):
         actual = output_seq_1.layer_predictions(printJson=True)
         assert len(actual) == 6  # an array for each layer

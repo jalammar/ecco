@@ -46,14 +46,22 @@ To use the project:
 
     import ecco
 
-    # Load pre-trained language model.
-    lm = ecco.from_pretrained('distilgpt2')
+    # Load pre-trained language model. Setting 'activations' to True tells Ecco to capture neuron activations.
+    lm = ecco.from_pretrained('distilgpt2', activations=True)
 
     # Input text
     text = "The countries of the European Union are:\n1. Austria\n2. Belgium\n3. Bulgaria\n4."
 
     # Generate 20 tokens to complete the input text.
     output = lm.generate(text, generate=20, do_sample=True)
+    
+    # Ecco will output each token as it is generated.
+    
+    # 'output' now contains the data captured from this run, including the input and output tokens
+    # as well as neuron activations and input saliency values. 
+    
+    # To view the input saliency
+    output.saliency()
 
 This does the following:
 
@@ -64,4 +72,22 @@ This does the following:
 
 - ``output.saliency()`` to generate input saliency explorable [`Input Saliency Colab Notebook <https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb>`_]
 - ``output.run_nmf()`` to to explore non-negative matrix factorization of neuron activations  [`Neuron Activation Colab Notebook <https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Neuron_Factors.ipynb>`_]
+
+
+.. code-block:: python
+
+    # To view the input saliency explorable
+    output.saliency()
+    
+    # to view input saliency with more details (a bar and % value for each token)
+    output.saliency(style="detailed")
+    
+    # output.activations contains the neuron activation values. it has the shape: (layer, neuron, token position)
+    
+    # We can run non-negative matrix factorization using run_nmf. We pass the number of factors/components to break down into
+    nmf_1 = output.run_nmf(n_components=10) 
+
+    # nmf_1 now contains the necessary data to create the interactive nmf explorable:
+    nmf_1.explore()
+
 
