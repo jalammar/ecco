@@ -43,9 +43,13 @@ def _one_hot(token_ids, vocab_size):
 def activations_dict_to_array(activations_dict):
     """
     Converts the dict used to collect activations into an array of the
-    shape (batch, layers, neurons, token position)
+    shape (batch, layers, neurons, token position).
+    Args:
+        activations_dict: python dictionary. Contains a key/value for each layer
+        in the model whose activations were collected. Key is the layer id ('0', '1').
+        Value is a tensor of shape (batch, position, neurons).
     """
-    # print(activations_dict[0].shape)
+
     activations = []
     for i in sorted(activations_dict.keys()):
         activations.append(activations_dict[i])

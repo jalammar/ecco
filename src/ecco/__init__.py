@@ -1,4 +1,4 @@
-__version__ = '0.0.13'
+__version__ = '0.0.14'
 from ecco.lm import LM, MockGPT
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel
 
