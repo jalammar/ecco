@@ -254,7 +254,7 @@ class LM(object):
         Run a forward pass through the model. For when we don't care about output tokens.
         Currently only support activations collection. No attribution/saliency.
         Args:
-            input_tokens: tuple returned by tokenizer.encode().
+            input_tokens: tuple returned by tokenizer( TEXT, return_tensors="pt").
                 contains key 'input_ids', its value tensor with input token ids.
                 Shape is (batch_size, sequence_length).
                 Also a key for masked tokens

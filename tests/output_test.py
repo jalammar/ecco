@@ -95,6 +95,8 @@ class TestOutput:
                                                      None, None, None)
         assert merged_activations.shape == (layers*neurons, batch*position)
 
+    def test_nmf_output_dims(self):
+        pass
     # 4d activations to 2d activations: one batch
     # multiple batches
     # one batch collect_activations_layer_nums

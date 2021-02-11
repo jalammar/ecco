@@ -493,6 +493,16 @@ class NMF:
                  tokens: Optional[List[str]] = None,
                  collect_activations_layer_nums: Optional[List[int]] = None,
                  **kwargs):
+        """
+        Args:
+            activations:
+            n_input_tokens:
+            token_ids:
+            _path:
+            n_components:
+            tokens:
+            collect_activations_layer_nums:
+            """
 
         if activations == []:
             raise ValueError(f"No activation data found. Make sure 'activations=True' was passed to "
@@ -515,7 +525,7 @@ class NMF:
         # Should delete from both here and eccojs
         # activations = np.expand_dims(merged_act, axis=0)
         activations = merged_act
-        print('nmf activations: ', activations.shape)
+        # print('nmf activations: ', activations.shape)
 
         self.tokens = tokens
         # Run NMF. 'activations' is neuron activations shaped (neurons (and layers), positions (and batches))
@@ -527,26 +537,15 @@ class NMF:
 
         # Get rid of negative activation values
         # (There are some, because GPT2 uses GELU, which allow small negative values)
-        activations = np.maximum(activations, 0)
+        self.activations = np.maximum(activations, 0).T
         # print(activations.shape)
 
-        model = decomposition.NMF(n_components=n_components,
+        self.model = decomposition.NMF(n_components=n_components,
                                   init='random',
                                   random_state=0,
                                   max_iter=500)
-        self.components = model.fit_transform(activations.T).T
+        self.components = self.model.fit_transform(self.activations).T
 
-        # Delete:
-        # for idx, layer in enumerate(activations):
-        #     #     print(layer.shape)
-        #     model = decomposition.NMF(n_components=n_components,
-        #                               init='random',
-        #                               random_state=0,
-        #                               max_iter=500)
-        #     components[idx] = model.fit_transform(layer.T).T
-        #     models.append(model)
-        # self.models = models
-        # self.components = components
 
     @staticmethod
     def reshape_activations(activations,
