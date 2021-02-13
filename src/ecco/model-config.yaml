@@ -1,0 +1,90 @@
+
+gpt2:
+    embedding: "transformer.wte.weight"
+    activations:
+    - 'mlp.c_proj'
+gpt2-medium:
+    embedding: "transformer.wte.weight"
+    activations:
+    - 'mlp.c_proj'
+gpt2-xl:
+    embedding: "transformer.wte.weight"
+    activations:
+    - 'mlp.c_proj'
+distilgpt2:
+    embedding: "transformer.wte.weight"
+    activations:
+    - 'mlp.c_proj'
+distilbert-base-uncased:
+    embedding: "embeddings.word_embeddings"
+    activations:
+    - 'ffn.lin2'
+bert-base-uncased:
+    embedding: "embeddings.word_embeddings"
+    activations:
+    - 'output.dense'
+bert-large-uncased:
+      embedding: "embeddings.word_embeddings"
+      activations:
+          - 'output.dense'
+bert-large-cased:
+      embedding: "embeddings.word_embeddings"
+      activations:
+          - 'output.dense'
+roberta-large:
+    embedding: 'embeddings.word_embeddings'
+    activations:
+        - 'output.dense'
+roberta-base:
+    embedding: 'embeddings.word_embeddings'
+    activations:
+        - 'output.dense'
+'microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract':
+    embedding: "embeddings.word_embeddings"
+    activations:
+        - 'output.dense'
+'valhalla/t5-small-qg-hl':
+   embedding: 'shared'
+   activations:
+   - 'wo' #Note that this will be both encoder and decoder layers
+'valhalla/t5-small-qa-qg-hl':
+   embedding: 'shared'
+   activations:
+   - 'wo' #Note that this will be both encoder and decoder layers
+'valhalla/t5-base-e2e-qg':
+   embedding: 'shared'
+   activations:
+   - 'wo' #Note that this will be both encoder and decoder layers
+'sentence-transformers/distilbert-base-nli-stsb-mean-tokens':
+    embedding: "embeddings.word_embeddings"
+    activations:
+    - 'ffn.lin2'
+'distilbert-base-uncased-finetuned-sst-2-english':
+    embedding: "embeddings.word_embeddings"
+    activations:
+    - 'ffn.lin2'
+albert-base-v2:
+    embedding: "embeddings.word_embeddings"
+    activations:
+    - 'ffn_output'
+t5-small:
+    embedding: 'shared'
+    activations:
+    - 'wo' #Note that this will be both encoder and decoder layers
+t5-base:
+    embedding: 'shared'
+    activations:
+    - 'wo' #Note that this will be both encoder and decoder layers
+facebook/bart-large-mnli:
+    embedding: 'shared'
+    activations:
+    - 'fc2'
+'sshleifer/tiny-gpt2':
+  embedding: "transformer.wte.weight"
+  activations:
+    - 'mlp.c_proj'
+'julien-c/bert-xsmall-dummy':
+  embedding: "embeddings.word_embeddings"
+  activations:
+    - 'output.dense'
+

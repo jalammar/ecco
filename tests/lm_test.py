@@ -2,15 +2,7 @@ from ecco.lm import LM, _one_hot, sample_output_token, activations_dict_to_array
 import ecco
 import torch
 import numpy as np
-
-
-# @pytest.fixture
-# def mockLM():
-#     #setup
-#     class mockLM
-#     #yield
-#
-#     #teardown
+from transformers import PreTrainedModel
 
 
 class TestLM:
@@ -34,18 +26,26 @@ class TestLM:
         activations = activations_dict_to_array(actual_dict)
         assert activations.shape == (batch, 2, neurons, position)
 
-    # def test_mock_gpt_call(self):
-    #     lm = ecco.from_pretrained('mockGPT', activations=True)
-    #     print(lm.model)
-    #
-    #     lm2 = ecco.from_pretrained('distilgpt2', activations=True)
-    #     print(lm2.model)
-    #     lm.tokenizer.pad_token = lm.tokenizer.eos_token
-    #     input_tokens_1 = lm.tokenizer('hi there', padding=True,
-    #                       truncation=True, return_tensors="pt")
-    #
-    #     output = lm(input_tokens_1.to(lm.device))
 
+    def test_init(self):
+        lm = ecco.from_pretrained('sshleifer/tiny-gpt2', activations=True)
+
+        assert isinstance(lm.model, PreTrainedModel), "Model downloaded and LM was initialized successfully."
+
+    def test_generate(self):
+        lm = ecco.from_pretrained('sshleifer/tiny-gpt2', verbose=False)
+        output = lm.generate('test', generate=1)
+        assert len(output.token_ids) == 2, "Generated one token successfully"
+        assert output.attribution['grad_x_input'][0] == 1, "Successfully got an attribution value"
+
+    def test_call_dummy_bert(self):
+        lm = ecco.from_pretrained('julien-c/bert-xsmall-dummy', activations=True, verbose=False)
+        inputs = lm.to(lm.tokenizer(['test', 'hi'], return_tensors="pt"))
+        output = lm(inputs)
+
+
+
+    # TODO: Test LM Generate with Activation. Tweak to support batch dimension.
     # def test_generate_token_no_attribution(self, mocker):
     #     pass
     #

@@ -1,0 +1,20 @@
+site_name: Ecco
+
+theme:
+  name: "material"
+
+plugins:
+- mkdocstrings:
+    watch:
+      - src/ecco
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - API:
+      - Language Model: api/language-model.md
+      - Output: api/output.md
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences

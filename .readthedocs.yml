@@ -5,6 +5,6 @@
 # Required
 version: 2
 
-# Build documentation in the docs/ directory with Sphinx
+# Build documentation in the docs-old/ directory with Sphinx
 sphinx:
-  configuration: docs/conf.py
+  configuration: docs-old/conf.py
