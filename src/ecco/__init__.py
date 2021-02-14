@@ -40,7 +40,9 @@ def from_pretrained(hf_model_id: str,
         verbose: If True, model.generate() displays output tokens in HTML as they're generated.
         gpu: Set to False to force using the CPU even if a GPU exists.
 """
-    if 'bert' in hf_model_id:
+    # TODO: Should specify task/head in a cleaner way. Allow masked LM. T5 generation.
+    # Likely use model-config. Have a default. Allow user to specify head?
+    if 'gpt2' not in hf_model_id:
         tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
         model = AutoModel.from_pretrained(hf_model_id,
                                                      output_hidden_states=hidden_states,
