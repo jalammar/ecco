@@ -9,4 +9,5 @@ pytest~=6.1.2
 setuptools~=49.6.0
 torch~=1.6.0
 torchvision~=0.7.0
+PyYAML==5.4.1
 

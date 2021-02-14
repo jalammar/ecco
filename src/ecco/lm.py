@@ -9,9 +9,10 @@ from IPython import display as d
 import os
 import json
 from ecco.attribution import *
-from typing import Optional, Any
+from typing import Optional, Any, List
 from pprint import pprint
 from operator import attrgetter
+import re
 
 from transformers import GPT2Model
 import yaml
@@ -22,7 +23,8 @@ class LM(object):
     Ecco's central class. A wrapper around language models. We use it to run the language models
     and collect important data like input saliency and neuron activations.
 
-    A LM object is not created directly, it is returned by ecco.
+    A LM object is typically not created directly by users,
+    it is returned by `ecco.from_pretrained()`.
 
     Usage:
 
@@ -34,23 +36,41 @@ class LM(object):
     ```
     """
 
-    def __init__(self, model, tokenizer,
-                 model_name,
-                 collect_activations_flag=False,
-                 collect_activations_layer_nums=None,  # None --> collect for all layers
-                 verbose: Optional[bool] = True
+    def __init__(self,
+                 model: transformers.PreTrainedModel,
+                 tokenizer: transformers.PreTrainedTokenizerFast,
+                 model_name: str,
+                 collect_activations_flag: Optional[bool] = False,
+                 collect_activations_layer_nums: Optional[List[int]] = None,  # None --> collect for all layers
+                 verbose: Optional[bool] = True,
+                 gpu: Optional[bool] = True
                  ):
+        """
+        Creates an LM object given a model and tokenizer.
+
+        Args:
+            model: HuggingFace Transformers Pytorch language model.
+            tokenizer: The tokenizer associated with the model
+            model_name: The name of the model. Used to retrieve required settings (like what the embedding layer is called)
+            collect_activations_flag: True if we want to collect activations
+            collect_activations_layer_nums: If collecting activations, we can use this parameter to indicate which layers
+                to track. By default this would be None and we'd collect activations for all layers.
+            verbose: If True, model.generate() displays output tokens in HTML as they're generated.
+            gpu: Set to False to force using the CPU even if a GPU exists.
+        """
         self.model_name = model_name
         self.model = model
-        if torch.cuda.is_available():
+        if torch.cuda.is_available() and gpu:
             self.model = model.to('cuda')
+
+        self.device = 'cuda' if torch.cuda.is_available() \
+                                and self.model.device.type == 'cuda' \
+            else 'cpu'
 
         self.tokenizer = tokenizer
         self.verbose = verbose
         self._path = os.path.dirname(ecco.__file__)
 
-        self.device = 'cuda' if torch.cuda.is_available() and self.model.device.type == 'cuda' \
-            else 'cpu'
 
         # Neuron Activation
         self.collect_activations_flag = collect_activations_flag
@@ -66,7 +86,7 @@ class LM(object):
             embeddings_layer_name = self.model_config['embedding']
             embed_retriever = attrgetter(embeddings_layer_name)
             self.model_embeddings = embed_retriever(self.model)
-            self.collect_activations_layer_name = self.model_config['activations'][0]
+            self.collect_activations_layer_name_sig = self.model_config['activations'][0]
         except KeyError:
             raise ValueError(
                    f"The model '{self.model_name}' is not defined in Ecco's 'model-config.yaml' file and"
@@ -273,22 +293,22 @@ class LM(object):
                 Shape is (batch_size, sequence_length).
                 Also a key for masked tokens
             attribution: Flag indicating whether to calculate attribution/saliency
-
-
-
         """
 
-        # Verify we don't have both input_str and input _ids
-        # if input_str != '':
-        #     input_ids = self.tokenizer(input_str, return_tensors="pt")['input_ids'][0]
+        if not hasattr(input_tokens, 'input_ids'):
+            raise ValueError("Parameter 'input_tokens' needs to have the attribute 'input_ids'."
+                             "Verify it was produced by the appropriate tokenizer with the "
+                             "parameter return_tensors=\"pt\".")
+
+        # Move inputs to GPU if the model is on GPU
+        if self.model.device.type == "cuda" and input_tokens['input_ids'].device.type == "cpu":
+            input_tokens = self.to(input_tokens)
 
         # Remove downstream. For now setting to batch length
         n_input_tokens = len(input_tokens['input_ids'][0])
         # self.attributions = {}
 
         # model
-        # inputs_embeds, token_ids_tensor_one_hot = self._get_embeddings(input_ids)
-        # print(input_ids)
         if 'bert' in self.model_name:
             output = self.model(**input_tokens, return_dict=True)
             lm_head = None
@@ -344,7 +364,7 @@ class LM(object):
         for name, module in model.named_modules():
             # Add hooks to capture activations in every FFNN
 
-            if self.collect_activations_layer_name in name:
+            if re.search(self.collect_activations_layer_name_sig, name):
                 # print("mlp.c_proj", self.collect_activations_flag , name)
                 if self.collect_activations_flag:
                     self._hooks[name] = module.register_forward_hook(
@@ -371,19 +391,29 @@ class LM(object):
         # print(type(input_), len(input_), type(input_[0]), input_[0].shape, len(input_[0]), input_[0][0].shape)
         # in distilGPT and GPT2, the layer name is 'transformer.h.0.mlp.c_fc'
         # Extract the number of the layer from the name
-        layer_number = int(name.split('.')[2])
+        # TODO: it will not always be 2 for other models. Move to model-config
+        # layer_number = int(name.split('.')[2])
+        # Get the layer number. This will be an int with periods before aand after it.
+        # (?<=\.) means look for a period before the int
+        # \d+ means look for one or multiple digits
+        # (?=\.) means look for a period after the int
+        layer_number = re.search("(?<=\.)\d+(?=\.)", name).group(0)
+        # print("layer number: ", layer_number)
 
         collecting_this_layer = (self.collect_activations_layer_nums is None) or (
                 layer_number in self.collect_activations_layer_nums)
 
         if collecting_this_layer:
+            # Initialize the layer's key the first time we encounter it
             if layer_number not in self._all_activations_dict:
                 self._all_activations_dict[layer_number] = [0]
 
-            # Overwrite the previous step activations. This collects all activations in the last step
+            # For MLM, we only run one inference step. We save it.
+            # For LM, we could be running multiple inference stesp with generate(). In that case,
+            # overwrite the previous step activations. This collects all activations in the last step
             # Assuming all input tokens are presented as input, no "past"
             # The inputs to c_proj already pass through the gelu activation function
-            self._all_activations_dict[layer_number][0] = input_[0][0].detach().cpu().numpy()
+            self._all_activations_dict[layer_number] = input_[0].detach().cpu().numpy()
 
     def _inhibit_neurons_hook(self, name: str, input_tensor):
         """
@@ -536,10 +566,9 @@ def activations_dict_to_array(activations_dict):
     for i in sorted(activations_dict.keys()):
         activations.append(activations_dict[i])
 
-    print(np.array(activations).shape)
-    activations = np.concatenate(activations, axis=0)
+    activations = np.array(activations)
     # 'activations' now is in the shape (layer, batch, position, neurons)
-    print(activations.shape)
+
     activations = np.swapaxes(activations, 2, 3)
     activations = np.swapaxes(activations, 0, 1)
     # print('after swapping: ', activations.shape)

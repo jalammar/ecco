@@ -5,6 +5,6 @@
 # Required
 version: 2
 
-# Build documentation in the docs-old/ directory with Sphinx
-sphinx:
-  configuration: docs-old/conf.py
+# Build documentation
+mdocs:
+  configuration: mkdocs.yml
