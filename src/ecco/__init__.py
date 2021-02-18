@@ -29,16 +29,24 @@ def from_pretrained(hf_model_id: str,
                     gpu: Optional[bool] = True
                     ):
     """
-    Constructs a LM object based on a string identifier from HuggingFace Transformers.
-    Args:
-        hf_model_id: name of the model. e.g. 'distilgpt2'.
-        activations: If True, collect activations when this model runs inference. Option saved in LM.
-        attention: If True, collect attention. Option passed to the model.
-        hidden_states: if True, collect hidden states. Needed for layer_predictions and rankings().
-        activations_layer_nums: If we are collecting activations, we can specify which layers to track. This is None by
-            default and all layer are collected if 'activations' is set to True.
-        verbose: If True, model.generate() displays output tokens in HTML as they're generated.
-        gpu: Set to False to force using the CPU even if a GPU exists.
+Constructs a [LM][ecco.lm.LM] object based on a string identifier from HuggingFace Transformers. This is main entry point to Ecco.
+
+Usage:
+
+```python
+import ecco
+lm = ecco.from_pretrained('gpt2')
+```
+
+Args:
+    hf_model_id: name of the model identifying it in the HuggingFace model hub. e.g. 'distilgpt2', 'bert-base-uncased'.
+    activations: If True, collect activations when this model runs inference. Option saved in LM.
+    attention: If True, collect attention. Option passed to the model.
+    hidden_states: if True, collect hidden states. Needed for layer_predictions and rankings().
+    activations_layer_nums: If we are collecting activations, we can specify which layers to track. This is None by
+        default and all layer are collected if 'activations' is set to True.
+    verbose: If True, model.generate() displays output tokens in HTML as they're generated.
+    gpu: Set to False to force using the CPU even if a GPU exists.
 """
     # TODO: Should specify task/head in a cleaner way. Allow masked LM. T5 generation.
     # Likely use model-config. Have a default. Allow user to specify head?

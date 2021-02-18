@@ -36,9 +36,8 @@ class TestLM:
                                   activations=True,
                                   verbose=False)
         output = lm.generate('test', generate=1)
-        assert len(output.token_ids) == 2, "Generated one token successfully"
+        assert output.token_ids.shape == (1, 2), "Generated one token successfully"
         assert output.attribution['grad_x_input'][0] == 1, "Successfully got an attribution value"
-        print(output.activations.shape)
         # Confirm activations is dimensions:
         # (batch 1, layer 2, h_dimension 8, position 1)
         assert output.activations.shape == (1, 2, 8, 1)
@@ -57,7 +56,6 @@ class TestLM:
         # position is 3 because of [CLS] and [SEP]
         # If we do require padding, this CUDA compains with this model for some reason.
         assert output.activations.shape == (2, 1, 40, 3)
-
 
 
     # TODO: Test LM Generate with Activation. Tweak to support batch dimension.

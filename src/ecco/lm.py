@@ -198,7 +198,6 @@ class LM(object):
         do_sample = do_sample if do_sample is not None else self.model.config.task_specific_params['text-generation'][
             'do_sample']
 
-
         # We needs this as a batch in order to collect activations.
         input_ids = self.tokenizer(input_str, return_tensors="pt")['input_ids'][0]
         n_input_tokens = len(input_ids)
@@ -210,7 +209,6 @@ class LM(object):
         past = None
         self.attributions = {}
         outputs = []
-
 
         if cur_len >= max_length:
             raise ValueError(
@@ -258,10 +256,10 @@ class LM(object):
         attributions = self.attributions
         attn = getattr(output, "attentions", None)
         return OutputSeq(**{'tokenizer': self.tokenizer,
-                            'token_ids': input_ids,
+                            'token_ids': input_ids.unsqueeze(0), # Add a batch dimension
                             'n_input_tokens': n_input_tokens,
                             'output_text': self.tokenizer.decode(input_ids),
-                            'tokens': tokens,
+                            'tokens': [tokens], # Add a batch dimension
                             'hidden_states': hidden_states,
                             'attention': attn,
                             'model_outputs': outputs,
@@ -331,7 +329,7 @@ class LM(object):
 
         attn = getattr(output, "attentions", None)
         return OutputSeq(**{'tokenizer': self.tokenizer,
-                            'token_ids': input_tokens,
+                            'token_ids': input_tokens['input_ids'],
                             'n_input_tokens': n_input_tokens,
                             # 'output_text': self.tokenizer.decode(input_ids),
                             'tokens': tokens,

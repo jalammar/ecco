@@ -3,7 +3,7 @@ import pytest
 import torch
 import numpy as np
 from ecco.output import NMF
-
+import ecco
 
 class TestOutput:
     def test_position_raises_value_error_more(self):
@@ -99,6 +99,38 @@ class TestOutput:
         merged_activations = NMF.reshape_activations(activations,
                                                      None, None, None)
         assert merged_activations.shape == (layers*neurons, batch*position)
+
+
+    def test_nmf_explore_on_dummy_gpt(self):
+        lm = ecco.from_pretrained('sshleifer/tiny-gpt2',
+                                  activations=True,
+                                  verbose=False)
+        output = lm.generate('test', generate=1)
+        nmf = output.run_nmf()
+        exp = nmf.explore(printJson=True)
+        print('gpt', output.activations.shape)
+        print(np.array(exp['factors']).shape)
+
+        assert len(exp['tokens']) == 2 # input & output tokens
+        # 1 redundant dimension, 1 generation /factor, 2 tokens.
+        assert np.array(exp['factors']).shape == (1, 1, 2)
+
+    def test_nmf_explore_on_dummy_bert(self):
+        lm = ecco.from_pretrained('julien-c/bert-xsmall-dummy',
+                                  activations=True,
+                                  verbose=False)
+        inputs = lm.to(lm.tokenizer(['test', 'hi'],
+                                    padding=True,
+                                    truncation=True,
+                                    return_tensors="pt",
+                                    max_length=512))
+        output = lm(inputs)
+        nmf = output.run_nmf()
+        exp = nmf.explore(printJson=True)
+
+        assert len(exp['tokens']) == 3  # CLS UNK SEP
+        # 1 redundant dimension,6 factors, 6 tokens (a batch of two examples, 3 tokens each)
+        assert np.array(exp['factors']).shape == (1, 6, 6)
 
     def test_nmf_output_dims(self):
         pass
