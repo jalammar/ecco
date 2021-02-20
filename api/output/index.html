@@ -1,0 +1,1177 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.2.8">
+    
+    
+      
+        <title>Output - Ecco</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.cb6bc1d0.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.39b8e14a.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ecco.output.OutputSeq" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="../.." title="Ecco" class="md-header-nav__button md-logo" aria-label="Ecco">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      <div class="md-header-nav__ellipsis">
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            Ecco
+          </span>
+        </div>
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            
+              Output
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Ecco" class="md-nav__button md-logo" aria-label="Ecco">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Ecco
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        Architecture
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      
+      <label class="md-nav__link" for="nav-3">
+        API
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="API" data-md-level="1">
+        <label class="md-nav__title" for="nav-3">
+          <span class="md-nav__icon md-icon"></span>
+          API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ecco/" class="md-nav__link">
+        Ecco
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../language-model/" class="md-nav__link">
+        Language Model
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Output
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Output
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq" class="md-nav__link">
+    ecco.output.OutputSeq
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.layer_predictions" class="md-nav__link">
+    layer_predictions()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.rankings" class="md-nav__link">
+    rankings()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.rankings_watch" class="md-nav__link">
+    rankings_watch()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.run_nmf" class="md-nav__link">
+    run_nmf()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.saliency" class="md-nav__link">
+    saliency()
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nmf/" class="md-nav__link">
+        NMF
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq" class="md-nav__link">
+    ecco.output.OutputSeq
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.layer_predictions" class="md-nav__link">
+    layer_predictions()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.rankings" class="md-nav__link">
+    rankings()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.rankings_watch" class="md-nav__link">
+    rankings_watch()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.run_nmf" class="md-nav__link">
+    run_nmf()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.output.OutputSeq.saliency" class="md-nav__link">
+    saliency()
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                  <h1>Output</h1>
+                
+                <div class="doc doc-object doc-class">
+<h2 class="hidden-toc" id="ecco.output.OutputSeq" style="visibility: hidden; position: absolute;">
+        </h2>
+<div class="doc doc-contents first">
+<p>An OutputSeq object is the result of running a language model on some input data. It contains not only the output
+sequence of words generated by the model, but also other data collecting during the generation process
+that is useful to analyze the model.</p>
+<p>In addition to the data, the object has methods to create plots
+and visualizations of that collected data. These include:</p>
+<ul>
+<li><a href="./#ecco.output.OutputSeq.layer_predictions">layer_predictions()</a> <br />
+
+Which tokens did the model consider as the best outputs for a specific position in the sequence?</li>
+<li><a href="./#ecco.output.OutputSeq.rankings">rankings()</a> <br />
+
+After the model chooses an output token for a specific position, this visual looks back at the ranking
+of this token at each layer of the model when it was generated (layers assign scores to candidate output tokens,
+the higher the "probability" score, the higher the ranking of the token).</li>
+<li><a href="./#ecco.output.OutputSeq.rankings_watch">rankings_watch()</a> <br />
+
+Shows the rankings of multiple tokens as the model scored them for a single position. For example, if the input is
+"The cat ___", we use this method to observe how the model ranked the words "is", "are", "was" as candidates
+to fill in the blank.</li>
+<li><a href="./#ecco.output.OutputSeq.saliency">saliency()</a> <br />
+
+How important was each input token in the selection of calculating the output token?</li>
+</ul>
+<p>To process neuron activations, OutputSeq has methods to reduce the dimensionality and reveal underlying patterns in
+neuron firings. These are:</p>
+<ul>
+<li><a href="./#ecco.output.OutputSeq.run_nmf">run_nmf()</a></li>
+</ul>
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
+<h2 class="doc doc-heading" id="ecco.output.OutputSeq.__init__">
+
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_input_tokens</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tokenizer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_text</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tokens</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hidden_states</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">activations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">collect_activations_layer_nums</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attention</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lm_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">'cpu'</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+      </h2>
+<div class="doc doc-contents ">
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>token_ids</code></td>
+<td><code></code></td>
+<td>
+<p>The input token ids. Dimensions: (batch, position)</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>n_input_tokens</code></td>
+<td><code></code></td>
+<td>
+<p>Int. The number of input tokens in the sequence.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>tokenizer</code></td>
+<td><code></code></td>
+<td>
+<p>huggingface tokenizer associated with the model generating this output</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>output_text</code></td>
+<td><code></code></td>
+<td>
+<p>The output text generated by the model (if processed with generate())</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>tokens</code></td>
+<td><code></code></td>
+<td>
+<p>A list of token text. Shorthand to passing the token ids by the tokenizer.
+dimensions are (batch, position)</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>hidden_states</code></td>
+<td><code></code></td>
+<td>
+<p>A tensor of  dimensions (layer, position, hidden_dimension).
+In layer, index 0 is for embedding hidden_state.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>attribution</code></td>
+<td><code></code></td>
+<td>
+<p>A list of attributions. One element per generated token.
+Each element is a list giving a value for tokens from 0 to right before the generated token.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>activations</code></td>
+<td><code></code></td>
+<td>
+<p>The activations collected from model processing.
+Shape is (batch, layer, neurons, position)</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>collect_activations_layer_nums</code></td>
+<td><code></code></td>
+<td></td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>attention</code></td>
+<td><code></code></td>
+<td>
+<p>The attention tensor retrieved from the language model</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>model_outputs</code></td>
+<td><code></code></td>
+<td>
+<p>Raw return object returned by the model</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>lm_head</code></td>
+<td><code></code></td>
+<td>
+<p>The trained language model head from a language model projecting a
+hidden state to an output vocabulary associated with teh tokenizer.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>device</code></td>
+<td><code></code></td>
+<td>
+<p>"cuda" or "cpu"</p>
+</td>
+<td><code>'cpu'</code></td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+          <summary>Source code in <code>ecco\output.py</code></summary>
+          <div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+             <span class="n">token_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">n_input_tokens</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">tokenizer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">output_text</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">tokens</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">hidden_states</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">attribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">activations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">collect_activations_layer_nums</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">attention</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">model_outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">lm_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">device</span><span class="o">=</span><span class="s1">'cpu'</span><span class="p">):</span>
+    <span class="sd">"""</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        token_ids: The input token ids. Dimensions: (batch, position)</span>
+<span class="sd">        n_input_tokens: Int. The number of input tokens in the sequence.</span>
+<span class="sd">        tokenizer: huggingface tokenizer associated with the model generating this output</span>
+<span class="sd">        output_text: The output text generated by the model (if processed with generate())</span>
+<span class="sd">        tokens: A list of token text. Shorthand to passing the token ids by the tokenizer.</span>
+<span class="sd">            dimensions are (batch, position)</span>
+<span class="sd">        hidden_states: A tensor of  dimensions (layer, position, hidden_dimension).</span>
+<span class="sd">            In layer, index 0 is for embedding hidden_state.</span>
+<span class="sd">        attribution: A list of attributions. One element per generated token.</span>
+<span class="sd">            Each element is a list giving a value for tokens from 0 to right before the generated token.</span>
+<span class="sd">        activations: The activations collected from model processing.</span>
+<span class="sd">            Shape is (batch, layer, neurons, position)</span>
+<span class="sd">        collect_activations_layer_nums:</span>
+<span class="sd">        attention: The attention tensor retrieved from the language model</span>
+<span class="sd">        model_outputs: Raw return object returned by the model</span>
+<span class="sd">        lm_head: The trained language model head from a language model projecting a</span>
+<span class="sd">            hidden state to an output vocabulary associated with teh tokenizer.</span>
+<span class="sd">        device: "cuda" or "cpu"</span>
+<span class="sd">    """</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">token_ids</span> <span class="o">=</span> <span class="n">token_ids</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">tokenizer</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">n_input_tokens</span> <span class="o">=</span> <span class="n">n_input_tokens</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">output_text</span> <span class="o">=</span> <span class="n">output_text</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="n">tokens</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">hidden_states</span> <span class="o">=</span> <span class="n">hidden_states</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span> <span class="o">=</span> <span class="n">attribution</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">activations</span> <span class="o">=</span> <span class="n">activations</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">collect_activations_layer_nums</span> <span class="o">=</span> <span class="n">collect_activations_layer_nums</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">model_outputs</span> <span class="o">=</span> <span class="n">model_outputs</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">attention_values</span> <span class="o">=</span> <span class="n">attention</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">lm_head</span> <span class="o">=</span> <span class="n">lm_head</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">ecco</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
+<h2 class="doc doc-heading" id="ecco.output.OutputSeq.layer_predictions">
+
+<code class="highlight language-python"><span class="n">layer_predictions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">topk</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+
+      </h2>
+<div class="doc doc-contents ">
+<p>Visualization plotting the topk predicted tokens after each layer (using its hidden state).</p>
+<p><strong>Examples:</strong></p>
+<br />
+<p><img alt="prediction scores" src="/img/layer_predictions_ex_london.png" /></p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>position</code></td>
+<td><code>int</code></td>
+<td>
+<p>The index of the output token to trace</p>
+</td>
+<td><code>1</code></td>
+</tr>
+<tr>
+<td><code>topk</code></td>
+<td><code>Optional[int]</code></td>
+<td>
+<p>Number of tokens to show for each layer</p>
+</td>
+<td><code>10</code></td>
+</tr>
+<tr>
+<td><code>layer</code></td>
+<td><code>Optional[int]</code></td>
+<td>
+<p>None shows all layers. Can also pass an int with the layer id to show only that layer</p>
+</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+          <summary>Source code in <code>ecco\output.py</code></summary>
+          <div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="nf">layer_predictions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">topk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Visualization plotting the topk predicted tokens after each layer (using its hidden state).</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    ![prediction scores](/img/layer_predictions_ex_london.png)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        position: The index of the output token to trace</span>
+<span class="sd">        topk: Number of tokens to show for each layer</span>
+<span class="sd">        layer: None shows all layers. Can also pass an int with the layer id to show only that layer</span>
+<span class="sd">    """</span>
+
+    <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_states</span>
+
+    <span class="k">if</span> <span class="n">position</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"'position' is set to 0. There is never a hidden state associated with this position."</span>
+                         <span class="sa">f</span><span class="s2">"Possible values are 1 and above -- the position of the token of interest in the sequence"</span><span class="p">)</span>
+    <span class="c1"># watch = self.to(torch.tensor([self.token_ids[self.n_input_tokens]]))</span>
+    <span class="c1"># There is one lm output per generated token. To get the index</span>
+    <span class="n">output_index</span> <span class="o">=</span> <span class="n">position</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_input_tokens</span>
+    <span class="k">if</span> <span class="n">layer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># If a layer is specified, choose it only.</span>
+        <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">hidden_states</span><span class="p">[</span><span class="n">layer</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># include all layers except the first</span>
+        <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">hidden_states</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="n">k</span> <span class="o">=</span> <span class="n">topk</span>
+    <span class="n">top_tokens</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">layer_no</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">):</span>
+        <span class="n">hidden_state</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="n">position</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># Use lm_head to project the layer's hidden state to output vocabulary</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lm_head</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">hidden_state</span><span class="p">))</span>
+        <span class="n">softmax</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># softmax dims are (number of words in vocab) - 50257 in GPT2</span>
+        <span class="n">sorted_softmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">softmax</span><span class="p">))</span>
+        <span class="c1"># Not currently used. If we're "watching" a specific token, this gets its ranking</span>
+        <span class="c1"># idx = sorted_softmax.shape[0] - torch.nonzero((sorted_softmax == watch)).flatten()</span>
+
+        <span class="n">layer_top_tokens</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sorted_softmax</span><span class="p">[</span><span class="o">-</span><span class="n">k</span><span class="p">:]][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">top_tokens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_top_tokens</span><span class="p">)</span>
+        <span class="n">layer_probs</span> <span class="o">=</span> <span class="n">softmax</span><span class="p">[</span><span class="n">sorted_softmax</span><span class="p">[</span><span class="o">-</span><span class="n">k</span><span class="p">:]]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">probs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_probs</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+
+        <span class="c1"># Package in output format</span>
+        <span class="n">layer_data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">prob</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">layer_top_tokens</span><span class="p">,</span> <span class="n">layer_probs</span><span class="p">)):</span>
+            <span class="c1"># print(layer_no, idx, token)</span>
+            <span class="n">layer_num</span> <span class="o">=</span> <span class="n">layer</span> <span class="k">if</span> <span class="n">layer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">layer_no</span>
+            <span class="n">layer_data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">'token'</span><span class="p">:</span> <span class="n">token</span><span class="p">,</span>
+                               <span class="s1">'prob'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">prob</span><span class="p">),</span>
+                               <span class="s1">'ranking'</span><span class="p">:</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                               <span class="s1">'layer'</span><span class="p">:</span> <span class="n">layer_num</span>
+                               <span class="p">})</span>
+
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_data</span><span class="p">)</span>
+
+    <span class="n">d</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">,</span> <span class="s2">"html"</span><span class="p">,</span> <span class="s2">"setup.html"</span><span class="p">)))</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">,</span> <span class="s2">"html"</span><span class="p">,</span> <span class="s2">"basic.html"</span><span class="p">)))</span>
+
+    <span class="n">js</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">     requirejs(['basic', 'ecco'], function(basic, ecco)</span><span class="se">{{</span><span class="s2"></span>
+<span class="s2">        const viz_id = basic.init()</span>
+
+
+<span class="s2">        let pred = new ecco.LayerPredictions(</span><span class="se">{{</span><span class="s2"></span>
+<span class="s2">            parentDiv: viz_id,</span>
+<span class="s2">            data:</span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"></span>
+<span class="s2">        </span><span class="se">}}</span><span class="s2">)</span>
+<span class="s2">        pred.init()</span>
+<span class="s2">     </span><span class="se">}}</span><span class="s2">, function (err) </span><span class="se">{{</span><span class="s2"></span>
+<span class="s2">        console.log(viz_id, err);</span>
+<span class="s2">    </span><span class="se">}}</span><span class="s2">)"""</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">Javascript</span><span class="p">(</span><span class="n">js</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="s1">'printJson'</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">'printJson'</span><span class="p">]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
+<h2 class="doc doc-heading" id="ecco.output.OutputSeq.rankings">
+
+<code class="highlight language-python"><span class="n">rankings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+
+      </h2>
+<div class="doc doc-contents ">
+<p>Plots the rankings (across layers) of the tokens the model selected.
+Each column is a position in the sequence. Each row is a layer.</p>
+<p><img alt="Rankings watch" src="/img/rankings_ex_eu_1.png" /></p>
+<details class="quote">
+          <summary>Source code in <code>ecco\output.py</code></summary>
+          <div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="nf">rankings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Plots the rankings (across layers) of the tokens the model selected.</span>
+<span class="sd">    Each column is a position in the sequence. Each row is a layer.</span>
+
+<span class="sd">    ![Rankings watch](/img/rankings_ex_eu_1.png)</span>
+<span class="sd">    """</span>
+
+    <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_states</span>
+
+    <span class="n">n_layers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+    <span class="n">position</span> <span class="o">=</span> <span class="n">hidden_states</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_input_tokens</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="n">predicted_tokens</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">position</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'U25'</span><span class="p">)</span>
+    <span class="n">rankings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">position</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">token_found_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">n_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">position</span><span class="p">))</span>
+
+    <span class="c1"># loop through layer levels</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">level</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="c1"># Loop through generated/output positions</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">hidden_state</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">level</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n_input_tokens</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:]):</span>
+            <span class="c1"># Project hidden state to vocabulary</span>
+            <span class="c1"># (after debugging pain: ensure input is on GPU, if appropriate)</span>
+            <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lm_head</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">hidden_state</span><span class="p">))</span>
+            <span class="c1"># Sort by score (ascending)</span>
+            <span class="nb">sorted</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
+            <span class="c1"># What token was sampled in this position?</span>
+
+            <span class="n">token_id</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">token_ids</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n_input_tokens</span> <span class="o">+</span> <span class="n">j</span><span class="p">])</span>
+            <span class="c1"># token_id = self.token_ids.clone().detach()[self.n_input_tokens + j]</span>
+            <span class="c1"># What's the index of the sampled token in the sorted list?</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nonzero</span><span class="p">((</span><span class="nb">sorted</span> <span class="o">==</span> <span class="n">token_id</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="c1"># subtract to get ranking (where 1 is the top scoring, because sorting was in ascending order)</span>
+            <span class="n">ranking</span> <span class="o">=</span> <span class="nb">sorted</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">r</span>
+            <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">([</span><span class="n">token_id</span><span class="p">])</span>
+            <span class="n">predicted_tokens</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">token</span>
+            <span class="n">rankings</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ranking</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">token_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_ids</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]:</span>
+                <span class="n">token_found_mask</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">input_tokens</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n_input_tokens</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="n">output_tokens</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n_input_tokens</span><span class="p">:]]</span>
+    <span class="n">lm_plots</span><span class="o">.</span><span class="n">plot_inner_token_rankings</span><span class="p">(</span><span class="n">input_tokens</span><span class="p">,</span>
+                                       <span class="n">output_tokens</span><span class="p">,</span>
+                                       <span class="n">rankings</span><span class="p">,</span>
+                                       <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">'printJson'</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">'printJson'</span><span class="p">]:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'input_tokens'</span><span class="p">:</span> <span class="n">input_tokens</span><span class="p">,</span>
+                <span class="s1">'output_tokens'</span><span class="p">:</span> <span class="n">output_tokens</span><span class="p">,</span>
+                <span class="s1">'rankings'</span><span class="p">:</span> <span class="n">rankings</span><span class="p">,</span>
+                <span class="s1">'predicted_tokens'</span><span class="p">:</span> <span class="n">predicted_tokens</span><span class="p">}</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
+<h2 class="doc doc-heading" id="ecco.output.OutputSeq.rankings_watch">
+
+<code class="highlight language-python"><span class="n">rankings_watch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">watch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">position</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+
+      </h2>
+<div class="doc doc-contents ">
+<p>Plots the rankings of the tokens whose ids are supplied in the watch list.
+Only considers one position.</p>
+<p><img alt="Rankings plot" src="/img/ranking_watch_ex_is_are_1.png" /></p>
+<details class="quote">
+          <summary>Source code in <code>ecco\output.py</code></summary>
+          <div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="nf">rankings_watch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">watch</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Plots the rankings of the tokens whose ids are supplied in the watch list.</span>
+<span class="sd">    Only considers one position.</span>
+
+<span class="sd">    ![Rankings plot](/img/ranking_watch_ex_is_are_1.png)</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">position</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="n">position</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># e.g. position 5 corresponds to activation 4</span>
+
+
+    <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_states</span>
+
+    <span class="n">n_layers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+    <span class="n">n_tokens_to_watch</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">watch</span><span class="p">)</span>
+
+    <span class="n">rankings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_tokens_to_watch</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+
+    <span class="c1"># loop through layer levels</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">level</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>  <span class="c1"># Skip the embedding layer</span>
+        <span class="c1"># Loop through generated/output positions</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">token_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">watch</span><span class="p">):</span>
+            <span class="n">hidden_state</span> <span class="o">=</span> <span class="n">level</span><span class="p">[</span><span class="n">position</span><span class="p">]</span>
+            <span class="c1"># Project hidden state to vocabulary</span>
+            <span class="c1"># (after debugging pain: ensure input is on GPU, if appropriate)</span>
+            <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lm_head</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">hidden_state</span><span class="p">))</span>
+            <span class="c1"># Sort by score (ascending)</span>
+            <span class="nb">sorted</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
+            <span class="c1"># What token was sampled in this position?</span>
+            <span class="n">token_id</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">token_id</span><span class="p">)</span>
+            <span class="c1"># What's the index of the sampled token in the sorted list?</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nonzero</span><span class="p">((</span><span class="nb">sorted</span> <span class="o">==</span> <span class="n">token_id</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="c1"># subtract to get ranking (where 1 is the top scoring, because sorting was in ascending order)</span>
+            <span class="n">ranking</span> <span class="o">=</span> <span class="nb">sorted</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">r</span>
+            <span class="n">rankings</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ranking</span><span class="p">)</span>
+
+    <span class="n">input_tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">]</span>
+    <span class="n">output_tokens</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">watch</span><span class="p">]</span>
+
+    <span class="n">lm_plots</span><span class="o">.</span><span class="n">plot_inner_token_rankings_watch</span><span class="p">(</span><span class="n">input_tokens</span><span class="p">,</span>
+                                             <span class="n">output_tokens</span><span class="p">,</span>
+                                             <span class="n">rankings</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">'printJson'</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">'printJson'</span><span class="p">]:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'input_tokens'</span><span class="p">:</span> <span class="n">input_tokens</span><span class="p">,</span>
+                <span class="s1">'output_tokens'</span><span class="p">:</span> <span class="n">output_tokens</span><span class="p">,</span>
+                <span class="s1">'rankings'</span><span class="p">:</span> <span class="n">rankings</span><span class="p">}</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
+<h2 class="doc doc-heading" id="ecco.output.OutputSeq.run_nmf">
+
+<code class="highlight language-python"><span class="n">run_nmf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+
+      </h2>
+<div class="doc doc-contents ">
+<p>Run Non-negative Matrix Factorization on network activations of FFNN. Returns an <a href="">NMF</a> object which holds
+the factorization model and data and methods to visualize them.</p>
+<details class="quote">
+          <summary>Source code in <code>ecco\output.py</code></summary>
+          <div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="nf">run_nmf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Run Non-negative Matrix Factorization on network activations of FFNN. Returns an [NMF]() object which holds</span>
+<span class="sd">    the factorization model and data and methods to visualize them.</span>
+
+
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">NMF</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">activations</span><span class="p">,</span>
+               <span class="n">n_input_tokens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_input_tokens</span><span class="p">,</span>
+               <span class="n">token_ids</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">token_ids</span><span class="p">,</span>
+               <span class="n">_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">,</span>
+               <span class="n">tokens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">,</span>
+               <span class="n">collect_activations_layer_nums</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">collect_activations_layer_nums</span><span class="p">,</span>
+               <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
+<h2 class="doc doc-heading" id="ecco.output.OutputSeq.saliency">
+
+<code class="highlight language-python"><span class="n">saliency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr_method</span><span class="o">=</span><span class="s1">'grad_x_input'</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">'minimal'</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+
+      </h2>
+<div class="doc doc-contents ">
+<p>Explorable showing saliency of each token generation step.
+Hovering-over or tapping an output token imposes a saliency map on other tokens
+showing their importance as features to that prediction.</p>
+<p><strong>Examples:</strong></p>
+<br />
+<div class="highlight">
+<pre><span></span><code><span class="kn">import</span> <span class="nn">ecco</span>
+<span class="n">lm</span> <span class="o">=</span> <span class="n">ecco</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s1">'distilgpt2'</span><span class="p">)</span>
+<span class="n">text</span><span class="o">=</span> <span class="s2">"The countries of the European Union are:</span>
+<span class="mf">1.</span> <span class="n">Austria</span>
+<span class="mf">2.</span> <span class="n">Belgium</span>
+<span class="mf">3.</span> <span class="n">Bulgaria</span>
+<span class="mf">4.</span><span class="s2">"</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">generate</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">do_sample</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Show saliency explorable</span>
+<span class="n">output</span><span class="o">.</span><span class="n">saliency</span><span class="p">()</span>
+</code></pre>
+</div>
+<p>Which creates the following interactive explorable:
+<img alt="input saliency example 1" src="/img/saliency_ex_1.png" /></p>
+<p>If we want more details on the saliency values, we can use the detailed view:</p>
+<div class="highlight">
+<pre><span></span><code><span class="c1"># Show detailed explorable</span>
+<span class="n">output</span><span class="o">.</span><span class="n">saliency</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s2">"detailed"</span><span class="p">)</span>
+</code></pre>
+</div>
+<p>Which creates the following interactive explorable:</p>
+<p><img alt="input saliency example 2 - detailed" src="/img/saliency_ex_2.png" /></p>
+<p>Details:
+This view shows the Gradient * Inputs method of input saliency. The attribution values are calculated across the
+embedding dimensions, then we use the L2 norm to calculate a score for each token (from the values of its embeddings dimension)
+To get a percentage value, we normalize the scores by dividing by the sum of the attribution scores for all
+the tokens in the sequence.</p>
+<details class="quote">
+          <summary>Source code in <code>ecco\output.py</code></summary>
+          <div class="highlight">
+<pre><span></span><code>    <span class="k">def</span> <span class="nf">saliency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr_method</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'grad_x_input'</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">"minimal"</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">"""</span>
+
+<span class="sd">Explorable showing saliency of each token generation step.</span>
+<span class="sd">Hovering-over or tapping an output token imposes a saliency map on other tokens</span>
+<span class="sd">showing their importance as features to that prediction.</span>
+
+<span class="sd">Examples:</span>
+
+<span class="sd">```python</span>
+<span class="sd">import ecco</span>
+<span class="sd">lm = ecco.from_pretrained('distilgpt2')</span>
+<span class="sd">text= "The countries of the European Union are:\n1. Austria\n2. Belgium\n3. Bulgaria\n4."</span>
+<span class="sd">output = lm.generate(text, generate=20, do_sample=True)</span>
+
+<span class="sd"># Show saliency explorable</span>
+<span class="sd">output.saliency()</span>
+<span class="sd">```</span>
+
+<span class="sd">Which creates the following interactive explorable:</span>
+<span class="sd">![input saliency example 1](/img/saliency_ex_1.png)</span>
+
+<span class="sd">If we want more details on the saliency values, we can use the detailed view:</span>
+
+<span class="sd">```python</span>
+<span class="sd"># Show detailed explorable</span>
+<span class="sd">output.saliency(style="detailed")</span>
+<span class="sd">```</span>
+
+<span class="sd">Which creates the following interactive explorable:</span>
+
+<span class="sd">![input saliency example 2 - detailed](/img/saliency_ex_2.png)</span>
+
+
+<span class="sd">Details:</span>
+<span class="sd">This view shows the Gradient * Inputs method of input saliency. The attribution values are calculated across the</span>
+<span class="sd">embedding dimensions, then we use the L2 norm to calculate a score for each token (from the values of its embeddings dimension)</span>
+<span class="sd">To get a percentage value, we normalize the scores by dividing by the sum of the attribution scores for all</span>
+<span class="sd">the tokens in the sequence.</span>
+<span class="sd">        """</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_input_tokens</span>
+
+        <span class="n">importance_id</span> <span class="o">=</span> <span class="n">position</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_input_tokens</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">attribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attribution</span><span class="p">[</span><span class="n">attr_method</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">token</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">):</span>
+            <span class="nb">type</span> <span class="o">=</span> <span class="s2">"input"</span> <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_input_tokens</span> <span class="k">else</span> <span class="s1">'output'</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">attribution</span><span class="p">[</span><span class="n">importance_id</span><span class="p">]):</span>
+                <span class="n">imp</span> <span class="o">=</span> <span class="n">attribution</span><span class="p">[</span><span class="n">importance_id</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">imp</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="n">tokens</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">'token'</span><span class="p">:</span> <span class="n">token</span><span class="p">,</span>
+                           <span class="s1">'token_id'</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">token_ids</span><span class="p">[</span><span class="n">idx</span><span class="p">]),</span>
+                           <span class="s1">'type'</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
+                           <span class="s1">'value'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">imp</span><span class="p">),</span>  <span class="c1"># because json complains of floats</span>
+                           <span class="s1">'position'</span><span class="p">:</span> <span class="n">idx</span>
+                           <span class="p">})</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'tokens'</span><span class="p">:</span> <span class="n">tokens</span><span class="p">,</span>
+            <span class="s1">'attributions'</span><span class="p">:</span> <span class="p">[</span><span class="n">att</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">att</span> <span class="ow">in</span> <span class="n">attribution</span><span class="p">]</span>
+        <span class="p">}</span>
+
+        <span class="n">d</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">,</span> <span class="s2">"html"</span><span class="p">,</span> <span class="s2">"setup.html"</span><span class="p">)))</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">,</span> <span class="s2">"html"</span><span class="p">,</span> <span class="s2">"basic.html"</span><span class="p">)))</span>
+        <span class="c1"># viz_id = 'viz_{}'.format(round(random.random() * 1000000))</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">style</span> <span class="o">==</span> <span class="s2">"minimal"</span><span class="p">):</span>
+            <span class="n">js</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">             requirejs(['basic', 'ecco'], function(basic, ecco)</span><span class="se">{{</span><span class="s2"></span>
+<span class="s2">                const viz_id = basic.init()</span>
+<span class="s2">                // ecco.interactiveTokens(viz_id, </span><span class="se">{{}}</span><span class="s2">)</span>
+<span class="s2">                window.ecco[viz_id] = new ecco.MinimalHighlighter(</span><span class="se">{{</span><span class="s2"></span>
+<span class="s2">                parentDiv: viz_id,</span>
+<span class="s2">                data: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">,</span>
+<span class="s2">                preset: 'viridis'</span>
+<span class="s2">             </span><span class="se">}}</span><span class="s2">)</span>
+
+<span class="s2">             window.ecco[viz_id].init();</span>
+<span class="s2">             window.ecco[viz_id].selectFirstToken();</span>
+
+<span class="s2">             </span><span class="se">}}</span><span class="s2">, function (err) </span><span class="se">{{</span><span class="s2"></span>
+<span class="s2">                console.log(err);</span>
+<span class="s2">            </span><span class="se">}}</span><span class="s2">)"""</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">style</span> <span class="o">==</span> <span class="s2">"detailed"</span><span class="p">):</span>
+
+            <span class="n">js</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">             requirejs(['basic', 'ecco'], function(basic, ecco)</span><span class="se">{{</span><span class="s2"></span>
+<span class="s2">                const viz_id = basic.init()</span>
+<span class="s2">                window.ecco[viz_id] = ecco.interactiveTokens(viz_id, </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">)</span>
+
+<span class="s2">             </span><span class="se">}}</span><span class="s2">, function (err) </span><span class="se">{{</span><span class="s2"></span>
+<span class="s2">                console.log(err);</span>
+<span class="s2">            </span><span class="se">}}</span><span class="s2">)"""</span>
+
+        <span class="n">d</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">Javascript</span><span class="p">(</span><span class="n">js</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="s1">'printJson'</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">'printJson'</span><span class="p">]:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">data</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../language-model/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Language Model
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../nmf/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                NMF
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/vendor.18f0862e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.994580cf.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      
+      <script>
+        app = initialize({
+          base: "../..",
+          features: [],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.9c0e82ba.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+    
+  </body>
+</html>

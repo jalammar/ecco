@@ -1,0 +1,956 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.2.8">
+    
+    
+      
+        <title>Language Model - Ecco</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.cb6bc1d0.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.39b8e14a.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ecco.lm.LM" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="../.." title="Ecco" class="md-header-nav__button md-logo" aria-label="Ecco">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      <div class="md-header-nav__ellipsis">
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            Ecco
+          </span>
+        </div>
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            
+              Language Model
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Ecco" class="md-nav__button md-logo" aria-label="Ecco">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Ecco
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        Architecture
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      
+      <label class="md-nav__link" for="nav-3">
+        API
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="API" data-md-level="1">
+        <label class="md-nav__title" for="nav-3">
+          <span class="md-nav__icon md-icon"></span>
+          API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ecco/" class="md-nav__link">
+        Ecco
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Language Model
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Language Model
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.lm.LM" class="md-nav__link">
+    ecco.lm.LM
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.lm.LM.__call__" class="md-nav__link">
+    __call__()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.lm.LM.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.lm.LM.generate" class="md-nav__link">
+    generate()
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../output/" class="md-nav__link">
+        Output
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nmf/" class="md-nav__link">
+        NMF
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.lm.LM" class="md-nav__link">
+    ecco.lm.LM
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.lm.LM.__call__" class="md-nav__link">
+    __call__()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.lm.LM.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecco.lm.LM.generate" class="md-nav__link">
+    generate()
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                  <h1>Language Model</h1>
+                
+                <div class="doc doc-object doc-class">
+<h2 class="hidden-toc" id="ecco.lm.LM" style="visibility: hidden; position: absolute;">
+        </h2>
+<div class="doc doc-contents first">
+<p>Ecco's central class. A wrapper around language models. We use it to run the language models
+and collect important data like input saliency and neuron activations.</p>
+<p>A LM object is typically not created directly by users,
+it is returned by <code>ecco.from_pretrained()</code>.</p>
+<p>Usage:</p>
+<div class="highlight">
+<pre><span></span><code><span class="kn">import</span> <span class="nn">ecco</span>
+
+<span class="n">lm</span> <span class="o">=</span> <span class="n">ecco</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s1">'distilgpt2'</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">"Hello computer"</span><span class="p">)</span>
+</code></pre>
+</div>
+<div class="doc doc-children">
+<div class="doc doc-object doc-method">
+<h2 class="doc doc-heading" id="ecco.lm.LM.__call__">
+
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tokens</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+      </h2>
+<div class="doc doc-contents ">
+<p>Run a forward pass through the model. For when we don't care about output tokens.
+Currently only support activations collection. No attribution/saliency.</p>
+<p>Usage:</p>
+<div class="highlight">
+<pre><span></span><code><span class="n">inputs</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">(</span><span class="s2">"Hello computer"</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">"pt"</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">lm</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+</code></pre>
+</div>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>input_tokens</code></td>
+<td><code>Tensor</code></td>
+<td>
+<p>tuple returned by tokenizer( TEXT, return_tensors="pt").
+contains key 'input_ids', its value tensor with input token ids.
+Shape is (batch_size, sequence_length).
+Also a key for masked tokens</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>attribution</code></td>
+<td><code></code></td>
+<td>
+<p>Flag indicating whether to calculate attribution/saliency</p>
+</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+          <summary>Source code in <code>ecco\lm.py</code></summary>
+          <div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+             <span class="c1"># input_str: Optional[str] = '',</span>
+             <span class="n">input_tokens</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+             <span class="c1"># attribution: Optional[bool] = True,</span>
+             <span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Run a forward pass through the model. For when we don't care about output tokens.</span>
+<span class="sd">    Currently only support activations collection. No attribution/saliency.</span>
+
+<span class="sd">    Usage:</span>
+
+<span class="sd">    ```python</span>
+<span class="sd">    inputs = lm.tokenizer("Hello computer", return_tensors="pt")</span>
+<span class="sd">    output = lm(inputs)</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_tokens: tuple returned by tokenizer( TEXT, return_tensors="pt").</span>
+<span class="sd">            contains key 'input_ids', its value tensor with input token ids.</span>
+<span class="sd">            Shape is (batch_size, sequence_length).</span>
+<span class="sd">            Also a key for masked tokens</span>
+<span class="sd">        attribution: Flag indicating whether to calculate attribution/saliency</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">input_tokens</span><span class="p">,</span> <span class="s1">'input_ids'</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Parameter 'input_tokens' needs to have the attribute 'input_ids'."</span>
+                         <span class="s2">"Verify it was produced by the appropriate tokenizer with the "</span>
+                         <span class="s2">"parameter return_tensors=</span><span class="se">\"</span><span class="s2">pt</span><span class="se">\"</span><span class="s2">."</span><span class="p">)</span>
+
+    <span class="c1"># Move inputs to GPU if the model is on GPU</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"cuda"</span> <span class="ow">and</span> <span class="n">input_tokens</span><span class="p">[</span><span class="s1">'input_ids'</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"cpu"</span><span class="p">:</span>
+        <span class="n">input_tokens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">input_tokens</span><span class="p">)</span>
+
+    <span class="c1"># Remove downstream. For now setting to batch length</span>
+    <span class="n">n_input_tokens</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_tokens</span><span class="p">[</span><span class="s1">'input_ids'</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+    <span class="c1"># self.attributions = {}</span>
+
+    <span class="c1"># model</span>
+    <span class="k">if</span> <span class="s1">'bert'</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">input_tokens</span><span class="p">,</span> <span class="n">return_dict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">lm_head</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">input_tokens</span><span class="p">,</span> <span class="n">return_dict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">predict</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">logits</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">predict</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:,</span> <span class="p">:]</span>
+        <span class="n">lm_head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">lm_head</span>
+
+    <span class="c1"># Turn activations from dict to a proper array</span>
+    <span class="n">activations_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_all_activations_dict</span>
+    <span class="k">if</span> <span class="n">activations_dict</span> <span class="o">!=</span> <span class="p">{}:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">activations</span> <span class="o">=</span> <span class="n">activations_dict_to_array</span><span class="p">(</span><span class="n">activations_dict</span><span class="p">)</span>
+
+    <span class="n">hidden_states</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="s2">"hidden_states"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">input_tokens</span><span class="p">[</span><span class="s1">'input_ids'</span><span class="p">]:</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">convert_ids_to_tokens</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">tokens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+
+    <span class="n">attn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="s2">"attentions"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">OutputSeq</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s1">'tokenizer'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">,</span>
+                        <span class="s1">'token_ids'</span><span class="p">:</span> <span class="n">input_tokens</span><span class="p">[</span><span class="s1">'input_ids'</span><span class="p">],</span>
+                        <span class="s1">'n_input_tokens'</span><span class="p">:</span> <span class="n">n_input_tokens</span><span class="p">,</span>
+                        <span class="c1"># 'output_text': self.tokenizer.decode(input_ids),</span>
+                        <span class="s1">'tokens'</span><span class="p">:</span> <span class="n">tokens</span><span class="p">,</span>
+                        <span class="s1">'hidden_states'</span><span class="p">:</span> <span class="n">hidden_states</span><span class="p">,</span>
+                        <span class="s1">'attention'</span><span class="p">:</span> <span class="n">attn</span><span class="p">,</span>
+                        <span class="c1"># 'model_outputs': outputs,</span>
+                        <span class="c1"># 'attribution': attributions,</span>
+                        <span class="s1">'activations'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">activations</span><span class="p">,</span>
+                        <span class="s1">'collect_activations_layer_nums'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">collect_activations_layer_nums</span><span class="p">,</span>
+                        <span class="s1">'lm_head'</span><span class="p">:</span> <span class="n">lm_head</span><span class="p">,</span>
+                        <span class="s1">'device'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">})</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
+<h2 class="doc doc-heading" id="ecco.lm.LM.__init__">
+
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">collect_activations_flag</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">collect_activations_layer_nums</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">gpu</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+      </h2>
+<div class="doc doc-contents ">
+<p>Creates an LM object given a model and tokenizer.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td><code>PreTrainedModel</code></td>
+<td>
+<p>HuggingFace Transformers Pytorch language model.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>tokenizer</code></td>
+<td><code>PreTrainedTokenizerFast</code></td>
+<td>
+<p>The tokenizer associated with the model</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>model_name</code></td>
+<td><code>str</code></td>
+<td>
+<p>The name of the model. Used to retrieve required settings (like what the embedding layer is called)</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>collect_activations_flag</code></td>
+<td><code>Optional[bool]</code></td>
+<td>
+<p>True if we want to collect activations</p>
+</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>collect_activations_layer_nums</code></td>
+<td><code>Optional[List[int]]</code></td>
+<td>
+<p>If collecting activations, we can use this parameter to indicate which layers
+to track. By default this would be None and we'd collect activations for all layers.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>verbose</code></td>
+<td><code>Optional[bool]</code></td>
+<td>
+<p>If True, model.generate() displays output tokens in HTML as they're generated.</p>
+</td>
+<td><code>True</code></td>
+</tr>
+<tr>
+<td><code>gpu</code></td>
+<td><code>Optional[bool]</code></td>
+<td>
+<p>Set to False to force using the CPU even if a GPU exists.</p>
+</td>
+<td><code>True</code></td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+          <summary>Source code in <code>ecco\lm.py</code></summary>
+          <div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+             <span class="n">model</span><span class="p">:</span> <span class="n">transformers</span><span class="o">.</span><span class="n">PreTrainedModel</span><span class="p">,</span>
+             <span class="n">tokenizer</span><span class="p">:</span> <span class="n">transformers</span><span class="o">.</span><span class="n">PreTrainedTokenizerFast</span><span class="p">,</span>
+             <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+             <span class="n">collect_activations_flag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+             <span class="n">collect_activations_layer_nums</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># None --&gt; collect for all layers</span>
+             <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+             <span class="n">gpu</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+             <span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Creates an LM object given a model and tokenizer.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: HuggingFace Transformers Pytorch language model.</span>
+<span class="sd">        tokenizer: The tokenizer associated with the model</span>
+<span class="sd">        model_name: The name of the model. Used to retrieve required settings (like what the embedding layer is called)</span>
+<span class="sd">        collect_activations_flag: True if we want to collect activations</span>
+<span class="sd">        collect_activations_layer_nums: If collecting activations, we can use this parameter to indicate which layers</span>
+<span class="sd">            to track. By default this would be None and we'd collect activations for all layers.</span>
+<span class="sd">        verbose: If True, model.generate() displays output tokens in HTML as they're generated.</span>
+<span class="sd">        gpu: Set to False to force using the CPU even if a GPU exists.</span>
+<span class="sd">    """</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="n">model_name</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="ow">and</span> <span class="n">gpu</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">'cuda'</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s1">'cuda'</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> \
+                            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">'cuda'</span> \
+        <span class="k">else</span> <span class="s1">'cpu'</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">tokenizer</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">ecco</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span>
+
+
+    <span class="c1"># Neuron Activation</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">collect_activations_flag</span> <span class="o">=</span> <span class="n">collect_activations_flag</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">collect_activations_layer_nums</span> <span class="o">=</span> <span class="n">collect_activations_layer_nums</span>
+
+    <span class="c1"># For each model, this indicates the layer whose activations</span>
+    <span class="c1"># we will collect</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">,</span> <span class="s2">"model-config.yaml"</span><span class="p">)))</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_config</span> <span class="o">=</span> <span class="n">configs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_config</span><span class="p">[</span><span class="s1">'embedding'</span><span class="p">]</span>
+        <span class="n">embeddings_layer_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_config</span><span class="p">[</span><span class="s1">'embedding'</span><span class="p">]</span>
+        <span class="n">embed_retriever</span> <span class="o">=</span> <span class="n">attrgetter</span><span class="p">(</span><span class="n">embeddings_layer_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_embeddings</span> <span class="o">=</span> <span class="n">embed_retriever</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collect_activations_layer_name_sig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_config</span><span class="p">[</span><span class="s1">'activations'</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+               <span class="sa">f</span><span class="s2">"The model '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">' is not defined in Ecco's 'model-config.yaml' file and"</span>
+               <span class="sa">f</span><span class="s2">" so is not explicitly supported yet. Supported models are:"</span><span class="p">,</span>
+               <span class="nb">list</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span> <span class="kn">from</span> <span class="nn">KeyError</span><span class="p">()</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_hooks</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_attach_hooks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+<div class="doc doc-object doc-method">
+<h2 class="doc doc-heading" id="ecco.lm.LM.generate">
+
+<code class="highlight language-python"><span class="n">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_str</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">top_p</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_model_output</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">do_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attribution</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">generate</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+      </h2>
+<div class="doc doc-contents ">
+<p>Generate tokens in response to an input prompt.
+Works with Language models like GPT2, not masked language models like BERT.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>input_str</code></td>
+<td><code>str</code></td>
+<td>
+<p>Input prompt.</p>
+</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>generate</code></td>
+<td><code>Optional[int]</code></td>
+<td>
+<p>Number of tokens to generate.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>max_length</code></td>
+<td><code>Optional[int]</code></td>
+<td>
+<p>max length of sequence (input + output tokens)</p>
+</td>
+<td><code>8</code></td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td><code>Optional[float]</code></td>
+<td>
+<p>Adjust the probability distibution of output candidate tokens.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>top_k</code></td>
+<td><code>Optional[int]</code></td>
+<td>
+<p>Specify top-k tokens to consider in decoding. Only used when do_sample is True.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>top_p</code></td>
+<td><code>Optional[float]</code></td>
+<td>
+<p>Specify top-p to consider in decoding. Only used when do_sample is True.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>get_model_output</code></td>
+<td><code>Optional[bool]</code></td>
+<td>
+<p>Flag to retrieve the final output object returned by the underlying language model.</p>
+</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>do_sample</code></td>
+<td><code>Optional[bool]</code></td>
+<td>
+<p>Decoding parameter. If set to False, the model always always
+chooses the highest scoring candidate output
+token. This may lead to repetitive text. If set to True, the model considers
+consults top_k and/or top_p to generate more itneresting output.</p>
+</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>attribution</code></td>
+<td><code>Optional[bool]</code></td>
+<td>
+<p>If True, the object will calculate input saliency/attribution.</p>
+</td>
+<td><code>True</code></td>
+</tr>
+</tbody>
+</table>
+<details class="quote">
+          <summary>Source code in <code>ecco\lm.py</code></summary>
+          <div class="highlight">
+<pre><span></span><code><span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+             <span class="n">max_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+             <span class="n">temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">top_k</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">top_p</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">get_model_output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+             <span class="n">do_sample</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">attribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+             <span class="n">generate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Generate tokens in response to an input prompt.</span>
+<span class="sd">    Works with Language models like GPT2, not masked language models like BERT.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        input_str: Input prompt.</span>
+<span class="sd">        generate: Number of tokens to generate.</span>
+<span class="sd">        max_length: max length of sequence (input + output tokens)</span>
+<span class="sd">        temperature: Adjust the probability distibution of output candidate tokens.</span>
+<span class="sd">        top_k: Specify top-k tokens to consider in decoding. Only used when do_sample is True.</span>
+<span class="sd">        top_p: Specify top-p to consider in decoding. Only used when do_sample is True.</span>
+<span class="sd">        get_model_output:  Flag to retrieve the final output object returned by the underlying language model.</span>
+<span class="sd">        do_sample: Decoding parameter. If set to False, the model always always</span>
+<span class="sd">            chooses the highest scoring candidate output</span>
+<span class="sd">            token. This may lead to repetitive text. If set to True, the model considers</span>
+<span class="sd">            consults top_k and/or top_p to generate more itneresting output.</span>
+<span class="sd">        attribution: If True, the object will calculate input saliency/attribution.</span>
+<span class="sd">    """</span>
+    <span class="n">top_k</span> <span class="o">=</span> <span class="n">top_k</span> <span class="k">if</span> <span class="n">top_k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">top_k</span>
+    <span class="n">top_p</span> <span class="o">=</span> <span class="n">top_p</span> <span class="k">if</span> <span class="n">top_p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">top_p</span>
+    <span class="n">temperature</span> <span class="o">=</span> <span class="n">temperature</span> <span class="k">if</span> <span class="n">temperature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="n">do_sample</span> <span class="o">=</span> <span class="n">do_sample</span> <span class="k">if</span> <span class="n">do_sample</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">task_specific_params</span><span class="p">[</span><span class="s1">'text-generation'</span><span class="p">][</span>
+        <span class="s1">'do_sample'</span><span class="p">]</span>
+
+    <span class="c1"># We needs this as a batch in order to collect activations.</span>
+    <span class="n">input_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">(</span><span class="n">input_str</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">"pt"</span><span class="p">)[</span><span class="s1">'input_ids'</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">n_input_tokens</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)</span>
+    <span class="n">cur_len</span> <span class="o">=</span> <span class="n">n_input_tokens</span>
+
+    <span class="k">if</span> <span class="n">generate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">max_length</span> <span class="o">=</span> <span class="n">n_input_tokens</span> <span class="o">+</span> <span class="n">generate</span>
+
+    <span class="n">past</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">attributions</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">cur_len</span> <span class="o">&gt;=</span> <span class="n">max_length</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+               <span class="s2">"max_length set to </span><span class="si">{}</span><span class="s2"> while input token has more tokens (</span><span class="si">{}</span><span class="s2">). Consider increasing max_length"</span> \
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">max_length</span><span class="p">,</span> <span class="n">cur_len</span><span class="p">))</span>
+
+    <span class="c1"># Print output</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+        <span class="n">viz_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_input_sequence</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">cur_len</span> <span class="o">&lt;</span> <span class="n">max_length</span><span class="p">:</span>
+        <span class="n">output_token_id</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_token</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span>
+                                                       <span class="n">past</span><span class="p">,</span>
+                                                       <span class="c1"># Note, this is not currently used</span>
+                                                       <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span>
+                                                       <span class="n">top_k</span><span class="o">=</span><span class="n">top_k</span><span class="p">,</span> <span class="n">top_p</span><span class="o">=</span><span class="n">top_p</span><span class="p">,</span>
+                                                       <span class="n">do_sample</span><span class="o">=</span><span class="n">do_sample</span><span class="p">,</span>
+                                                       <span class="n">attribution_flag</span><span class="o">=</span><span class="n">attribution</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">get_model_output</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="n">input_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">output_token_id</span><span class="p">])])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">display_token</span><span class="p">(</span><span class="n">viz_id</span><span class="p">,</span>
+                               <span class="n">output_token_id</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
+                               <span class="n">cur_len</span><span class="p">)</span>
+        <span class="n">cur_len</span> <span class="o">=</span> <span class="n">cur_len</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">output_token_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">eos_token_id</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="c1"># Turn activations from dict to a proper array</span>
+    <span class="n">activations_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_all_activations_dict</span>
+
+    <span class="k">if</span> <span class="n">activations_dict</span> <span class="o">!=</span> <span class="p">{}:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">activations</span> <span class="o">=</span> <span class="n">activations_dict_to_array</span><span class="p">(</span><span class="n">activations_dict</span><span class="p">)</span>
+
+    <span class="n">hidden_states</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="s2">"hidden_states"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">input_ids</span><span class="p">:</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">([</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">tokens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+
+    <span class="n">attributions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributions</span>
+    <span class="n">attn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="s2">"attentions"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">OutputSeq</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s1">'tokenizer'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">,</span>
+                        <span class="s1">'token_ids'</span><span class="p">:</span> <span class="n">input_ids</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="c1"># Add a batch dimension</span>
+                        <span class="s1">'n_input_tokens'</span><span class="p">:</span> <span class="n">n_input_tokens</span><span class="p">,</span>
+                        <span class="s1">'output_text'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">input_ids</span><span class="p">),</span>
+                        <span class="s1">'tokens'</span><span class="p">:</span> <span class="p">[</span><span class="n">tokens</span><span class="p">],</span> <span class="c1"># Add a batch dimension</span>
+                        <span class="s1">'hidden_states'</span><span class="p">:</span> <span class="n">hidden_states</span><span class="p">,</span>
+                        <span class="s1">'attention'</span><span class="p">:</span> <span class="n">attn</span><span class="p">,</span>
+                        <span class="s1">'model_outputs'</span><span class="p">:</span> <span class="n">outputs</span><span class="p">,</span>
+                        <span class="s1">'attribution'</span><span class="p">:</span> <span class="n">attributions</span><span class="p">,</span>
+                        <span class="s1">'activations'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">activations</span><span class="p">,</span>
+                        <span class="s1">'collect_activations_layer_nums'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">collect_activations_layer_nums</span><span class="p">,</span>
+                        <span class="s1">'lm_head'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">lm_head</span><span class="p">,</span>
+                        <span class="s1">'device'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">})</span>
+</code></pre>
+</div>
+</details>
+</div>
+</div>
+</div>
+</div>
+</div>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../ecco/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Ecco
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../output/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Output
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/vendor.18f0862e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.994580cf.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      
+      <script>
+        app = initialize({
+          base: "../..",
+          features: [],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.9c0e82ba.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+    
+  </body>
+</html>
