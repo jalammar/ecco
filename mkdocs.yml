@@ -7,7 +7,6 @@ plugins:
 - mkdocstrings:
     watch:
       - src/ecco
-
     handlers:
       python:
         setup_commands:
