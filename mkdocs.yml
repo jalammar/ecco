@@ -8,6 +8,11 @@ plugins:
     watch:
       - src/ecco
 
+    handlers:
+      python:
+        setup_commands:
+          - import ecco
+
 nav:
   - Home: index.md
   - Architecture: architecture.md
@@ -15,6 +20,7 @@ nav:
       - Ecco: api/ecco.md
       - Language Model: api/language-model.md
       - Output: api/output.md
+      - NMF: api/nmf.md
 
 markdown_extensions:
   - pymdownx.highlight
