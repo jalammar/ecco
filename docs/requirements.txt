@@ -3,3 +3,4 @@ mkdocs-material==6.2.8
 mkdocstrings==0.14.0
 -f https://download.pytorch.org/whl/torch_stable.html
 torch~=1.6.0
+transformers~=4.2.2
