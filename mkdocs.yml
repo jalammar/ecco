@@ -10,7 +10,8 @@ plugins:
     handlers:
       python:
         setup_commands:
-          - import ecco
+#          - import ecco
+          - import sys
           - sys.path.append("src")
 
 nav:
