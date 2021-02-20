@@ -108,8 +108,6 @@ class TestOutput:
         output = lm.generate('test', generate=1)
         nmf = output.run_nmf()
         exp = nmf.explore(printJson=True)
-        print('gpt', output.activations.shape)
-        print(np.array(exp['factors']).shape)
 
         assert len(exp['tokens']) == 2 # input & output tokens
         # 1 redundant dimension, 1 generation /factor, 2 tokens.

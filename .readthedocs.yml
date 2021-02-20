@@ -6,5 +6,5 @@
 version: 2
 
 # Build documentation
-mdocs:
+mkdocs:
   configuration: mkdocs.yml
