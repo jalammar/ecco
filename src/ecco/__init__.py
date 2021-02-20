@@ -9,8 +9,6 @@ Usage:
 
     lm = ecco.from_pretrained('distilgpt2')
 ```
-
-
 """
 
 

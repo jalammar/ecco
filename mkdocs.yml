@@ -11,6 +11,7 @@ plugins:
       python:
         setup_commands:
           - import ecco
+          - sys.path.append("src")
 
 nav:
   - Home: index.md
