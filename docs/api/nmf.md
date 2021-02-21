@@ -3,6 +3,7 @@ Large language models can have up to billions of neurons. Direct examination of 
 
 [Matrix decomposition](https://scikit-learn.org/stable/modules/decomposition.html) methods can give us a glimpse into the underlying patterns in neuron firing. From these methods, Ecco currently provides easy access to Non-negative Matrix Factorization (NMF).
 
+![NMF Example](img/nmf_ex_1.png)
 ## NMF
 
 ::: ecco.output.NMF
