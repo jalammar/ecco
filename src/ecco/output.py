@@ -199,7 +199,7 @@ output.saliency()
 ```
 
 Which creates the following interactive explorable:
-![input saliency example 1](/img/saliency_ex_1.png)
+![input saliency example 1](../../img/saliency_ex_1.png)
 
 If we want more details on the saliency values, we can use the detailed view:
 
@@ -210,7 +210,7 @@ output.saliency(style="detailed")
 
 Which creates the following interactive explorable:
 
-![input saliency example 2 - detailed](/img/saliency_ex_2.png)
+![input saliency example 2 - detailed](../../img/saliency_ex_2.png)
 
 
 Details:
@@ -304,7 +304,7 @@ the tokens in the sequence.
         Visualization plotting the topk predicted tokens after each layer (using its hidden state).
 
         Example:
-        ![prediction scores](/img/layer_predictions_ex_london.png)
+        ![prediction scores](../../img/layer_predictions_ex_london.png)
 
         Args:
             position: The index of the output token to trace
@@ -387,7 +387,7 @@ the tokens in the sequence.
         Plots the rankings (across layers) of the tokens the model selected.
         Each column is a position in the sequence. Each row is a layer.
 
-        ![Rankings watch](/img/rankings_ex_eu_1.png)
+        ![Rankings watch](../../img/rankings_ex_eu_1.png)
         """
 
         hidden_states = self.hidden_states
@@ -442,7 +442,7 @@ the tokens in the sequence.
         Plots the rankings of the tokens whose ids are supplied in the watch list.
         Only considers one position.
 
-        ![Rankings plot](/img/ranking_watch_ex_is_are_1.png)
+        ![Rankings plot](../../img/ranking_watch_ex_is_are_1.png)
         """
         if position != -1:
             position = position - 1  # e.g. position 5 corresponds to activation 4
@@ -567,14 +567,20 @@ class NMF:
                  collect_activations_layer_nums: Optional[List[int]] = None,
                  **kwargs):
         """
+        Receives a neuron activations tensor from OutputSeq and decomposes it using NMF into the number
+        of components specified by `n_components`. For example, a model like `distilgpt2` has 18,000+
+        neurons. Using NMF to reduce them to 32 components can reveal interesting underlying firing
+        patterns.
+
         Args:
-            activations:
-            n_input_tokens:
-            token_ids:
-            _path:
-            n_components:
-            tokens:
-            collect_activations_layer_nums:
+            activations: Activations tensor. Dimensions: (batch, layer, neuron, position)
+            n_input_tokens: Number of input tokens.
+            token_ids: List of tokens ids.
+            _path: Disk path to find javascript that create interactive explorables
+            n_components: Number of components/factors to reduce the neuron factors to.
+            tokens: The text of each token.
+            collect_activations_layer_nums: The list of layer ids whose activtions were collected. If
+            None, then all layers were collected.
             """
 
         if activations == []:
@@ -594,11 +600,7 @@ class NMF:
                                               collect_activations_layer_nums)
         # 'merged_act' is now ( neuron (and layer), position (and batch) )
 
-        # DELETE: This dimension was added back when we wanted a model for each layer.
-        # Should delete from both here and eccojs
-        # activations = np.expand_dims(merged_act, axis=0)
         activations = merged_act
-        # print('nmf activations: ', activations.shape)
 
         self.tokens = tokens
         # Run NMF. 'activations' is neuron activations shaped (neurons (and layers), positions (and batches))
@@ -611,7 +613,6 @@ class NMF:
         # Get rid of negative activation values
         # (There are some, because GPT2 uses GELU, which allow small negative values)
         self.activations = np.maximum(activations, 0).T
-        # print(activations.shape)
 
         self.model = decomposition.NMF(n_components=n_components,
                                   init='random',
@@ -685,6 +686,9 @@ class NMF:
     def explore(self, input_sequence: int = 0, **kwargs):
         """
         Show interactive explorable for a single sequence with sparklines to isolate factors.
+
+        Example:
+            ![NMF Example](img/nmf_ex_1.png)
         Args:
             input_sequence: Which sequence in the batch to show.
         """
