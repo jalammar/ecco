@@ -688,7 +688,7 @@ class NMF:
         Show interactive explorable for a single sequence with sparklines to isolate factors.
 
         Example:
-            ![NMF Example](img/nmf_ex_1.png)
+            ![NMF Example](../../img/nmf_ex_1.png)
         Args:
             input_sequence: Which sequence in the batch to show.
         """
