@@ -8,7 +8,9 @@ Ecco runs inside Jupyter notebooks. It is built on top of [pytorch](https://pyto
 Ecco is not concerned with training or fine-tuning models. Only exploring and understanding existing pre-trained models.
 
 ## Tutorials
-- Video: [Take A Look Inside Language Models With Ecco](https://www.youtube.com/watch?v=rHrItfNeuh0)
+- Video: [Take A Look Inside Language Models With Ecco](https://www.youtube.com/watch?v=rHrItfNeuh0). \[<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Language_Models_and_Ecco_PyData_Khobar.ipynb">Colab Notebook</a>]
+
+
 
 ## How-to Guides
 - [Interfaces for Explaining Transformer Language Models](https://jalammar.github.io/explaining-transformers/)
@@ -22,24 +24,26 @@ The [API reference](api/ecco) and the [architecture](architecture) page explain 
 
 <div class="container gallery" markdown="1">
 
-<p><strong>Predicted Tokens:</strong> View the model's prediction for the next token (with probability scores). See how the predictions evolved through the model's layers. [<a href="">Notebook</a>] [<a href="">Colab</a>]</p>
+<p><strong>Predicted Tokens:</strong> View the model's prediction for the next token (with probability scores). See how the predictions evolved through the model's layers. [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Output_Token_Scores.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Output_Token_Scores.ipynb">Colab</a>]</p>
 <img src="img/layer_predictions_ex_london.png" />
-
-<p><strong>Rankings across layers:</strong> After the model picks an output token, Look back at how each layer ranked that token.  [<a href="">Notebook</a>] [<a href="">Colab</a>]</p>
+<hr />
+<p><strong>Rankings across layers:</strong> After the model picks an output token, Look back at how each layer ranked that token.  [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Evolution_of_Selected_Token.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Evolution_of_Selected_Token.ipynb">Colab</a>]</p>
 <img src="img/rankings_ex_eu_1_widethumb.png" />
-
-<p><strong>Layer Predictions:</strong>Compare the rankings of multiple tokens as candidates for a certain position in the sequence.  [<a href="">Notebook</a>] [<a href="">Colab</a>]</p>
+<hr />
+<p><strong>Layer Predictions:</strong>Compare the rankings of multiple tokens as candidates for a certain position in the sequence.  [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Comparing_Token_Rankings.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Comparing_Token_Rankings.ipynb">Colab</a>]</p>
 <img src="img/rankings_watch_ex_is_are_widethumb.png" />
-<br />
-<p><strong>Input Saliency:</strong> How much did each input token contribute to producing the output token?  [<a href="">Notebook</a>] [<a href="">Colab</a>]
+<hr />
+<p><strong>Input Saliency:</strong> How much did each input token contribute to producing the output token?   [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Colab</a>]
 </p>
 <img src="img/saliency_ex_1_thumbwide.png" />
 
-<p><strong>Detailed Saliency:</strong> See more precise input saliency values using the detailed view. [<a href="">Notebook</a>] [<a href="">Colab</a>]
+<hr />
+<p><strong>Detailed Saliency:</strong> See more precise input saliency values using the detailed view. [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Colab</a>]
 </p>
 <img src="img/saliency_ex_2_thumbwide.png" />
 
-<p><strong>Neuron Activation Analysis:</strong> Examine underlying patterns in neuron activations using non-negative matrix factorization. [<a href="">Notebook</a>] [<a href="">Colab</a>]</p>
+<hr />
+<p><strong>Neuron Activation Analysis:</strong> Examine underlying patterns in neuron activations using non-negative matrix factorization. [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Neuron_Factors.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Neuron_Factors.ipynb">Colab</a>]</p>
 <img src="img/nmf_ex_1_widethumb.png" />
 
 </div>
