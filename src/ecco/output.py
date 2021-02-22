@@ -103,11 +103,11 @@ class OutputSeq:
     def explorable(self, printJson: Optional[bool] = False):
 
         tokens = []
-        for idx, token in enumerate(self.tokens):
+        for idx, token in enumerate(self.tokens[0]):
             type = "input" if idx < self.n_input_tokens else 'output'
 
             tokens.append({'token': token,
-                           'token_id': int(self.token_ids[idx]),
+                           'token_id': int(self.token_ids[0][idx]),
                            'type': type
                            })
 
@@ -181,7 +181,6 @@ class OutputSeq:
 
     def saliency(self, attr_method: Optional[str] = 'grad_x_input', style="minimal", **kwargs):
         """
-
 Explorable showing saliency of each token generation step.
 Hovering-over or tapping an output token imposes a saliency map on other tokens
 showing their importance as features to that prediction.
@@ -224,7 +223,7 @@ the tokens in the sequence.
         importance_id = position - self.n_input_tokens
         tokens = []
         attribution = self.attribution[attr_method]
-        for idx, token in enumerate(self.tokens):
+        for idx, token in enumerate(self.tokens[0]):
             type = "input" if idx < self.n_input_tokens else 'output'
             if idx < len(attribution[importance_id]):
                 imp = attribution[importance_id][idx]
@@ -232,7 +231,7 @@ the tokens in the sequence.
                 imp = 0
 
             tokens.append({'token': token,
-                           'token_id': int(self.token_ids[idx]),
+                           'token_id': int(self.token_ids[0][idx]),
                            'type': type,
                            'value': str(imp),  # because json complains of floats
                            'position': idx
@@ -410,7 +409,7 @@ the tokens in the sequence.
                 sorted = torch.argsort(logits)
                 # What token was sampled in this position?
 
-                token_id = torch.tensor(self.token_ids[self.n_input_tokens + j])
+                token_id = torch.tensor(self.token_ids[0][self.n_input_tokens + j])
                 # token_id = self.token_ids.clone().detach()[self.n_input_tokens + j]
                 # What's the index of the sampled token in the sorted list?
                 r = torch.nonzero((sorted == token_id)).flatten()
@@ -419,11 +418,11 @@ the tokens in the sequence.
                 token = self.tokenizer.decode([token_id])
                 predicted_tokens[i, j] = token
                 rankings[i, j] = int(ranking)
-                if token_id == self.token_ids[j + 1]:
+                if token_id == self.token_ids[0][j + 1]:
                     token_found_mask[i, j] = 0
 
-        input_tokens = [repr(t) for t in self.tokens[self.n_input_tokens - 1:-1]]
-        output_tokens = [repr(t) for t in self.tokens[self.n_input_tokens:]]
+        input_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens - 1:-1]]
+        output_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens:]]
         lm_plots.plot_inner_token_rankings(input_tokens,
                                            output_tokens,
                                            rankings,
@@ -446,7 +445,6 @@ the tokens in the sequence.
         """
         if position != -1:
             position = position - 1  # e.g. position 5 corresponds to activation 4
-
 
         hidden_states = self.hidden_states
 
@@ -473,7 +471,7 @@ the tokens in the sequence.
                 ranking = sorted.shape[0] - r
                 rankings[i, j] = int(ranking)
 
-        input_tokens = [t for t in self.tokens]
+        input_tokens = [t for t in self.tokens[0]]
         output_tokens = [repr(self.tokenizer.decode(t)) for t in watch]
 
         lm_plots.plot_inner_token_rankings_watch(input_tokens,

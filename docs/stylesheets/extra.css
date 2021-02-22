@@ -1,0 +1,7 @@
+
+.gallery{
+    font-size:80%;
+}
+.gallery img{
+    max-width: 400px;
+}

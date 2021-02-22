@@ -144,10 +144,10 @@ def output_seq_1():
             return ''
 
     output_1 = output.OutputSeq(**{'tokenizer': MockTokenizer(),
-                                   'token_ids': [352, 11, 352, 11, 362],
+                                   'token_ids': [[352, 11, 352, 11, 362]],
                                    'n_input_tokens': 4,
                                    'output_text': ' 1, 1, 2',
-                                   'tokens': [' 1', ',', ' 1', ',', ' 2'],
+                                   'tokens': [[' 1', ',', ' 1', ',', ' 2']],
                                    'hidden_states': [torch.rand(4, 768) for i in range(7)],
                                    'attention': None,
                                    'model_outputs': None,

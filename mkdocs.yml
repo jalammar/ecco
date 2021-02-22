@@ -2,6 +2,13 @@ site_name: Ecco
 
 theme:
   name: "material"
+  logo: img/eccorca_white.png
+  favicon: img/eccorca_purple.png
+  palette:
+    primary: purple
+    accent: pink
+extra_css:
+  - stylesheets/extra.css
 
 plugins:
 - mkdocstrings:
