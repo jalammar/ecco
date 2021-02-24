@@ -37,23 +37,23 @@ The [API reference](api/ecco) and the [architecture](architecture) page explain 
 <img src="docs/img/layer_predictions_ex_london.png" width="400" />
 <hr />
 <p><strong>Rankings across layers:</strong> After the model picks an output token, Look back at how each layer ranked that token.  [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Evolution_of_Selected_Token.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Evolution_of_Selected_Token.ipynb">Colab</a>]</p>
-<img src="docs/img/rankings_ex_eu_1_widethumb.png" />
+<img src="docs/img/rankings_ex_eu_1_widethumb.png" width="400"/>
 <hr />
 <p><strong>Layer Predictions:</strong>Compare the rankings of multiple tokens as candidates for a certain position in the sequence.  [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Comparing_Token_Rankings.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Comparing_Token_Rankings.ipynb">Colab</a>]</p>
-<img src="docs/img/rankings_watch_ex_is_are_widethumb.png" />
+<img src="docs/img/rankings_watch_ex_is_are_widethumb.png" width="400" />
 <hr />
 <p><strong>Input Saliency:</strong> How much did each input token contribute to producing the output token?   [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Colab</a>]
 </p>
-<img src="docs/img/saliency_ex_1_thumbwide.png" />
+<img src="docs/img/saliency_ex_1_thumbwide.png" width="400"/>
 
 <hr />
 <p><strong>Detailed Saliency:</strong> See more precise input saliency values using the detailed view. [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Colab</a>]
 </p>
-<img src="docs/img/saliency_ex_2_thumbwide.png" />
+<img src="docs/img/saliency_ex_2_thumbwide.png" width="400"/>
 
 <hr />
 <p><strong>Neuron Activation Analysis:</strong> Examine underlying patterns in neuron activations using non-negative matrix factorization. [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Neuron_Factors.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Neuron_Factors.ipynb">Colab</a>]</p>
-<img src="docs/img/nmf_ex_1_widethumb.png" />
+<img src="docs/img/nmf_ex_1_widethumb.png" width="400"/>
 
 </div>
 
