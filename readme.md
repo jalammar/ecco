@@ -34,7 +34,7 @@ The [API reference](api/ecco) and the [architecture](architecture) page explain 
 <div class="container gallery" markdown="1">
 
 <p><strong>Predicted Tokens:</strong> View the model's prediction for the next token (with probability scores). See how the predictions evolved through the model's layers. [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Output_Token_Scores.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Output_Token_Scores.ipynb">Colab</a>]</p>
-<img src="docs/img/layer_predictions_ex_london.png" style="max-width: 400px" />
+<img src="docs/img/layer_predictions_ex_london.png" width="400" />
 <hr />
 <p><strong>Rankings across layers:</strong> After the model picks an output token, Look back at how each layer ranked that token.  [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Evolution_of_Selected_Token.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Evolution_of_Selected_Token.ipynb">Colab</a>]</p>
 <img src="docs/img/rankings_ex_eu_1_widethumb.png" />
