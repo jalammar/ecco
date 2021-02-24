@@ -14,6 +14,9 @@ Ecco runs inside Jupyter notebooks. It is built on top of [pytorch](https://pyto
 Ecco is not concerned with training or fine-tuning models. Only exploring and understanding existing pre-trained models. The library is currently an alpha release of a research project. Not production ready. You're welcome to contribute to make it better!
 
 
+Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
+
+
 ## Tutorials
 - Video: [Take A Look Inside Language Models With Ecco](https://www.youtube.com/watch?v=rHrItfNeuh0). \[<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Language_Models_and_Ecco_PyData_Khobar.ipynb">Colab Notebook</a>]
 
@@ -26,12 +29,12 @@ Ecco is not concerned with training or fine-tuning models. Only exploring and un
 ## API Reference
 The [API reference](api/ecco) and the [architecture](architecture) page explain Ecco's components and how they work together.
 
-## Gallery
+## Gallery & Examples
 
 <div class="container gallery" markdown="1">
 
 <p><strong>Predicted Tokens:</strong> View the model's prediction for the next token (with probability scores). See how the predictions evolved through the model's layers. [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Output_Token_Scores.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Output_Token_Scores.ipynb">Colab</a>]</p>
-<img src="docs/img/layer_predictions_ex_london.png" />
+<img src="docs/img/layer_predictions_ex_london.png" style="max-width: 400px" />
 <hr />
 <p><strong>Rankings across layers:</strong> After the model picks an output token, Look back at how each layer ranked that token.  [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Evolution_of_Selected_Token.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Evolution_of_Selected_Token.ipynb">Colab</a>]</p>
 <img src="docs/img/rankings_ex_eu_1_widethumb.png" />
