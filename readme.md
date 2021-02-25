@@ -27,7 +27,7 @@ Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
 
 
 ## API Reference
-The [API reference](api/ecco) and the [architecture](architecture) page explain Ecco's components and how they work together.
+The [API reference](https://ecco.readthedocs.io/en/main/api/ecco/) and the [architecture](https://ecco.readthedocs.io/en/main/architecture/) page explain Ecco's components and how they work together.
 
 ## Gallery & Examples
 
