@@ -25,7 +25,7 @@ def read(*names, **kwargs):
 
 setup(
     name='ecco',
-    version='0.0.13',
+    version='0.0.14',
     license='BSD-3-Clause',
     description='Visualization tools for NLP machine learning models.',
     long_description='%s\n%s' % (
@@ -66,7 +66,8 @@ setup(
     install_requires=[
         "transformers ~= 4.2",
         "seaborn ~= 0.11",
-        "scikit-learn~=0.23"
+        "scikit-learn~=0.23",
+        "PyYAML~=5.4"
     ],
     extras_require={
         "dev": [

@@ -1,5 +1,5 @@
 """
-Entrypoint module, in case you use `python -mecco`.
+Entrypoint module, in case you use `python -m ecco`.
 
 
 Why does this file exist, and why __main__? For more info, read:

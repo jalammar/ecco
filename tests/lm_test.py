@@ -1,15 +1,8 @@
-from ecco.lm import _one_hot, sample_output_token, activations_dict_to_array
+from ecco.lm import LM, _one_hot, sample_output_token, activations_dict_to_array
+import ecco
 import torch
 import numpy as np
-
-
-# @pytest.fixture
-# def mockLM():
-#     #setup
-#     class mockLM
-#     #yield
-#
-#     #teardown
+from transformers import PreTrainedModel
 
 
 class TestLM:
@@ -27,11 +20,45 @@ class TestLM:
         assert result == torch.tensor(2)
 
     def test_activations_dict_to_array(self):
-        dict = {0:[np.zeros((3,4))],
-                1:[np.zeros((3,4))]}
-        activations = activations_dict_to_array(dict)
-        assert activations.shape == (2,4,3)
+        batch, position, neurons = 1, 3, 4
+        actual_dict = {0: np.zeros((batch, position, neurons)),
+                       1: np.zeros((batch, position, neurons))}
+        activations = activations_dict_to_array(actual_dict)
+        assert activations.shape == (batch, 2, neurons, position)
 
+    def test_init(self):
+        lm = ecco.from_pretrained('sshleifer/tiny-gpt2', activations=True)
+
+        assert isinstance(lm.model, PreTrainedModel), "Model downloaded and LM was initialized successfully."
+
+    def test_generate(self):
+        lm = ecco.from_pretrained('sshleifer/tiny-gpt2',
+                                  activations=True,
+                                  verbose=False)
+        output = lm.generate('test', generate=1)
+        assert output.token_ids.shape == (1, 2), "Generated one token successfully"
+        assert output.attribution['grad_x_input'][0] == 1, "Successfully got an attribution value"
+        # Confirm activations is dimensions:
+        # (batch 1, layer 2, h_dimension 8, position 1)
+        assert output.activations.shape == (1, 2, 8, 1)
+
+    def test_call_dummy_bert(self):
+        lm = ecco.from_pretrained('julien-c/bert-xsmall-dummy',
+                                  activations=True,
+                                  verbose=False)
+        inputs = lm.to(lm.tokenizer(['test', 'hi'],
+                                    padding=True,
+                                    truncation=True,
+                                    return_tensors="pt",
+                                    max_length=512))
+        output = lm(inputs)
+        # Confirm it's (batch 2, layer 1, h_dimension 40, position 3)
+        # position is 3 because of [CLS] and [SEP]
+        # If we do require padding, this CUDA compains with this model for some reason.
+        assert output.activations.shape == (2, 1, 40, 3)
+
+
+    # TODO: Test LM Generate with Activation. Tweak to support batch dimension.
     # def test_generate_token_no_attribution(self, mocker):
     #     pass
     #

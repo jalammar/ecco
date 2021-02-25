@@ -5,6 +5,11 @@
 # Required
 version: 2
 
-# Build documentation in the docs/ directory with Sphinx
-sphinx:
-  configuration: docs/conf.py
+# Build documentation
+mkdocs:
+  configuration: mkdocs.yml
+
+python:
+   version: 3.8
+   install:
+   - requirements: docs/requirements.txt

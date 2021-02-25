@@ -3,7 +3,7 @@ import pytest
 import torch
 import numpy as np
 from ecco.output import NMF
-
+import ecco
 
 class TestOutput:
     def test_position_raises_value_error_more(self):
@@ -66,28 +66,75 @@ class TestOutput:
         assert isinstance(int(actual['rankings'][0][0]), int)
 
     def test_nmf_raises_activations_dimension_value_error(self):
-        with pytest.raises(ValueError, match=r".* three dimensions.*") as ex:
+        with pytest.raises(ValueError, match=r".* four dimensions.*") as ex:
             NMF(np.zeros(0),
                 n_components=2)
 
     def test_nmf_raises_value_error_same_layer(self):
         with pytest.raises(ValueError, match=r".* same value.*") as ex:
-            NMF(np.zeros((1, 1, 1)),
+            NMF(np.zeros((1, 1, 1, 1)),
                 n_components=2,
                 from_layer=0,
                 to_layer=0)
 
     def test_nmf_raises_value_error_layer_bounds(self):
         with pytest.raises(ValueError, match=r".* larger.*"):
-            NMF(np.zeros((1, 1, 1)),
+            NMF(np.zeros((1, 1, 1, 1)),
                 n_components=2,
                 from_layer=1,
                 to_layer=0)
 
-    # def test_rankings_watch_success_1(self, output_seq_1):
-    #     actual = output_seq_1.rankings_watch(watch=[0,1], printJson=True)
-    #     print(actual)
-    #     assert False
+    # NMF properly deals with collect_activations_layer_nums
+    def test_nmf_reshape_activations_1(self):
+        batch, layers, neurons, position = 1, 6, 128, 10
+        activations = np.ones((batch, layers, neurons, position))
+        merged_activations = NMF.reshape_activations(activations,
+                                                     None, None, None)
+        assert merged_activations.shape == (layers*neurons, batch*position)
+
+    # NMF properly deals with collect_activations_layer_nums
+    def test_nmf_reshape_activations_2(self):
+        batch, layers, neurons, position = 2, 6, 128, 10
+        activations = np.ones((batch, layers, neurons, position))
+        merged_activations = NMF.reshape_activations(activations,
+                                                     None, None, None)
+        assert merged_activations.shape == (layers*neurons, batch*position)
+
+
+    def test_nmf_explore_on_dummy_gpt(self):
+        lm = ecco.from_pretrained('sshleifer/tiny-gpt2',
+                                  activations=True,
+                                  verbose=False)
+        output = lm.generate('test', generate=1)
+        nmf = output.run_nmf()
+        exp = nmf.explore(printJson=True)
+
+        assert len(exp['tokens']) == 2 # input & output tokens
+        # 1 redundant dimension, 1 generation /factor, 2 tokens.
+        assert np.array(exp['factors']).shape == (1, 1, 2)
+
+    def test_nmf_explore_on_dummy_bert(self):
+        lm = ecco.from_pretrained('julien-c/bert-xsmall-dummy',
+                                  activations=True,
+                                  verbose=False)
+        inputs = lm.to(lm.tokenizer(['test', 'hi'],
+                                    padding=True,
+                                    truncation=True,
+                                    return_tensors="pt",
+                                    max_length=512))
+        output = lm(inputs)
+        nmf = output.run_nmf()
+        exp = nmf.explore(printJson=True)
+
+        assert len(exp['tokens']) == 3  # CLS UNK SEP
+        # 1 redundant dimension,6 factors, 6 tokens (a batch of two examples, 3 tokens each)
+        assert np.array(exp['factors']).shape == (1, 6, 6)
+
+    def test_nmf_output_dims(self):
+        pass
+    # 4d activations to 2d activations: one batch
+    # multiple batches
+    # one batch collect_activations_layer_nums
 
 
 @pytest.fixture
@@ -97,10 +144,10 @@ def output_seq_1():
             return ''
 
     output_1 = output.OutputSeq(**{'tokenizer': MockTokenizer(),
-                                   'token_ids': [352, 11, 352, 11, 362],
+                                   'token_ids': [[352, 11, 352, 11, 362]],
                                    'n_input_tokens': 4,
                                    'output_text': ' 1, 1, 2',
-                                   'tokens': [' 1', ',', ' 1', ',', ' 2'],
+                                   'tokens': [[' 1', ',', ' 1', ',', ' 2']],
                                    'hidden_states': [torch.rand(4, 768) for i in range(7)],
                                    'attention': None,
                                    'model_outputs': None,

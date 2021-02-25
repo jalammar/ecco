@@ -1,0 +1,35 @@
+site_name: Ecco
+
+theme:
+  name: "material"
+  logo: img/eccorca_white.png
+  favicon: img/eccorca_purple.png
+  palette:
+    primary: purple
+    accent: pink
+extra_css:
+  - stylesheets/extra.css
+
+plugins:
+- mkdocstrings:
+    watch:
+      - src/ecco
+    handlers:
+      python:
+        setup_commands:
+#          - import ecco
+          - import sys
+          - sys.path.append("src")
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - API:
+      - Ecco: api/ecco.md
+      - Language Model: api/language-model.md
+      - Output: api/output.md
+      - NMF: api/nmf.md
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences

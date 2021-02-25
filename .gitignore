@@ -55,7 +55,7 @@ output/*.html
 output/*/index.html
 
 # Sphinx
-docs/_build
+docs-old/_build
 
 .DS_Store
 *~
