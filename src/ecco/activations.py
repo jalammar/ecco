@@ -13,7 +13,7 @@ def reshape_hidden_states_to_3d(hidden_states):
 
     # Turn from a list of tensors into a tensor
     if isinstance(hs, tuple):
-        hidden_states = torch.stack(hs)
+        hs = torch.stack(hs)
 
     # Merge the batch and position dimensions
     hs = hs.reshape((hs.shape[0], -1, hs.shape[-1]))
