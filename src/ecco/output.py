@@ -621,9 +621,9 @@ class NMF:
 
     @staticmethod
     def reshape_activations(activations,
-                            from_layer: Optional[int],
-                            to_layer: Optional[int],
-                            collect_activations_layer_nums: Optional[List[int]]):
+                            from_layer: Optional[int] = None,
+                            to_layer: Optional[int] = None,
+                            collect_activations_layer_nums: Optional[List[int]] = None):
         """Prepares the activations tensor for NMF by reshaping it from four dimensions
         (batch, layer, neuron, position) down to two:
         ( neuron (and layer), position (and batch) ).

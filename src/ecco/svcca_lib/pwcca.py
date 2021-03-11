@@ -23,7 +23,7 @@ for full details.
 """
 
 import numpy as np
-from ecco.svcca import cca_core
+from ecco.svcca_lib import cca_core
 
 
 def compute_pwcca(acts1, acts2, epsilon=0.):
