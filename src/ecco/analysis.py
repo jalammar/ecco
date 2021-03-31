@@ -47,7 +47,7 @@ def svcca(acts1, acts2, dims: int = 20):
     return np.mean(results["cca_coef1"])
 
 
-def pwcca(acts1, acts2):
+def pwcca(acts1, acts2, epsilon=1e-10):
     """
     Calculate a similarity score for two activation matrices using Projection Weighted Canonical Correlation Analysis.
     It's more convenient as it does not require setting a specific number of dims like SVCCA.
@@ -59,5 +59,5 @@ def pwcca(acts1, acts2):
         score: between 0 and 1, where 0 means not correlated, 1 means the two activation matrices are
         linear transformations of each other.
     """
-    results = pwcca_lib.compute_pwcca(acts1, acts2, epsilon=1e-10)
+    results = pwcca_lib.compute_pwcca(acts1, acts2, epsilon=epsilon)
     return results[0]

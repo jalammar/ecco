@@ -13,7 +13,7 @@ def acts():
     yield acts1, acts2
 
 
-class TestCCA:
+class TestAnalysis:
     def test_cca_smoke(self, acts):
         actual = analysis.cca(acts[0], acts[1])
         assert isinstance(actual, float)
