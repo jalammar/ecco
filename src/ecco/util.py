@@ -1,3 +1,6 @@
+import yaml
+import os
+
 # CHeck if running from inside jupyter
 # From https://stackoverflow.com/questions/47211324/check-if-module-is-running-in-jupyter-or-not
 def type_of_script():
@@ -9,3 +12,15 @@ def type_of_script():
             return 'ipython'
     except:
         return 'terminal'
+
+def load_config(model_name):
+    path = os.path.dirname(__file__) 
+    configs = yaml.safe_load(open(os.path.join(path, "model-config.yaml")))
+    try:
+        model_config = configs[model_name]
+    except KeyError:
+        raise ValueError(
+                f"The model '{model_name}' is not defined in Ecco's 'model-config.yaml' file and"
+                f" so is not explicitly supported yet. Supported models are:",
+                list(configs.keys())) from KeyError()
+    return model_config
