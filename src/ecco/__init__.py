@@ -11,11 +11,13 @@ Usage:
 ```
 """
 
-
 __version__ = '0.0.14'
-from ecco.lm import LM
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel
+
 from typing import Optional, List
+
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel, AutoModelForSeq2SeqLM
+
+from ecco.lm import LM, T5LM
 
 
 def from_pretrained(hf_model_id: str,
@@ -48,16 +50,24 @@ Args:
 """
     # TODO: Should specify task/head in a cleaner way. Allow masked LM. T5 generation.
     # Likely use model-config. Have a default. Allow user to specify head?
-    if 'gpt2' not in hf_model_id:
+    if 't5' in hf_model_id:
+        tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
+        model = AutoModelForSeq2SeqLM.from_pretrained(hf_model_id,
+                                                      output_hidden_states=hidden_states,
+                                                      output_attentions=attention)
+        klass = T5LM
+    elif 'gpt2' not in hf_model_id:
         tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
         model = AutoModel.from_pretrained(hf_model_id,
-                                                     output_hidden_states=hidden_states,
-                                                     output_attentions=attention)
+                                          output_hidden_states=hidden_states,
+                                          output_attentions=attention)
+        klass = LM
     else:
         tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
         model = AutoModelForCausalLM.from_pretrained(hf_model_id,
                                                      output_hidden_states=hidden_states,
                                                      output_attentions=attention)
+        klass = LM
 
     lm_kwargs = {
         'model_name': hf_model_id,
@@ -65,5 +75,13 @@ Args:
         'collect_activations_layer_nums': activations_layer_nums,
         'verbose': verbose,
         'gpu': gpu}
-    lm = LM(model, tokenizer, **lm_kwargs)
+    lm = klass(model, tokenizer, **lm_kwargs)
     return lm
+
+
+
+if __name__ == '__main__':
+    lm = from_pretrained('t5-small')
+    text = "translate English to Spanish: Prime Minister Narendra Modi and Ministry of Health and " \
+           "Welfare had meetings today to discuss the pandemic"
+    output = lm.generate(text, generate=3, do_sample=True)

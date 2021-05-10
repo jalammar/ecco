@@ -73,3 +73,4 @@ docs-old/_build
 # Mypy Cache
 .mypy_cache/
 /notebooks/
+.ipynb_checkpoints/

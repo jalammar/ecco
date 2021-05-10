@@ -1,21 +1,21 @@
+import json
+import os
+import random
+import re
+from operator import attrgetter
+from typing import Optional, List, Tuple
+
 import torch
 import transformers
-import ecco
-from torch.nn import functional as F
-import numpy as np
-from ecco.output import OutputSeq
-import random
-from IPython import display as d
-import os
-import json
-from ecco.attribution import *
-from typing import Optional, Any, List
-from pprint import pprint
-from operator import attrgetter
-import re
-
-from transformers import GPT2Model
 import yaml
+from IPython import display as d
+from torch.nn import functional as F
+from transformers.modeling_outputs import Seq2SeqLMOutput
+
+import ecco
+from ecco.attribution import *
+from ecco.output import OutputSeq
+import ecco.attribution_enc_dec as attrib_ed
 
 
 class LM(object):
@@ -71,7 +71,6 @@ class LM(object):
         self.verbose = verbose
         self._path = os.path.dirname(ecco.__file__)
 
-
         # Neuron Activation
         self.collect_activations_flag = collect_activations_flag
         self.collect_activations_layer_nums = collect_activations_layer_nums
@@ -89,9 +88,9 @@ class LM(object):
             self.collect_activations_layer_name_sig = self.model_config['activations'][0]
         except KeyError:
             raise ValueError(
-                   f"The model '{self.model_name}' is not defined in Ecco's 'model-config.yaml' file and"
-                   f" so is not explicitly supported yet. Supported models are:",
-                   list(configs.keys())) from KeyError()
+                f"The model '{self.model_name}' is not defined in Ecco's 'model-config.yaml' file and"
+                f" so is not explicitly supported yet. Supported models are:",
+                list(configs.keys())) from KeyError()
 
         self._hooks = {}
         self._reset()
@@ -212,8 +211,8 @@ class LM(object):
 
         if cur_len >= max_length:
             raise ValueError(
-                   "max_length set to {} while input token has more tokens ({}). Consider increasing max_length" \
-                   .format(max_length, cur_len))
+                "max_length set to {} while input token has more tokens ({}). Consider increasing max_length" \
+                    .format(max_length, cur_len))
 
         # Print output
         if self.verbose:
@@ -256,10 +255,10 @@ class LM(object):
         attributions = self.attributions
         attn = getattr(output, "attentions", None)
         return OutputSeq(**{'tokenizer': self.tokenizer,
-                            'token_ids': input_ids.unsqueeze(0), # Add a batch dimension
+                            'token_ids': input_ids.unsqueeze(0),  # Add a batch dimension
                             'n_input_tokens': n_input_tokens,
                             'output_text': self.tokenizer.decode(input_ids),
-                            'tokens': [tokens], # Add a batch dimension
+                            'tokens': [tokens],  # Add a batch dimension
                             'hidden_states': hidden_states,
                             'attention': attn,
                             'model_outputs': outputs,
@@ -571,3 +570,217 @@ def activations_dict_to_array(activations_dict):
     activations = np.swapaxes(activations, 0, 1)
     # print('after swapping: ', activations.shape)
     return activations
+
+
+class T5LM(LM):
+    def _attach_hooks(self, model):
+        # TODO: Hooks removed for experimentation sake, put them back in once we need them
+        pass
+
+    def _get_embeddings(self, input_ids) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
+        """
+        Takes the token ids of a sequence, returns a matrix of their embeddings.
+        """
+        # embedding_matrix = self.model.transformer.wte.weight
+        embedding_matrix = self.model_embeddings
+        vocab_size = embedding_matrix.shape[0]
+        batch_size, num_tokens = input_ids.shape
+        one_hot_tensor = torch.zeros(batch_size, num_tokens, vocab_size).scatter_(-1, input_ids.unsqueeze(-1), 1.)
+        one_hot_tensor = self.to(one_hot_tensor)
+        token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
+        # token_ids_tensor_one_hot.requires_grad_(True)
+
+        inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
+        return inputs_embeds, token_ids_tensor_one_hot
+
+    def generate(self,
+                 input_str: str,
+                 max_length: Optional[int] = 8,
+                 temperature: Optional[float] = None,
+                 top_k: Optional[int] = None,
+                 top_p: Optional[float] = None,
+                 get_model_output: Optional[bool] = False,
+                 do_sample: Optional[bool] = None,
+                 attribution: Optional[bool] = True,
+                 generate: Optional[int] = None):
+        top_k = top_k if top_k is not None else self.model.config.top_k
+        top_p = top_p if top_p is not None else self.model.config.top_p
+        temperature = temperature if temperature is not None else self.model.config.temperature
+        do_sample = do_sample if do_sample is not None else self.model.config.task_specific_params['text-generation'][
+            'do_sample']
+        pad_token_id = self.model.config.pad_token_id
+        eos_token_id = self.model.config.eos_token_id
+
+        # We needs this as a batch in order to collect activations.
+        input_ids = self.tokenizer(input_str, return_tensors="pt")['input_ids']  # Shape Batch x Tokens
+        n_input_tokens = len(input_ids[0])
+        cur_len = n_input_tokens
+
+        if generate is not None:
+            max_length = n_input_tokens + generate
+
+        past = None
+        self.attributions = {}
+        outputs = []
+
+        if cur_len >= max_length:
+            raise ValueError("max_length set to {} while input token has more tokens ({}). "
+                             "Consider increasing max_length".format(max_length, cur_len))
+
+        # Print output
+        if self.verbose:
+            viz_id = self.display_input_sequence(input_ids[0])
+
+        attention_mask = self.model._prepare_attention_mask_for_generation(input_ids, pad_token_id, eos_token_id)
+        decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_ids, None, None)
+        # At this point we have encoder_outputs and the encoding part is finished, we now want to start generating
+        # We might want to work with decoder_input_ids
+
+        while cur_len < max_length:
+            output_token_id, output = self._generate_token(encoder_input_ids=input_ids,
+                                                           encoder_attention_mask=attention_mask,
+                                                           decoder_input_ids=decoder_input_ids,
+                                                           past=past,  # Note, this is not currently used
+                                                           temperature=temperature,
+                                                           top_k=top_k,
+                                                           top_p=top_p,
+                                                           do_sample=do_sample,
+                                                           attribution_flag=attribution)
+
+            # TODO: vvv These are broken vvv
+            if get_model_output:
+                outputs.append(output)
+            # TODO: ^^^ These are broken ^^^
+
+            decoder_input_ids = torch.cat([decoder_input_ids, torch.tensor([[output_token_id]])], dim=-1)
+
+            if self.verbose:
+                self.display_token(viz_id, output_token_id.cpu().numpy(), cur_len)
+            cur_len = cur_len + 1
+
+            if output_token_id == self.model.config.eos_token_id:
+                break
+
+        # TODO: vvv These are broken vvv
+        # Turn activations from dict to a proper array
+        activations_dict = self._all_activations_dict
+        if activations_dict != {}:
+            self.activations = activations_dict_to_array(activations_dict)
+        hidden_states = getattr(output, "hidden_states", None)
+        attn = getattr(output, "attentions", None)
+        # TODO: ^^^ These are broken ^^^
+
+        full_seq_ids = torch.cat([input_ids, decoder_input_ids], dim=-1)
+        tokens = []
+        for i in full_seq_ids[0]:
+            token = self.tokenizer.decode([i])
+            tokens.append(token)
+
+        attributions = self.attributions
+        return OutputSeq(**{
+            'tokenizer': self.tokenizer,
+            'token_ids': full_seq_ids,
+            'n_input_tokens': n_input_tokens,
+            'output_text': self.tokenizer.decode(full_seq_ids[0]),
+            'tokens': [tokens],  # Add a batch dimension
+            'attribution': attributions,
+
+            # TODO: vvv These are broken vvv
+            'hidden_states': hidden_states,
+            'attention': attn,
+            'model_outputs': outputs,
+            'activations': self.activations,
+            'collect_activations_layer_nums': self.collect_activations_layer_nums,
+            'lm_head': self.model.lm_head,
+            # TODO: ^^^ These are broken ^^^
+
+            'device': self.device
+        })
+
+    def _generate_token(self,
+                        encoder_input_ids,
+                        encoder_attention_mask,
+                        decoder_input_ids,
+                        past,
+                        do_sample: bool,
+                        temperature: float,
+                        top_k: int,
+                        top_p: float,
+                        attribution_flag: Optional[bool]):
+        encoder_inputs_embeds, encoder_token_ids_tensor_one_hot = self._get_embeddings(encoder_input_ids)
+        # B x T x E, B x T x V
+
+        # This is okay as long as encoder and decoder share the embeddings
+        decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = self._get_embeddings(decoder_input_ids)
+        # B x T x E, B x T x V
+
+        output: Seq2SeqLMOutput = self.model(
+            # TODO: This re-forwarding encoder side is expensive, can we optimise or is it needed everytime for fresh
+            #       backward ?
+            inputs_embeds=encoder_inputs_embeds,
+            attention_mask=encoder_attention_mask,
+            decoder_inputs_embeds=decoder_inputs_embeds,
+            use_cache=False,
+            return_dict=True,
+        )
+        """Seq2SeqLMOutput has
+        
+        loss: Optional[torch.FloatTensor]
+        logits: torch.FloatTensor
+        past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]]
+        decoder_hidden_states: Optional[Tuple[torch.FloatTensor]]
+        decoder_attentions: Optional[Tuple[torch.FloatTensor]]
+        cross_attentions: Optional[Tuple[torch.FloatTensor]]
+        encoder_last_hidden_state: Optional[torch.FloatTensor]
+        encoder_hidden_states: Optional[Tuple[torch.FloatTensor]]
+        encoder_attentions: Optional[Tuple[torch.FloatTensor]]
+        """
+        predict = output.logits
+        scores = predict[0, -1:, :]
+        prediction_id = sample_output_token(scores, do_sample, temperature, top_k, top_p)
+        # prediction_id now has the id of the token we want to output
+        # To do feature importance, let's get the actual logit associated with
+        # this token
+        prediction_logit = predict[0][-1][prediction_id]
+
+        if attribution_flag:
+            saliency_results = attrib_ed.compute_saliency_scores(
+                prediction_logit,
+                encoder_token_ids_tensor_one_hot,
+                encoder_inputs_embeds,
+                decoder_token_ids_tensor_one_hot,
+                decoder_inputs_embeds,
+            )
+
+            if 'gradient' not in self.attributions:
+                self.attributions['gradient'] = []
+            self.attributions['gradient'].append(saliency_results['gradient'].cpu().detach().numpy())
+
+            if 'grad_x_input' not in self.attributions:
+                self.attributions['grad_x_input'] = []
+            self.attributions['grad_x_input'].append(saliency_results['grad_x_input'].cpu().detach().numpy())
+
+        output['logits'] = None  # free tensor memory we won't use again
+
+        # detach(): don't need grads here
+        # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
+        # TODO: Re-write this for T5
+        # if getattr(output, "hidden_states", None) is not None:
+        #     hs_list = []
+        #     for idx, layer_hs in enumerate(output.hidden_states):
+        #         # in Hugging Face Transformers v4, there's an extra index for batch
+        #         if len(layer_hs.shape) == 3:  # If there's a batch dimension, pick the first oen
+        #             hs = layer_hs.cpu().detach()[0].unsqueeze(0)  # Adding a dimension to concat to later
+        #         # Earlier versions are only 2 dimensional
+        #         # But also, in v4, for GPT2, all except the last one would have 3 dims, the last layer
+        #         # would only have two dims
+        #         else:
+        #             hs = layer_hs.cpu().detach().unsqueeze(0)
+        #
+        #         hs_list.append(hs)
+        #
+        #     output.hidden_states = torch.cat(hs_list, dim=0)
+
+        return prediction_id, output
+
+
