@@ -632,9 +632,11 @@ class T5LM(LM):
             viz_id = self.display_input_sequence(input_ids[0])
 
         attention_mask = self.model._prepare_attention_mask_for_generation(input_ids, pad_token_id, eos_token_id)
+        attention_mask = self.to(attention_mask)
         decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_ids, None, None)
         # At this point we have encoder_outputs and the encoding part is finished, we now want to start generating
         # We might want to work with decoder_input_ids
+        # Move inputs to GPU if the model is on GPU
 
         while cur_len < max_length:
             output_token_id, output = self._generate_token(encoder_input_ids=input_ids,
