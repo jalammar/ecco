@@ -581,7 +581,6 @@ class T5LM(LM):
         """
         Takes the token ids of a sequence, returns a matrix of their embeddings.
         """
-        # embedding_matrix = self.model.transformer.wte.weight
         embedding_matrix = self.model_embeddings
         vocab_size = embedding_matrix.shape[0]
         batch_size, num_tokens = input_ids.shape
@@ -627,16 +626,12 @@ class T5LM(LM):
             raise ValueError("max_length set to {} while input token has more tokens ({}). "
                              "Consider increasing max_length".format(max_length, cur_len))
 
-        # Print output
         if self.verbose:
             viz_id = self.display_input_sequence(input_ids[0])
 
         attention_mask = self.model._prepare_attention_mask_for_generation(input_ids, pad_token_id, eos_token_id)
         attention_mask = self.to(attention_mask)
         decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_ids, None, None)
-        # At this point we have encoder_outputs and the encoding part is finished, we now want to start generating
-        # We might want to work with decoder_input_ids
-        # Move inputs to GPU if the model is on GPU
 
         while cur_len < max_length:
             output_token_id, output = self._generate_token(encoder_input_ids=input_ids,
@@ -712,7 +707,8 @@ class T5LM(LM):
         encoder_inputs_embeds, encoder_token_ids_tensor_one_hot = self._get_embeddings(encoder_input_ids)
         # B x T x E, B x T x V
 
-        # This is okay as long as encoder and decoder share the embeddings
+        # This is only okay as long as encoder and decoder share the embeddings
+        # Should make separate ones for more flexibility
         decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = self._get_embeddings(decoder_input_ids)
         # B x T x E, B x T x V
 
