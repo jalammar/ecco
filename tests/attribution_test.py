@@ -18,7 +18,10 @@ def simpleNNModel():
 class TestAttribution:
     def test_grad_x_input(self, simpleNNModel):
         input = torch.tensor([[9., 9.]], requires_grad=True)
+        print(input.device)
         output = simpleNNModel(input)
+        print(output.device,output.shape, output[0].shape, output[0][0] )
         expected = torch.tensor([1.])
         actual = gradient_x_inputs_attribution(output[0][0],input)
         assert torch.all(torch.eq(actual, expected))
+        assert False
