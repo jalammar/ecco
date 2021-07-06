@@ -1,4 +1,4 @@
-from .svcca_lib import cca_core, pwcca as pwcca_lib
+from .svcca_lib import cca_core, pwcca as pwcca_lib, cka_lib
 
 import numpy as np
 
@@ -21,9 +21,12 @@ def svcca(acts1, acts2, dims: int = 20):
     """
     Calculate a similarity score for two activation matrices using Singular Value Canonical Correlation Analysis (
     SVCCA). A meaningful score requires setting an appropriate value for 'dims', see SVCCA tutorial for how to do
-    that. Args: acts1: Activations matrix #1. 2D numPy array. Dimensions: (neurons, token position) acts2:
-    Activations matrix #2. 2D numPy array. Dimensions: (neurons, token position) dims: The number of dimensions to
-    consider for SVCCA calculation. See the SVCCA tutorial to see how to determine this in a way
+    that.
+    Args:
+        acts1: Activations matrix #1. 2D numPy array. Dimensions: (neurons, token position)
+        acts2: Activations matrix #2. 2D numPy array. Dimensions: (neurons, token position)
+        dims: The number of dimensions to consider for SVCCA calculation. See the SVCCA tutorial to see how to
+                determine this in a way
 
     Returns:
         score: between 0 and 1, where 0 means not correlated, 1 means the two activation matrices are linear
@@ -61,3 +64,19 @@ def pwcca(acts1, acts2, epsilon=1e-10):
     """
     results = pwcca_lib.compute_pwcca(acts1, acts2, epsilon=epsilon)
     return results[0]
+
+def cka(acts1, acts2):
+    """
+    Calculates a similarity score for two activation matrices using center kernal analysis (CKA). CKA is more
+    has the benefit of not requiring the number of tokens to be larger than the number of neurons.
+
+    Args:
+        acts1: Activations matrix #1. 2D numPy array. Dimensions: (neurons, token position)
+        acts2: Activations matrix #2. 2D numPy array. Dimensions: (neurons, token position)
+
+    Returns:
+        score: between 0 and 1, where 0 means not correlated, 1 means the two activation matrices are
+        linear transformations of each other.
+    """
+
+    return cka_lib.feature_space_linear_cka(acts1.T, acts2.T)
