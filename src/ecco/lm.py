@@ -293,7 +293,7 @@ class LM(object):
             attribution: Flag indicating whether to calculate attribution/saliency
         """
 
-        if not hasattr(input_tokens, 'input_ids'):
+        if 'input_ids' not in input_tokens:
             raise ValueError("Parameter 'input_tokens' needs to have the attribute 'input_ids'."
                              "Verify it was produced by the appropriate tokenizer with the "
                              "parameter return_tensors=\"pt\".")
