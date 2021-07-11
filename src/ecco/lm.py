@@ -15,7 +15,7 @@ from operator import attrgetter
 import re
 
 from transformers import GPT2Model
-import yaml
+from ecco.util import load_config
 
 
 class LM(object):
@@ -78,10 +78,8 @@ class LM(object):
 
         # For each model, this indicates the layer whose activations
         # we will collect
-        configs = yaml.safe_load(open(os.path.join(self._path, "model-config.yaml")))
-
+        self.model_config = load_config(self.model_name)
         try:
-            self.model_config = configs[self.model_name]
             self.model_embeddings = self.model_config['embedding']
             embeddings_layer_name = self.model_config['embedding']
             embed_retriever = attrgetter(embeddings_layer_name)
@@ -89,9 +87,7 @@ class LM(object):
             self.collect_activations_layer_name_sig = self.model_config['activations'][0]
         except KeyError:
             raise ValueError(
-                   f"The model '{self.model_name}' is not defined in Ecco's 'model-config.yaml' file and"
-                   f" so is not explicitly supported yet. Supported models are:",
-                   list(configs.keys())) from KeyError()
+                   f"The model '{self.model_name}' is not correctly configured in Ecco's 'model-config.yaml' file") from KeyError()
 
         self._hooks = {}
         self._reset()
@@ -571,3 +567,5 @@ def activations_dict_to_array(activations_dict):
     activations = np.swapaxes(activations, 0, 1)
     # print('after swapping: ', activations.shape)
     return activations
+
+
