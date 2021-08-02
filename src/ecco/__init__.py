@@ -12,7 +12,7 @@ Usage:
 """
 
 
-__version__ = '0.0.14'
+__version__ = '0.0.15'
 from ecco.lm import LM
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel
 from typing import Optional, List
