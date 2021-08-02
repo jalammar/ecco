@@ -340,7 +340,15 @@ class LM(object):
 
     def _get_embeddings(self, input_ids):
         """
-        Takes the token ids of a sequence, returns a matrix of their embeddings.
+        Get token embeddings and one-hot vector into vocab. It's done via matrix multiplication
+        so that gradient attribution is available when needed.
+        Args:
+            input_ids: Int tensor containing token ids. Of length (sequence length).
+            Generally returned from the the tokenizer such as
+            lm.tokenizer(text, return_tensors="pt")['input_ids'][0]
+        Returns:
+            inputs_embeds: Embeddings of the tokens. Dimensions are (sequence_len, d_embed)
+            token_ids_tensor_one_hot: Dimensions are (sequence_len, vocab_size)
         """
         # embedding_matrix = self.model.transformer.wte.weight
         embedding_matrix = self.model_embeddings
