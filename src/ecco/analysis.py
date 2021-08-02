@@ -9,7 +9,7 @@ def cca(acts1, acts2):
     average of all the correlation coefficients.
     Args:
         acts1: Activations matrix #1. 2D numPy array. Dimensions: (neurons, token position)
-    acts2: Activations matrix #2. 2D numPy array. Dimensions: (neurons, token position)
+        acts2: Activations matrix #2. 2D numPy array. Dimensions: (neurons, token position)
 
     Returns:
         score: Float between 0 and 1, where 0 means not correlated, 1 means the two activation matrices are linear transformations of each other.
@@ -21,8 +21,8 @@ def cca(acts1, acts2):
 # More details at https://github.com/google/svcca/blob/master/tutorials/001_Introduction.ipynb
 def svcca(acts1, acts2, dims: int = 20):
     """
-    Calculate a similarity score for two activation matrices using Singular Value Canonical Correlation Analysis (
-    SVCCA). A meaningful score requires setting an appropriate value for 'dims', see SVCCA tutorial for how to do
+    Calculate a similarity score for two activation matrices using Singular Value Canonical Correlation Analysis
+    (SVCCA). A meaningful score requires setting an appropriate value for 'dims', see SVCCA tutorial for how to do
     that.
     Args:
         acts1: Activations matrix #1. 2D numPy array. Dimensions: (neurons, token position)
@@ -69,7 +69,7 @@ def pwcca(acts1, acts2, epsilon=1e-10):
 
 def cka(acts1, acts2):
     """
-    Calculates a similarity score for two activation matrices using center kernal analysis (CKA). CKA is more
+    Calculates a similarity score for two activation matrices using center kernel alignment (CKA). CKA
     has the benefit of not requiring the number of tokens to be larger than the number of neurons.
 
     Args:
