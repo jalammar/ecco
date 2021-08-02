@@ -621,9 +621,9 @@ class NMF:
 
     @staticmethod
     def reshape_activations(activations,
-                            from_layer: Optional[int],
-                            to_layer: Optional[int],
-                            collect_activations_layer_nums: Optional[List[int]]):
+                            from_layer: Optional[int] = None,
+                            to_layer: Optional[int] = None,
+                            collect_activations_layer_nums: Optional[List[int]] = None):
         """Prepares the activations tensor for NMF by reshaping it from four dimensions
         (batch, layer, neuron, position) down to two:
         ( neuron (and layer), position (and batch) ).
@@ -667,6 +667,7 @@ class NMF:
             available = sorted(layer_nums_to_row_ixs.keys())
             raise ValueError(f"Not all layers between from_layer ({from_layer}) and to_layer ({to_layer}) "
                              f"have recorded activations. Layers with recorded activations are: {available}")
+
         row_ixs = [layer_nums_to_row_ixs[layer_num] for layer_num in layer_nums]
         activation_rows = [activations[:, row_ix] for row_ix in row_ixs]
         # Merge 'layers' and 'neuron' dimensions. Sending activations down from

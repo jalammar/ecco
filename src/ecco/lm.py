@@ -15,7 +15,7 @@ from operator import attrgetter
 import re
 
 from transformers import GPT2Model
-import yaml
+from ecco.util import load_config
 
 
 class LM(object):
@@ -78,10 +78,8 @@ class LM(object):
 
         # For each model, this indicates the layer whose activations
         # we will collect
-        configs = yaml.safe_load(open(os.path.join(self._path, "model-config.yaml")))
-
+        self.model_config = load_config(self.model_name)
         try:
-            self.model_config = configs[self.model_name]
             self.model_embeddings = self.model_config['embedding']
             embeddings_layer_name = self.model_config['embedding']
             embed_retriever = attrgetter(embeddings_layer_name)
@@ -89,9 +87,7 @@ class LM(object):
             self.collect_activations_layer_name_sig = self.model_config['activations'][0]
         except KeyError:
             raise ValueError(
-                   f"The model '{self.model_name}' is not defined in Ecco's 'model-config.yaml' file and"
-                   f" so is not explicitly supported yet. Supported models are:",
-                   list(configs.keys())) from KeyError()
+                   f"The model '{self.model_name}' is not correctly configured in Ecco's 'model-config.yaml' file") from KeyError()
 
         self._hooks = {}
         self._reset()
@@ -293,7 +289,7 @@ class LM(object):
             attribution: Flag indicating whether to calculate attribution/saliency
         """
 
-        if not hasattr(input_tokens, 'input_ids'):
+        if 'input_ids' not in input_tokens:
             raise ValueError("Parameter 'input_tokens' needs to have the attribute 'input_ids'."
                              "Verify it was produced by the appropriate tokenizer with the "
                              "parameter return_tensors=\"pt\".")
@@ -344,7 +340,15 @@ class LM(object):
 
     def _get_embeddings(self, input_ids):
         """
-        Takes the token ids of a sequence, returns a matrix of their embeddings.
+        Get token embeddings and one-hot vector into vocab. It's done via matrix multiplication
+        so that gradient attribution is available when needed.
+        Args:
+            input_ids: Int tensor containing token ids. Of length (sequence length).
+            Generally returned from the the tokenizer such as
+            lm.tokenizer(text, return_tensors="pt")['input_ids'][0]
+        Returns:
+            inputs_embeds: Embeddings of the tokens. Dimensions are (sequence_len, d_embed)
+            token_ids_tensor_one_hot: Dimensions are (sequence_len, vocab_size)
         """
         # embedding_matrix = self.model.transformer.wte.weight
         embedding_matrix = self.model_embeddings
@@ -571,3 +575,5 @@ def activations_dict_to_array(activations_dict):
     activations = np.swapaxes(activations, 0, 1)
     # print('after swapping: ', activations.shape)
     return activations
+
+

@@ -1,13 +1,11 @@
--f https://download.pytorch.org/whl/torch_stable.html
 matplotlib~=3.3.1
 numpy~=1.19.1
 ipython~=7.16.1
-scikit-learn~=0.23.2
+scikit-learn~=0.24.2
 seaborn~=0.11.0
-transformers~=4.2.2
+transformers~=4.6.1
 pytest~=6.1.2
 setuptools~=49.6.0
-torch~=1.6.0
-torchvision~=0.7.0
+torch~=1.9.0
 PyYAML==5.4.1
 

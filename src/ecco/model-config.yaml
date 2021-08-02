@@ -1,17 +1,21 @@
 # GPT2
 gpt2:
+    use_causal_lm: true
     embedding: "transformer.wte.weight" # String. Directly accessed
     activations: # Regex pattern
     - 'mlp\.c_proj'
 gpt2-medium:
+    use_causal_lm: true
     embedding: "transformer.wte.weight"
     activations:
     - 'mlp\.c_proj'
 gpt2-xl:
+    use_causal_lm: true
     embedding: "transformer.wte.weight"
     activations:
     - 'mlp\.c_proj'
 distilgpt2:
+    use_causal_lm: true
     embedding: "transformer.wte.weight"
     activations:
     - 'mlp\.c_proj'
@@ -100,6 +104,7 @@ facebook/bart-large-mnli:
     - 'fc2'
 # DUMMY MODELS
 'sshleifer/tiny-gpt2':
+  use_causal_lm: true
   embedding: "transformer.wte.weight"
   activations:
     - 'mlp.c_proj'
@@ -107,4 +112,19 @@ facebook/bart-large-mnli:
   embedding: "embeddings.word_embeddings"
   activations:
     - '\d+\.output\.dense'
-
+#EleutherAI
+EleutherAI/gpt-neo-125M:
+    use_causal_lm: true
+    embedding: "transformer.wte.weight"
+    activations:
+    - 'mlp\.c_proj'
+EleutherAI/gpt-neo-1.3B:
+    use_causal_lm: true
+    embedding: "transformer.wte.weight"
+    activations:
+    - 'mlp\.c_proj'
+EleutherAI/gpt-neo-2.7B:
+    use_causal_lm: true
+    embedding: "transformer.wte.weight"
+    activations:
+    - 'mlp\.c_proj'

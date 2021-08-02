@@ -16,6 +16,7 @@ __version__ = '0.0.14'
 from ecco.lm import LM
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel
 from typing import Optional, List
+from ecco.util import load_config
 
 
 def from_pretrained(hf_model_id: str,
@@ -48,8 +49,13 @@ Args:
 """
     # TODO: Should specify task/head in a cleaner way. Allow masked LM. T5 generation.
     # Likely use model-config. Have a default. Allow user to specify head?
-    if 'gpt2' not in hf_model_id:
-        tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
+
+    model_config = load_config(hf_model_id)
+    use_causal_lm = model_config.get('use_causal_lm',False)
+
+    tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
+    
+    if not use_causal_lm:
         model = AutoModel.from_pretrained(hf_model_id,
                                                      output_hidden_states=hidden_states,
                                                      output_attentions=attention)

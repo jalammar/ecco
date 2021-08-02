@@ -29,6 +29,7 @@ nav:
       - Language Model: api/language-model.md
       - Output: api/output.md
       - NMF: api/nmf.md
+      - Analysis: api/analysis.md
 
 markdown_extensions:
   - pymdownx.highlight
