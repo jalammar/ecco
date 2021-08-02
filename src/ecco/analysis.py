@@ -6,8 +6,10 @@ import numpy as np
 def cca(acts1, acts2):
     """
     Calculate a similarity score for two activation matrices using Canonical Correlation Analysis (CCA). Returns the
-    average of all the correlation coefficients. Args: acts1: Activations matrix #1. 2D numPy array. Dimensions: (
-    neurons, token position) acts2: Activations matrix #2. 2D numPy array. Dimensions: (neurons, token position)
+    average of all the correlation coefficients.
+    Args:
+        acts1: Activations matrix #1. 2D numPy array. Dimensions: (neurons, token position)
+    acts2: Activations matrix #2. 2D numPy array. Dimensions: (neurons, token position)
 
     Returns:
         score: Float between 0 and 1, where 0 means not correlated, 1 means the two activation matrices are linear transformations of each other.
