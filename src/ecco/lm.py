@@ -5,7 +5,6 @@ import re
 from operator import attrgetter
 from typing import Optional, List, Tuple
 
-import torch
 import transformers
 import yaml
 from IPython import display as d
@@ -13,9 +12,9 @@ from torch.nn import functional as F
 from transformers.modeling_outputs import Seq2SeqLMOutput
 
 import ecco
+import ecco.attribution_enc_dec as attrib_ed
 from ecco.attribution import *
 from ecco.output import OutputSeq
-import ecco.attribution_enc_dec as attrib_ed
 
 
 class LM(object):
@@ -677,7 +676,7 @@ class T5LM(LM):
         return OutputSeq(**{
             'tokenizer': self.tokenizer,
             'token_ids': full_seq_ids,
-            'n_input_tokens': n_input_tokens,
+            'n_input_tokens': n_input_tokens + 1,  # we want the decoder priming token to be considered as input
             'output_text': self.tokenizer.decode(full_seq_ids[0]),
             'tokens': [tokens],  # Add a batch dimension
             'attribution': attributions,
@@ -780,5 +779,3 @@ class T5LM(LM):
         #     output.hidden_states = torch.cat(hs_list, dim=0)
 
         return prediction_id, output
-
-

@@ -79,9 +79,9 @@ Args:
     return lm
 
 
-
 if __name__ == '__main__':
+    # Only kept here so I can start debugging conveniently
     lm = from_pretrained('t5-small')
-    text = "translate English to Spanish: Prime Minister Narendra Modi and Ministry of Health and " \
+    text = "translate English to German: Prime Minister Narendra Modi and Ministry of Health and " \
            "Welfare had meetings today to discuss the pandemic"
-    output = lm.generate(text, generate=3, do_sample=True)
+    output = lm.generate(text, generate=1000, do_sample=True)
