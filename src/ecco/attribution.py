@@ -1,5 +1,5 @@
 import torch
-import numpy as np
+from typing import Optional
 
 
 def saliency(prediction_logit, token_ids_tensor_one_hot, norm=True, retain_graph=True):
@@ -49,17 +49,34 @@ def saliency_on_d_embeddings(prediction_logit, inputs_embeds, aggregation="L2", 
     return token_importance
 
 
-def gradient_x_inputs_attribution(prediction_logit, inputs_embeds, retain_graph=True):
+def gradient_x_inputs_attribution(prediction_logit, encoder_inputs_embeds, decoder_inputs_embeds: Optional = None,
+                                  retain_graph=True):
 
-    inputs_embeds.retain_grad()
+    if decoder_inputs_embeds is not None:
+        # TODO: Verify if this makes sense!
+        assert len(decoder_inputs_embeds.shape) == 3 and decoder_inputs_embeds.shape[0] == 1
+        assert len(encoder_inputs_embeds.shape) == 3 and encoder_inputs_embeds.shape[0] == 1
+
+        decoder_inputs_embeds.retain_grad()
+
+    encoder_inputs_embeds.retain_grad()
+
     # back-prop gradient
     prediction_logit.backward(retain_graph=retain_graph)
-    grad = inputs_embeds.grad
+    decoder_grad = decoder_inputs_embeds.grad if decoder_inputs_embeds is not None else None
+    encoder_grad = encoder_inputs_embeds.grad
     # This should be equivalent to
     # grad = torch.autograd.grad(prediction_logit, inputs_embeds)[0]
 
     # Grad X Input
-    grad_x_input = grad * inputs_embeds
+    grad_enc_x_input = encoder_grad * encoder_inputs_embeds
+
+    if decoder_grad is not None:
+        grad_dec_x_input = decoder_grad * decoder_inputs_embeds
+        grad_enc_x_input = encoder_grad * encoder_inputs_embeds
+        grad_x_input = torch.cat([grad_enc_x_input, grad_dec_x_input], dim=1)[0]
+    else:
+        grad_x_input = grad_enc_x_input
 
     # Turn into a scalar value for each input token by taking L2 norm
     feature_importance = torch.norm(grad_x_input, dim=1)
@@ -69,24 +86,32 @@ def gradient_x_inputs_attribution(prediction_logit, inputs_embeds, retain_graph=
 
     # Zero the gradient for the tensor so next backward() calls don't have
     # gradients accumulating
-    inputs_embeds.grad.data.zero_()
+    if decoder_inputs_embeds is not None:
+        decoder_inputs_embeds.grad.data.zero_()
+    encoder_inputs_embeds.grad.data.zero_()
+
     return token_importance_normalized
 
+
 def compute_saliency_scores(prediction_logit,
-                            token_ids_tensor_one_hot,
-                            inputs_embeds,
+                            encoder_token_ids_tensor_one_hot,
+                            encoder_inputs_embeds,
+                            decoder_token_ids_tensor_one_hot,
+                            decoder_inputs_embeds,
                             gradient_kwargs={},
-                            gradient_x_input_kwargs={},
-                            ):
+                            gradient_x_input_kwargs={}):
+
     results = {}
 
-    results['grad_x_input'] = gradient_x_inputs_attribution(prediction_logit,
-                                                            inputs_embeds,
+    results['grad_x_input'] = gradient_x_inputs_attribution(prediction_logit=prediction_logit,
+                                                            encoder_inputs_embeds=encoder_inputs_embeds,
+                                                            decoder_inputs_embeds=decoder_inputs_embeds,
                                                             retain_graph=True,
                                                             **gradient_x_input_kwargs)
 
-    results['gradient'] = saliency(prediction_logit,
-                                   token_ids_tensor_one_hot,
+    results['gradient'] = saliency(prediction_logit=prediction_logit,
+                                   encoder_token_ids_tensor_one_hot=encoder_token_ids_tensor_one_hot,
+                                   decoder_token_ids_tensor_one_hot=decoder_token_ids_tensor_one_hot,
                                    retain_graph=False,
                                    **gradient_kwargs)
 

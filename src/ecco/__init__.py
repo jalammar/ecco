@@ -55,27 +55,23 @@ Args:
         model = AutoModelForSeq2SeqLM.from_pretrained(hf_model_id,
                                                       output_hidden_states=hidden_states,
                                                       output_attentions=attention)
-        klass = T5LM
     elif 'gpt2' not in hf_model_id:
         tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
         model = AutoModel.from_pretrained(hf_model_id,
                                           output_hidden_states=hidden_states,
                                           output_attentions=attention)
-        klass = LM
     else:
         tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
         model = AutoModelForCausalLM.from_pretrained(hf_model_id,
                                                      output_hidden_states=hidden_states,
                                                      output_attentions=attention)
-        klass = LM
-
     lm_kwargs = {
         'model_name': hf_model_id,
         'collect_activations_flag': activations,
         'collect_activations_layer_nums': activations_layer_nums,
         'verbose': verbose,
         'gpu': gpu}
-    lm = klass(model, tokenizer, **lm_kwargs)
+    lm = LM(model, tokenizer, **lm_kwargs)
     return lm
 
 
