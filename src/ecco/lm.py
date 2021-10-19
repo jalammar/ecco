@@ -252,14 +252,14 @@ class LM(object):
 
         # Get attention mask and decoder input ids
         if getattr(self.model, '_prepare_attention_mask_for_generation'):
-            assert self.model_config['needs_batching'] # will break otherwise
+            assert len(input_ids.size()) == 2 # will break otherwise
             attention_mask = self.model._prepare_attention_mask_for_generation(input_ids, pad_token_id, eos_token_id)
             attention_mask = self.to(attention_mask)
         else:
             attention_mask = None
 
         if getattr(self.model, '_prepare_decoder_input_ids_for_generation'):
-            assert self.model_config['needs_batching'] # will break otherwise
+            assert len(input_ids.size()) == 2 # will break otherwise
             decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_ids, None, None)
         else:
             decoder_input_ids = None
@@ -283,10 +283,15 @@ class LM(object):
                 outputs.append(output) # TODO: This is broken for T5
 
             if decoder_input_ids is not None:
-                assert self.model_config['needs_batching'] # will break otherwise
-                input_ids = torch.cat([input_ids, decoder_input_ids, torch.tensor([[output_token_id]])], dim=-1)[0]
+                assert len(decoder_input_ids.size()) == 2 # will break otherwise
+                decoder_input_ids = torch.cat([decoder_input_ids, torch.tensor([[output_token_id]])], dim=-1)
             else:
-                input_ids = torch.cat([input_ids, torch.tensor([output_token_id])])
+                input_ids = torch.cat(
+                    [
+                        input_ids if not self.model_config['needs_batching'] else input_ids[0],
+                        torch.tensor([output_token_id])
+                    ]
+                )
 
             if self.verbose:
                 self.display_token(viz_id, output_token_id.cpu().numpy(), cur_len)
@@ -303,8 +308,13 @@ class LM(object):
         hidden_states = getattr(output, "hidden_states", None)
         # TODO: ^^^ This is broken for T5  ^^^
 
+        if decoder_input_ids is not None:
+            assert len(decoder_input_ids.size()) == 2
+            all_token_ids = torch.cat([input_ids[0], decoder_input_ids], dim=-1)[0]
+        else:
+            all_token_ids = input_ids
         tokens = []
-        for i in input_ids:
+        for i in all_token_ids:
             token = self.tokenizer.decode([i])
             tokens.append(token)
 
@@ -368,7 +378,6 @@ class LM(object):
         else:
             output = self.model(**input_tokens, return_dict=True, use_cache=False)
             predict = output.logits
-            scores = predict[-1:, :]
             lm_head = self.model.lm_head
 
         # Turn activations from dict to a proper array
