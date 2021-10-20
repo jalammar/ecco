@@ -306,7 +306,7 @@ class LM(object):
 
         if decoder_input_ids is not None:
             assert len(decoder_input_ids.size()) == 2
-            all_token_ids = torch.cat([input_ids[0], decoder_input_ids], dim=-1)[0]
+            all_token_ids = torch.cat([input_ids, decoder_input_ids], dim=-1)[0]
         else:
             all_token_ids = input_ids
         tokens = []
@@ -317,9 +317,9 @@ class LM(object):
         attributions = self.attributions
         attn = getattr(output, "attentions", None)
         return OutputSeq(**{'tokenizer': self.tokenizer,
-                            'token_ids': input_ids.unsqueeze(0) if not self.model_config['needs_batching'] else input_ids,  # Add a batch dimension
+                            'token_ids': all_token_ids.unsqueeze(0) if len(all_token_ids.size()) == 1  else all_token_ids,  # Add a batch dimension
                             'n_input_tokens': n_input_tokens if decoder_input_ids is not None else n_input_tokens + 1, # we want the decoder priming token to be considered as input
-                            'output_text': self.tokenizer.decode(input_ids),
+                            'output_text': self.tokenizer.decode(all_token_ids if len(all_token_ids.size()) == 1 else all_token_ids[0]),
                             'tokens': [tokens],  # Add a batch dimension
                             'hidden_states': hidden_states,
                             'attention': attn,
