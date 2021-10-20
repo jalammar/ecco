@@ -9,6 +9,7 @@ gpt2-medium:
     - 'mlp\.c_proj'
 gpt2-xl:
     embedding: "transformer.wte.weight"
+    needs_batching: False
     activations:
     - 'mlp\.c_proj'
 distilgpt2:

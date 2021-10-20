@@ -4,15 +4,11 @@ import random
 import re
 from operator import attrgetter
 from typing import Optional, List, Tuple
-
 import transformers
 import yaml
 from IPython import display as d
 from torch.nn import functional as F
-from transformers.modeling_outputs import Seq2SeqLMOutput
-
 import ecco
-import ecco.attribution_enc_dec as attrib_ed
 from ecco.attribution import *
 from ecco.output import OutputSeq
 
@@ -112,27 +108,60 @@ class LM(object):
             return tensor.to('cuda')
         return tensor
 
-    def _generate_token(self, input_ids, past, do_sample: bool, temperature: float, top_k: int, top_p: float,
+    def _generate_token(self,
+                        encoder_input_ids,
+                        encoder_attention_mask: Optional,
+                        decoder_input_ids: Optional,
+                        past,
+                        do_sample: bool,
+                        temperature: float,
+                        top_k: int,
+                        top_p: float,
                         attribution_flag: Optional[bool]):
         """
         Run a forward pass through the model and sample a token.
         """
-        inputs_embeds, token_ids_tensor_one_hot = self._get_embeddings(input_ids)
+        encoder_inputs_embeds, encoder_token_ids_tensor_one_hot = self._get_embeddings(encoder_input_ids)
 
-        output = self.model(inputs_embeds=inputs_embeds, return_dict=True, use_cache=False)
+        # TODO: This is only okay as long as encoder and decoder share the embeddings
+        # Should make separate ones for more flexibility
+        if decoder_input_ids is not None:
+            decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = self._get_embeddings(decoder_input_ids)
+        else:
+            decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = None, None
+
+        extra_kwargs = {
+            'attention_mask': encoder_attention_mask,
+            'decoder_inputs_embeds': decoder_inputs_embeds
+        }
+        output = self.model(
+            # TODO: This re-forwarding encoder side is expensive, can we optimise or is it needed everytime for fresh
+            #       backward ?
+            inputs_embeds=encoder_inputs_embeds,
+            decoder_inputs_embeds=decoder_inputs_embeds,
+            use_cache=False,
+            return_dict=True,
+            **{ k: v for k, v in extra_kwargs.items() if k in self.model.__call__.__code__.co_varnames}
+            # TODO: check if this is being passed correctly to self.model when in seq2seq
+        )
+
         predict = output.logits
-
-        scores = predict[-1:, :]
-
+        scores = predict[0, -1:, :]
         prediction_id = sample_output_token(scores, do_sample, temperature, top_k, top_p)
-
         # prediction_id now has the id of the token we want to output
         # To do feature importance, let's get the actual logit associated with
         # this token
-        prediction_logit = predict[inputs_embeds.shape[0] - 1][prediction_id]
+        prediction_logit = predict[0][-1][prediction_id]
 
         if attribution_flag:
-            saliency_results = compute_saliency_scores(prediction_logit, token_ids_tensor_one_hot, inputs_embeds)
+
+            saliency_results = compute_saliency_scores(
+                prediction_logit,
+                encoder_token_ids_tensor_one_hot,
+                encoder_inputs_embeds,
+                decoder_token_ids_tensor_one_hot,
+                decoder_inputs_embeds,
+            )
 
             if 'gradient' not in self.attributions:
                 self.attributions['gradient'] = []
@@ -148,7 +177,7 @@ class LM(object):
         # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
         if getattr(output, "hidden_states", None) is not None:
             hs_list = []
-            for idx, layer_hs in enumerate(output.hidden_states):
+            for idx, layer_hs in enumerate(output.hidden_states[0]):
                 # in Hugging Face Transformers v4, there's an extra index for batch
                 if len(layer_hs.shape) == 3:  # If there's a batch dimension, pick the first oen
                     hs = layer_hs.cpu().detach()[0].unsqueeze(0)  # Adding a dimension to concat to later
@@ -160,7 +189,7 @@ class LM(object):
 
                 hs_list.append(hs)
 
-            output.hidden_states = torch.cat(hs_list, dim=0)
+            output.hidden_states[0] = torch.cat(hs_list, dim=0)
 
         return prediction_id, output
 
@@ -177,7 +206,7 @@ class LM(object):
         Generate tokens in response to an input prompt.
         Works with Language models like GPT2, not masked language models like BERT.
         Args:
-            input_str: Input prompt.
+            input_str: Input prompt. # TODO: accept batch of input strings
             generate: Number of tokens to generate.
             max_length: max length of sequence (input + output tokens)
             temperature: Adjust the probability distibution of output candidate tokens.
@@ -195,10 +224,12 @@ class LM(object):
         temperature = temperature if temperature is not None else self.model.config.temperature
         do_sample = do_sample if do_sample is not None else self.model.config.task_specific_params['text-generation'][
             'do_sample']
+        pad_token_id = self.model.config.pad_token_id
+        eos_token_id = self.model.config.eos_token_id
 
         # We needs this as a batch in order to collect activations.
-        input_ids = self.tokenizer(input_str, return_tensors="pt")['input_ids'][0]
-        n_input_tokens = len(input_ids)
+        input_ids = self.tokenizer(input_str, return_tensors="pt")['input_ids']
+        n_input_tokens = len(input_ids[0])
         cur_len = n_input_tokens
 
         if generate is not None:
@@ -213,50 +244,73 @@ class LM(object):
                 "max_length set to {} while input token has more tokens ({}). Consider increasing max_length" \
                     .format(max_length, cur_len))
 
+        # Get attention mask and decoder input ids
+        if getattr(self.model, '_prepare_attention_mask_for_generation'):
+            assert len(input_ids.size()) == 2 # will break otherwise
+            attention_mask = self.model._prepare_attention_mask_for_generation(input_ids, pad_token_id, eos_token_id)
+            attention_mask = self.to(attention_mask)
+        else:
+            attention_mask = None
+
+        if getattr(self.model, '_prepare_decoder_input_ids_for_generation'):
+            assert len(input_ids.size()) == 2 # will break otherwise
+            decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_ids, None, None)
+        else:
+            decoder_input_ids = None
+
         # Print output
         if self.verbose:
-            viz_id = self.display_input_sequence(input_ids)
+            viz_id = self.display_input_sequence(input_ids[0])
 
         while cur_len < max_length:
-            output_token_id, output = self._generate_token(input_ids,
-                                                           past,
-                                                           # Note, this is not currently used
+            output_token_id, output = self._generate_token(encoder_input_ids=input_ids,
+                                                           encoder_attention_mask=attention_mask,
+                                                           decoder_input_ids=decoder_input_ids,
+                                                           past=past,  # Note, this is not currently used
                                                            temperature=temperature,
-                                                           top_k=top_k, top_p=top_p,
+                                                           top_k=top_k,
+                                                           top_p=top_p,
                                                            do_sample=do_sample,
                                                            attribution_flag=attribution)
 
             if get_model_output:
                 outputs.append(output)
-            input_ids = torch.cat([input_ids, torch.tensor([output_token_id])])
+
+            if decoder_input_ids is not None:
+                assert len(decoder_input_ids.size()) == 2 # will break otherwise
+                decoder_input_ids = torch.cat([decoder_input_ids, torch.tensor([[output_token_id]])], dim=-1)
+            else:
+                input_ids = torch.cat([input_ids[0], torch.tensor([output_token_id])])
 
             if self.verbose:
-                self.display_token(viz_id,
-                                   output_token_id.cpu().numpy(),
-                                   cur_len)
+                self.display_token(viz_id, output_token_id.cpu().numpy(), cur_len)
             cur_len = cur_len + 1
 
-            if output_token_id == self.model.config.eos_token_id:
+            if output_token_id == eos_token_id:
                 break
 
         # Turn activations from dict to a proper array
         activations_dict = self._all_activations_dict
-
         if activations_dict != {}:
             self.activations = activations_dict_to_array(activations_dict)
+        hidden_states = getattr(output, "hidden_states", [None])[0]
 
-        hidden_states = getattr(output, "hidden_states", None)
+        if decoder_input_ids is not None:
+            assert len(decoder_input_ids.size()) == 2
+            all_token_ids = torch.cat([input_ids, decoder_input_ids], dim=-1)[0]
+        else:
+            all_token_ids = input_ids[0]
         tokens = []
-        for i in input_ids:
+        for i in all_token_ids:
             token = self.tokenizer.decode([i])
             tokens.append(token)
 
         attributions = self.attributions
         attn = getattr(output, "attentions", None)
         return OutputSeq(**{'tokenizer': self.tokenizer,
-                            'token_ids': input_ids.unsqueeze(0),  # Add a batch dimension
-                            'n_input_tokens': n_input_tokens,
-                            'output_text': self.tokenizer.decode(input_ids),
+                            'token_ids': all_token_ids.unsqueeze(0),  # Add a batch dimension
+                            'n_input_tokens': n_input_tokens if decoder_input_ids is None else n_input_tokens + 1, # we want the decoder priming token to be considered as input
+                            'output_text': self.tokenizer.decode(all_token_ids),
                             'tokens': [tokens],  # Add a batch dimension
                             'hidden_states': hidden_states,
                             'attention': attn,
@@ -311,7 +365,6 @@ class LM(object):
         else:
             output = self.model(**input_tokens, return_dict=True, use_cache=False)
             predict = output.logits
-            scores = predict[-1:, :]
             lm_head = self.model.lm_head
 
         # Turn activations from dict to a proper array
@@ -340,18 +393,17 @@ class LM(object):
                             'lm_head': lm_head,
                             'device': self.device})
 
-    def _get_embeddings(self, input_ids):
+    def _get_embeddings(self, input_ids) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
         """
         Takes the token ids of a sequence, returns a matrix of their embeddings.
         """
-        # embedding_matrix = self.model.transformer.wte.weight
-        embedding_matrix = self.model_embeddings
+
+        embedding_matrix = getattr(self.model_embeddings, 'weight', self.model_embeddings)
 
         vocab_size = embedding_matrix.shape[0]
-        one_hot_tensor = self.to(_one_hot(input_ids, vocab_size))
 
+        one_hot_tensor = self.to(_one_hot_batched(input_ids, vocab_size))
         token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
-        # token_ids_tensor_one_hot.requires_grad_(True)
 
         inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
         return inputs_embeds, token_ids_tensor_one_hot
@@ -454,7 +506,6 @@ class LM(object):
         # """
 
         js = f"""
-
          requirejs( ['basic', 'ecco'], function(basic, ecco){{
             basic.init('{viz_id}')
 
@@ -462,7 +513,7 @@ class LM(object):
          }}, function (err) {{
             console.log(err);
         }})
-"""
+        """
         # print(js)
         # d.display(d.HTML(html))
         d.display(d.Javascript(js))
@@ -547,6 +598,10 @@ def sample_output_token(scores, do_sample, temperature, top_k, top_p):
 def _one_hot(token_ids, vocab_size):
     return torch.zeros(len(token_ids), vocab_size).scatter_(1, token_ids.unsqueeze(1), 1.)
 
+def _one_hot_batched(token_ids, vocab_size):
+    batch_size, num_tokens = token_ids.shape
+    return torch.zeros(batch_size, num_tokens, vocab_size).scatter_(-1, token_ids.unsqueeze(-1), 1.)
+
 
 def activations_dict_to_array(activations_dict):
     """
@@ -569,213 +624,3 @@ def activations_dict_to_array(activations_dict):
     activations = np.swapaxes(activations, 0, 1)
     # print('after swapping: ', activations.shape)
     return activations
-
-
-class T5LM(LM):
-    def _attach_hooks(self, model):
-        # TODO: Hooks removed for experimentation sake, put them back in once we need them
-        pass
-
-    def _get_embeddings(self, input_ids) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
-        """
-        Takes the token ids of a sequence, returns a matrix of their embeddings.
-        """
-        embedding_matrix = self.model_embeddings
-        vocab_size = embedding_matrix.shape[0]
-        batch_size, num_tokens = input_ids.shape
-        one_hot_tensor = torch.zeros(batch_size, num_tokens, vocab_size).scatter_(-1, input_ids.unsqueeze(-1), 1.)
-        one_hot_tensor = self.to(one_hot_tensor)
-        token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
-        # token_ids_tensor_one_hot.requires_grad_(True)
-
-        inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
-        return inputs_embeds, token_ids_tensor_one_hot
-
-    def generate(self,
-                 input_str: str,
-                 max_length: Optional[int] = 8,
-                 temperature: Optional[float] = None,
-                 top_k: Optional[int] = None,
-                 top_p: Optional[float] = None,
-                 get_model_output: Optional[bool] = False,
-                 do_sample: Optional[bool] = None,
-                 attribution: Optional[bool] = True,
-                 generate: Optional[int] = None):
-        top_k = top_k if top_k is not None else self.model.config.top_k
-        top_p = top_p if top_p is not None else self.model.config.top_p
-        temperature = temperature if temperature is not None else self.model.config.temperature
-        do_sample = do_sample if do_sample is not None else self.model.config.task_specific_params['text-generation'][
-            'do_sample']
-        pad_token_id = self.model.config.pad_token_id
-        eos_token_id = self.model.config.eos_token_id
-
-        # We needs this as a batch in order to collect activations.
-        input_ids = self.tokenizer(input_str, return_tensors="pt")['input_ids']  # Shape Batch x Tokens
-        n_input_tokens = len(input_ids[0])
-        cur_len = n_input_tokens
-
-        if generate is not None:
-            max_length = n_input_tokens + generate
-
-        past = None
-        self.attributions = {}
-        outputs = []
-
-        if cur_len >= max_length:
-            raise ValueError("max_length set to {} while input token has more tokens ({}). "
-                             "Consider increasing max_length".format(max_length, cur_len))
-
-        if self.verbose:
-            viz_id = self.display_input_sequence(input_ids[0])
-
-        attention_mask = self.model._prepare_attention_mask_for_generation(input_ids, pad_token_id, eos_token_id)
-        attention_mask = self.to(attention_mask)
-        decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_ids, None, None)
-
-        while cur_len < max_length:
-            output_token_id, output = self._generate_token(encoder_input_ids=input_ids,
-                                                           encoder_attention_mask=attention_mask,
-                                                           decoder_input_ids=decoder_input_ids,
-                                                           past=past,  # Note, this is not currently used
-                                                           temperature=temperature,
-                                                           top_k=top_k,
-                                                           top_p=top_p,
-                                                           do_sample=do_sample,
-                                                           attribution_flag=attribution)
-
-            # TODO: vvv These are broken vvv
-            if get_model_output:
-                outputs.append(output)
-            # TODO: ^^^ These are broken ^^^
-
-            decoder_input_ids = torch.cat([decoder_input_ids, torch.tensor([[output_token_id]])], dim=-1)
-
-            if self.verbose:
-                self.display_token(viz_id, output_token_id.cpu().numpy(), cur_len)
-            cur_len = cur_len + 1
-
-            if output_token_id == self.model.config.eos_token_id:
-                break
-
-        # TODO: vvv These are broken vvv
-        # Turn activations from dict to a proper array
-        activations_dict = self._all_activations_dict
-        if activations_dict != {}:
-            self.activations = activations_dict_to_array(activations_dict)
-        hidden_states = getattr(output, "hidden_states", None)
-        attn = getattr(output, "attentions", None)
-        # TODO: ^^^ These are broken ^^^
-
-        full_seq_ids = torch.cat([input_ids, decoder_input_ids], dim=-1)
-        tokens = []
-        for i in full_seq_ids[0]:
-            token = self.tokenizer.decode([i])
-            tokens.append(token)
-
-        attributions = self.attributions
-        return OutputSeq(**{
-            'tokenizer': self.tokenizer,
-            'token_ids': full_seq_ids,
-            'n_input_tokens': n_input_tokens + 1,  # we want the decoder priming token to be considered as input
-            'output_text': self.tokenizer.decode(full_seq_ids[0]),
-            'tokens': [tokens],  # Add a batch dimension
-            'attribution': attributions,
-
-            # TODO: vvv These are broken vvv
-            'hidden_states': hidden_states,
-            'attention': attn,
-            'model_outputs': outputs,
-            'activations': self.activations,
-            'collect_activations_layer_nums': self.collect_activations_layer_nums,
-            'lm_head': self.model.lm_head,
-            # TODO: ^^^ These are broken ^^^
-
-            'device': self.device
-        })
-
-    def _generate_token(self,
-                        encoder_input_ids,
-                        encoder_attention_mask,
-                        decoder_input_ids,
-                        past,
-                        do_sample: bool,
-                        temperature: float,
-                        top_k: int,
-                        top_p: float,
-                        attribution_flag: Optional[bool]):
-        encoder_inputs_embeds, encoder_token_ids_tensor_one_hot = self._get_embeddings(encoder_input_ids)
-        # B x T x E, B x T x V
-
-        # This is only okay as long as encoder and decoder share the embeddings
-        # Should make separate ones for more flexibility
-        decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = self._get_embeddings(decoder_input_ids)
-        # B x T x E, B x T x V
-
-        output: Seq2SeqLMOutput = self.model(
-            # TODO: This re-forwarding encoder side is expensive, can we optimise or is it needed everytime for fresh
-            #       backward ?
-            inputs_embeds=encoder_inputs_embeds,
-            attention_mask=encoder_attention_mask,
-            decoder_inputs_embeds=decoder_inputs_embeds,
-            use_cache=False,
-            return_dict=True,
-        )
-        """Seq2SeqLMOutput has
-        
-        loss: Optional[torch.FloatTensor]
-        logits: torch.FloatTensor
-        past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]]
-        decoder_hidden_states: Optional[Tuple[torch.FloatTensor]]
-        decoder_attentions: Optional[Tuple[torch.FloatTensor]]
-        cross_attentions: Optional[Tuple[torch.FloatTensor]]
-        encoder_last_hidden_state: Optional[torch.FloatTensor]
-        encoder_hidden_states: Optional[Tuple[torch.FloatTensor]]
-        encoder_attentions: Optional[Tuple[torch.FloatTensor]]
-        """
-        predict = output.logits
-        scores = predict[0, -1:, :]
-        prediction_id = sample_output_token(scores, do_sample, temperature, top_k, top_p)
-        # prediction_id now has the id of the token we want to output
-        # To do feature importance, let's get the actual logit associated with
-        # this token
-        prediction_logit = predict[0][-1][prediction_id]
-
-        if attribution_flag:
-            saliency_results = attrib_ed.compute_saliency_scores(
-                prediction_logit,
-                encoder_token_ids_tensor_one_hot,
-                encoder_inputs_embeds,
-                decoder_token_ids_tensor_one_hot,
-                decoder_inputs_embeds,
-            )
-
-            if 'gradient' not in self.attributions:
-                self.attributions['gradient'] = []
-            self.attributions['gradient'].append(saliency_results['gradient'].cpu().detach().numpy())
-
-            if 'grad_x_input' not in self.attributions:
-                self.attributions['grad_x_input'] = []
-            self.attributions['grad_x_input'].append(saliency_results['grad_x_input'].cpu().detach().numpy())
-
-        output['logits'] = None  # free tensor memory we won't use again
-
-        # detach(): don't need grads here
-        # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
-        # TODO: Re-write this for T5
-        # if getattr(output, "hidden_states", None) is not None:
-        #     hs_list = []
-        #     for idx, layer_hs in enumerate(output.hidden_states):
-        #         # in Hugging Face Transformers v4, there's an extra index for batch
-        #         if len(layer_hs.shape) == 3:  # If there's a batch dimension, pick the first oen
-        #             hs = layer_hs.cpu().detach()[0].unsqueeze(0)  # Adding a dimension to concat to later
-        #         # Earlier versions are only 2 dimensional
-        #         # But also, in v4, for GPT2, all except the last one would have 3 dims, the last layer
-        #         # would only have two dims
-        #         else:
-        #             hs = layer_hs.cpu().detach().unsqueeze(0)
-        #
-        #         hs_list.append(hs)
-        #
-        #     output.hidden_states = torch.cat(hs_list, dim=0)
-
-        return prediction_id, output
