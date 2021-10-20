@@ -292,7 +292,10 @@ class LM(object):
         activations_dict = self._all_activations_dict
         if activations_dict != {}:
             self.activations = activations_dict_to_array(activations_dict)
-        hidden_states = getattr(output, "hidden_states", [None])[0]
+
+        encoder_hidden_states = getattr(output, "hidden_states", output.encoder_hidden_states)[0]
+        decoder_hidden_states = getattr(output, "decoder_hidden_states", [None])[0]
+        from ipdb import set_trace; set_trace()
 
         if decoder_input_ids is not None:
             assert len(decoder_input_ids.size()) == 2
@@ -305,13 +308,17 @@ class LM(object):
             tokens.append(token)
 
         attributions = self.attributions
-        attn = getattr(output, "attentions", None)
+        attn = getattr(output, "attentions", [None])[0]
+
+        from ipdb import set_trace; set_trace()
+
         return OutputSeq(**{'tokenizer': self.tokenizer,
                             'token_ids': all_token_ids.unsqueeze(0),  # Add a batch dimension
                             'n_input_tokens': n_input_tokens if decoder_input_ids is None else n_input_tokens + 1, # we want the decoder priming token to be considered as input
                             'output_text': self.tokenizer.decode(all_token_ids),
                             'tokens': [tokens],  # Add a batch dimension
-                            'hidden_states': hidden_states,
+                            'encoder_hidden_states': encoder_hidden_states,
+                            'decoder_hidden_states': decoder_hidden_states,
                             'attention': attn,
                             'model_outputs': outputs,
                             'attribution': attributions,
@@ -335,6 +342,8 @@ class LM(object):
         inputs = lm.tokenizer("Hello computer", return_tensors="pt")
         output = lm(inputs)
         ```
+
+        # TODO: Adapt this for Seq2Seq models
 
         Args:
             input_tokens: tuple returned by tokenizer( TEXT, return_tensors="pt").
@@ -371,19 +380,22 @@ class LM(object):
         if activations_dict != {}:
             self.activations = activations_dict_to_array(activations_dict)
 
-        hidden_states = getattr(output, "hidden_states", None)
+        encoder_hidden_states = getattr(output, "hidden_states", output.encoder_hidden_states)[0]
+        decoder_hidden_states = getattr(output, "decoder_hidden_states", [None])[0]
+
         tokens = []
         for i in input_tokens['input_ids']:
             token = self.tokenizer.convert_ids_to_tokens(i)
             tokens.append(token)
 
-        attn = getattr(output, "attentions", None)
+        attn = getattr(output, "attentions", [None])[0]
         return OutputSeq(**{'tokenizer': self.tokenizer,
                             'token_ids': input_tokens['input_ids'],
                             'n_input_tokens': n_input_tokens,
                             # 'output_text': self.tokenizer.decode(input_ids),
                             'tokens': tokens,
-                            'hidden_states': hidden_states,
+                            'encoder_hidden_states': encoder_hidden_states,
+                            'decoder_hidden_states': decoder_hidden_states,
                             'attention': attn,
                             # 'model_outputs': outputs,
                             # 'attribution': attributions,
@@ -412,6 +424,9 @@ class LM(object):
             # Add hooks to capture activations in every FFNN
 
             if re.search(self.collect_activations_layer_name_sig, name):
+
+                from ipdb import set_trace; set_trace()
+
                 # print("mlp.c_proj", self.collect_activations_flag , name)
                 if self.collect_activations_flag:
                     self._hooks[name] = module.register_forward_hook(
@@ -461,6 +476,8 @@ class LM(object):
             # Assuming all input tokens are presented as input, no "past"
             # The inputs to c_proj already pass through the gelu activation function
             self._all_activations_dict[layer_number] = input_[0].detach().cpu().numpy()
+
+        from ipdb import set_trace; set_trace()
 
     def _inhibit_neurons_hook(self, name: str, input_tensor):
         """

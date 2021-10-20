@@ -47,7 +47,8 @@ class OutputSeq:
                  tokenizer=None,
                  output_text=None,
                  tokens=None,
-                 hidden_states=None,
+                 encoder_hidden_states=None,
+                 decoder_hidden_states=None,
                  attribution=None,
                  activations=None,
                  collect_activations_layer_nums=None,
@@ -82,7 +83,8 @@ class OutputSeq:
         self.n_input_tokens = n_input_tokens
         self.output_text = output_text
         self.tokens = tokens
-        self.hidden_states = hidden_states
+        self.encoder_hidden_states = encoder_hidden_states
+        self.decoder_hidden_states = decoder_hidden_states
         self.attribution = attribution
         self.activations = activations
         self.collect_activations_layer_nums = collect_activations_layer_nums
@@ -92,8 +94,11 @@ class OutputSeq:
         self.device = device
         self._path = os.path.dirname(ecco.__file__)
 
+    def _get_hidden_states(self):
+        return self.decoder_hidden_states if self.decoder_hidden_states is not None else self.encoder_hidden_states
+
     def __str__(self):
-        return "<LMOutput '{}' # of lm outputs: {}>".format(self.output_text, len(self.hidden_states))
+        return "<LMOutput '{}' # of lm outputs: {}>".format(self.output_text, len(self._get_hidden_states()))
 
     def to(self, tensor: torch.Tensor):
         if self.device == 'cuda':
@@ -311,7 +316,7 @@ the tokens in the sequence.
             layer: None shows all layers. Can also pass an int with the layer id to show only that layer
         """
 
-        hidden_states = self.hidden_states
+        hidden_states = self._get_hidden_states()
 
         if position == 0:
             raise ValueError(f"'position' is set to 0. There is never a hidden state associated with this position."
@@ -389,7 +394,7 @@ the tokens in the sequence.
         ![Rankings watch](../../img/rankings_ex_eu_1.png)
         """
 
-        hidden_states = self.hidden_states
+        hidden_states = self._get_hidden_states()
 
         n_layers = len(hidden_states)
         position = hidden_states[0].shape[0] - self.n_input_tokens + 1
@@ -446,7 +451,7 @@ the tokens in the sequence.
         if position != -1:
             position = position - 1  # e.g. position 5 corresponds to activation 4
 
-        hidden_states = self.hidden_states
+        hidden_states = self._get_hidden_states()
 
         n_layers = len(hidden_states)
         n_tokens_to_watch = len(watch)
