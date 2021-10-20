@@ -12,6 +12,8 @@ Usage:
 """
 
 __version__ = '0.0.14'
+import pathlib
+import yaml
 
 from typing import Optional, List
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel, AutoModelForSeq2SeqLM
@@ -27,33 +29,34 @@ def from_pretrained(hf_model_id: str,
                     gpu: Optional[bool] = True
                     ):
     """
-Constructs a [LM][ecco.lm.LM] object based on a string identifier from HuggingFace Transformers. This is main entry point to Ecco.
+    Constructs a [LM][ecco.lm.LM] object based on a string identifier from HuggingFace Transformers. This is main entry point to Ecco.
 
-Usage:
+    Usage:
 
-```python
-import ecco
-lm = ecco.from_pretrained('gpt2')
-```
+    ```python
+    import ecco
+    lm = ecco.from_pretrained('gpt2')
+    ```
 
-Args:
-    hf_model_id: name of the model identifying it in the HuggingFace model hub. e.g. 'distilgpt2', 'bert-base-uncased'.
-    activations: If True, collect activations when this model runs inference. Option saved in LM.
-    attention: If True, collect attention. Option passed to the model.
-    hidden_states: if True, collect hidden states. Needed for layer_predictions and rankings().
-    activations_layer_nums: If we are collecting activations, we can specify which layers to track. This is None by
-        default and all layer are collected if 'activations' is set to True.
-    verbose: If True, model.generate() displays output tokens in HTML as they're generated.
-    gpu: Set to False to force using the CPU even if a GPU exists.
-"""
-    # TODO: Should specify task/head in a cleaner way. Allow masked LM. T5 generation.
-    # Likely use model-config. Have a default. Allow user to specify head?
-    if 't5' in hf_model_id:
+    Args:
+        hf_model_id: name of the model identifying it in the HuggingFace model hub. e.g. 'distilgpt2', 'bert-base-uncased'.
+        activations: If True, collect activations when this model runs inference. Option saved in LM.
+        attention: If True, collect attention. Option passed to the model.
+        hidden_states: if True, collect hidden states. Needed for layer_predictions and rankings().
+        activations_layer_nums: If we are collecting activations, we can specify which layers to track. This is None by
+            default and all layer are collected if 'activations' is set to True.
+        verbose: If True, model.generate() displays output tokens in HTML as they're generated.
+        gpu: Set to False to force using the CPU even if a GPU exists.
+    """
+    path = pathlib.Path(__file__).parent.resolve() / "model-config.yaml"
+    configs = yaml.safe_load(path.open())
+
+    if configs[hf_model_id]['type'] == 'enc-dec':
         tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
         model = AutoModelForSeq2SeqLM.from_pretrained(hf_model_id,
                                                       output_hidden_states=hidden_states,
                                                       output_attentions=attention)
-    elif 'gpt2' not in hf_model_id:
+    elif configs[hf_model_id]['type'] == 'causal':
         tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
         model = AutoModel.from_pretrained(hf_model_id,
                                           output_hidden_states=hidden_states,
@@ -65,6 +68,7 @@ Args:
                                                      output_attentions=attention)
     lm_kwargs = {
         'model_name': hf_model_id,
+        'config': configs,
         'collect_activations_flag': activations,
         'collect_activations_layer_nums': activations_layer_nums,
         'verbose': verbose,

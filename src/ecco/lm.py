@@ -2,13 +2,14 @@ import json
 import os
 import random
 import re
-from operator import attrgetter
-from typing import Optional, List, Tuple
+
 import transformers
-import yaml
+import ecco
+
+from operator import attrgetter
+from typing import Any, Dict, Optional, List, Tuple
 from IPython import display as d
 from torch.nn import functional as F
-import ecco
 from ecco.attribution import *
 from ecco.output import OutputSeq
 
@@ -35,10 +36,11 @@ class LM(object):
                  model: transformers.PreTrainedModel,
                  tokenizer: transformers.PreTrainedTokenizerFast,
                  model_name: str,
+                 config: Dict[str, Any],
                  collect_activations_flag: Optional[bool] = False,
                  collect_activations_layer_nums: Optional[List[int]] = None,  # None --> collect for all layers
                  verbose: Optional[bool] = True,
-                 gpu: Optional[bool] = True
+                 gpu: Optional[bool] = True, 
                  ):
         """
         Creates an LM object given a model and tokenizer.
@@ -47,6 +49,7 @@ class LM(object):
             model: HuggingFace Transformers Pytorch language model.
             tokenizer: The tokenizer associated with the model
             model_name: The name of the model. Used to retrieve required settings (like what the embedding layer is called)
+            config: Configuration that has the information about the layer whose activations we will collect
             collect_activations_flag: True if we want to collect activations
             collect_activations_layer_nums: If collecting activations, we can use this parameter to indicate which layers
                 to track. By default this would be None and we'd collect activations for all layers.
@@ -70,12 +73,8 @@ class LM(object):
         self.collect_activations_flag = collect_activations_flag
         self.collect_activations_layer_nums = collect_activations_layer_nums
 
-        # For each model, this indicates the layer whose activations
-        # we will collect
-        configs = yaml.safe_load(open(os.path.join(self._path, "model-config.yaml")))
-
         try:
-            self.model_config = configs[self.model_name]
+            self.model_config = config[self.model_name]
             self.model_embeddings = self.model_config['embedding']
             embeddings_layer_name = self.model_config['embedding']
             embed_retriever = attrgetter(embeddings_layer_name)
@@ -85,7 +84,7 @@ class LM(object):
             raise ValueError(
                 f"The model '{self.model_name}' is not defined in Ecco's 'model-config.yaml' file and"
                 f" so is not explicitly supported yet. Supported models are:",
-                list(configs.keys())) from KeyError()
+                list(config.keys())) from KeyError()
 
         self._hooks = {}
         self._reset()
