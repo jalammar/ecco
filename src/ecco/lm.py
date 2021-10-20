@@ -146,12 +146,12 @@ class LM(object):
         )
 
         predict = output.logits
-        scores = predict[-1:, :] if not self.model_config['needs_batching'] else predict[0, -1:, :]
+        scores = predict[0, -1:, :]
         prediction_id = sample_output_token(scores, do_sample, temperature, top_k, top_p)
         # prediction_id now has the id of the token we want to output
         # To do feature importance, let's get the actual logit associated with
         # this token
-        prediction_logit = predict[-1][prediction_id] if not self.model_config['needs_batching'] else predict[0][-1][prediction_id]
+        prediction_logit = predict[0][-1][prediction_id]
 
         if attribution_flag:
 
@@ -173,12 +173,11 @@ class LM(object):
 
         output['logits'] = None  # free tensor memory we won't use again
 
-        # TODO: Re-write this for Seq2Seq models (e.g., T5)
         # detach(): don't need grads here
         # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
         if getattr(output, "hidden_states", None) is not None:
             hs_list = []
-            for idx, layer_hs in enumerate(output.hidden_states):
+            for idx, layer_hs in enumerate(output.hidden_states[0]):
                 # in Hugging Face Transformers v4, there's an extra index for batch
                 if len(layer_hs.shape) == 3:  # If there's a batch dimension, pick the first oen
                     hs = layer_hs.cpu().detach()[0].unsqueeze(0)  # Adding a dimension to concat to later
@@ -190,7 +189,7 @@ class LM(object):
 
                 hs_list.append(hs)
 
-            output.hidden_states = torch.cat(hs_list, dim=0)
+            output.hidden_states[0] = torch.cat(hs_list, dim=0)
 
         return prediction_id, output
 
@@ -207,7 +206,7 @@ class LM(object):
         Generate tokens in response to an input prompt.
         Works with Language models like GPT2, not masked language models like BERT.
         Args:
-            input_str: Input prompt. # TODO: accept batch os input strings
+            input_str: Input prompt. # TODO: accept batch of input strings
             generate: Number of tokens to generate.
             max_length: max length of sequence (input + output tokens)
             temperature: Adjust the probability distibution of output candidate tokens.
@@ -230,8 +229,7 @@ class LM(object):
 
         # We needs this as a batch in order to collect activations.
         input_ids = self.tokenizer(input_str, return_tensors="pt")['input_ids']
-        input_ids = input_ids if self.model_config['needs_batching'] else input_ids[0]
-        n_input_tokens = len(input_ids[0]) if self.model_config['needs_batching'] else input_ids
+        n_input_tokens = len(input_ids[0])
         cur_len = n_input_tokens
 
         if generate is not None:
@@ -262,10 +260,10 @@ class LM(object):
 
         # Print output
         if self.verbose:
-            viz_id = self.display_input_sequence(input_ids if not self.model_config['needs_batching'] else input_ids[0])
+            viz_id = self.display_input_sequence(input_ids[0])
 
         while cur_len < max_length:
-            output_token_id, output = self._generate_token(encoder_input_ids=input_ids if self.model_config['needs_batching'] else input_ids[0],
+            output_token_id, output = self._generate_token(encoder_input_ids=input_ids,
                                                            encoder_attention_mask=attention_mask,
                                                            decoder_input_ids=decoder_input_ids,
                                                            past=past,  # Note, this is not currently used
@@ -276,18 +274,13 @@ class LM(object):
                                                            attribution_flag=attribution)
 
             if get_model_output:
-                outputs.append(output) # TODO: This is broken for T5
+                outputs.append(output)
 
             if decoder_input_ids is not None:
                 assert len(decoder_input_ids.size()) == 2 # will break otherwise
                 decoder_input_ids = torch.cat([decoder_input_ids, torch.tensor([[output_token_id]])], dim=-1)
             else:
-                input_ids = torch.cat(
-                    [
-                        input_ids if not self.model_config['needs_batching'] else input_ids[0],
-                        torch.tensor([output_token_id])
-                    ]
-                )
+                input_ids = torch.cat([input_ids[0], torch.tensor([output_token_id])])
 
             if self.verbose:
                 self.display_token(viz_id, output_token_id.cpu().numpy(), cur_len)
@@ -296,19 +289,17 @@ class LM(object):
             if output_token_id == eos_token_id:
                 break
 
-        # TODO: vvv This is broken for T5  vvv
         # Turn activations from dict to a proper array
         activations_dict = self._all_activations_dict
         if activations_dict != {}:
             self.activations = activations_dict_to_array(activations_dict)
-        hidden_states = getattr(output, "hidden_states", None)
-        # TODO: ^^^ This is broken for T5  ^^^
+        hidden_states = getattr(output, "hidden_states", [None])[0]
 
         if decoder_input_ids is not None:
             assert len(decoder_input_ids.size()) == 2
             all_token_ids = torch.cat([input_ids, decoder_input_ids], dim=-1)[0]
         else:
-            all_token_ids = input_ids
+            all_token_ids = input_ids[0]
         tokens = []
         for i in all_token_ids:
             token = self.tokenizer.decode([i])
@@ -317,9 +308,9 @@ class LM(object):
         attributions = self.attributions
         attn = getattr(output, "attentions", None)
         return OutputSeq(**{'tokenizer': self.tokenizer,
-                            'token_ids': all_token_ids.unsqueeze(0) if len(all_token_ids.size()) == 1  else all_token_ids,  # Add a batch dimension
-                            'n_input_tokens': n_input_tokens if decoder_input_ids is not None else n_input_tokens + 1, # we want the decoder priming token to be considered as input
-                            'output_text': self.tokenizer.decode(all_token_ids if len(all_token_ids.size()) == 1 else all_token_ids[0]),
+                            'token_ids': all_token_ids.unsqueeze(0),  # Add a batch dimension
+                            'n_input_tokens': n_input_tokens if decoder_input_ids is None else n_input_tokens + 1, # we want the decoder priming token to be considered as input
+                            'output_text': self.tokenizer.decode(all_token_ids),
                             'tokens': [tokens],  # Add a batch dimension
                             'hidden_states': hidden_states,
                             'attention': attn,
@@ -406,18 +397,13 @@ class LM(object):
         """
         Takes the token ids of a sequence, returns a matrix of their embeddings.
         """
-        # embedding_matrix = self.model.transformer.wte.weight
-        embedding_matrix = self.model_embeddings
+
+        embedding_matrix = getattr(self.model_embeddings, 'weight', self.model_embeddings)
 
         vocab_size = embedding_matrix.shape[0]
 
-        if self.model_config['needs_batching']:
-            one_hot_tensor = self.to(_one_hot_batched(input_ids, vocab_size))
-        else:
-            one_hot_tensor = self.to(_one_hot(input_ids, vocab_size))
-
+        one_hot_tensor = self.to(_one_hot_batched(input_ids, vocab_size))
         token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
-        # token_ids_tensor_one_hot.requires_grad_(True)
 
         inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
         return inputs_embeds, token_ids_tensor_one_hot
@@ -520,7 +506,6 @@ class LM(object):
         # """
 
         js = f"""
-
          requirejs( ['basic', 'ecco'], function(basic, ecco){{
             basic.init('{viz_id}')
 
@@ -528,7 +513,7 @@ class LM(object):
          }}, function (err) {{
             console.log(err);
         }})
-"""
+        """
         # print(js)
         # d.display(d.HTML(html))
         d.display(d.Javascript(js))
