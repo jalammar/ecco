@@ -78,7 +78,6 @@ class LM(object):
         try:
             self.model_config = config[self.model_name]
             self.model_type = self.model_config['type']
-            self.model_embeddings = self.model_config['embedding']
             embeddings_layer_name = self.model_config['embedding']
             embed_retriever = attrgetter(embeddings_layer_name)
             self.model_embeddings = embed_retriever(self.model)
@@ -255,7 +254,7 @@ class LM(object):
         else:
             attention_mask = None
 
-        if self.model_type == 'enc-dec':
+        if self.model_type == 'enc-dec': # FIXME: only done because causal LMs like GPT-2 have the _prepare_decoder_input_ids_for_generation method but do not use it
             assert len(input_ids.size()) == 2 # will break otherwise
             decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_ids, None, None)
         else:

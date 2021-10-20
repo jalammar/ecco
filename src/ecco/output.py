@@ -397,16 +397,16 @@ class OutputSeq:
         hidden_states = self._get_hidden_states()
 
         n_layers = len(hidden_states)
-        position = hidden_states[0].shape[0] - self.n_input_tokens + 1
+        position = hidden_states[0].shape[1] - self.n_input_tokens + 1
 
         predicted_tokens = np.empty((n_layers - 1, position), dtype='U25')
         rankings = np.zeros((n_layers - 1, position), dtype=np.int32)
         token_found_mask = np.ones((n_layers - 1, position))
 
         # loop through layer levels
-        for i, level in enumerate(hidden_states[1:]):
+        for i, level in enumerate(hidden_states[1:]):  # Skip the embedding layer TODO: is this the same for enc-dec architectures?
             # Loop through generated/output positions
-            for j, hidden_state in enumerate(level[self.n_input_tokens - 1:]):
+            for j, hidden_state in enumerate(level[0][self.n_input_tokens - 1:]): # [0] to skip batch size dimension
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
                 logits = self.lm_head(self.to(hidden_state))
@@ -459,10 +459,10 @@ class OutputSeq:
         rankings = np.zeros((n_layers - 1, n_tokens_to_watch), dtype=np.int32)
 
         # loop through layer levels
-        for i, level in enumerate(hidden_states[1:]):  # Skip the embedding layer
+        for i, level in enumerate(hidden_states[1:]):  # Skip the embedding layer TODO: is this the same for enc-dec architectures?
             # Loop through generated/output positions
             for j, token_id in enumerate(watch):
-                hidden_state = level[position]
+                hidden_state = level[0][position] # [0] to skip batch size dimension
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
                 logits = self.lm_head(self.to(hidden_state))
