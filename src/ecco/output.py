@@ -328,7 +328,7 @@ class OutputSeq:
             # If a layer is specified, choose it only.
             hidden_states = hidden_states[layer + 1].unsqueeze(0)
         else:
-            # include all layers except the first
+            # include all layers except the first TODO: is this the same for enc-dec architectures?
             hidden_states = hidden_states[1:]
 
         k = topk
@@ -337,7 +337,7 @@ class OutputSeq:
         data = []
 
         for layer_no, h in enumerate(hidden_states):
-            hidden_state = h[position - 1]
+            hidden_state = h[0][position - 1] # [0] to skip batch size dimension
             # Use lm_head to project the layer's hidden state to output vocabulary
             logits = self.lm_head(self.to(hidden_state))
             softmax = F.softmax(logits, dim=-1)
