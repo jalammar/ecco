@@ -2,23 +2,40 @@ import torch
 from typing import Optional
 
 
-def saliency(prediction_logit, token_ids_tensor_one_hot, norm=True, retain_graph=True):
+def saliency(prediction_logit, encoder_token_ids_tensor_one_hot, decoder_token_ids_tensor_one_hot: Optional = None,
+             norm=True, retain_graph=False):
+
+    if decoder_token_ids_tensor_one_hot is not None:
+        # only works in batches of 1
+        assert len(decoder_token_ids_tensor_one_hot.shape) == 3 and decoder_token_ids_tensor_one_hot.shape[0] == 1
+        assert len(encoder_token_ids_tensor_one_hot.shape) == 3 and encoder_token_ids_tensor_one_hot.shape[0] == 1
+    else:
+        # only works for vector without batch dimension
+        assert len(encoder_token_ids_tensor_one_hot.shape) == 2
+
     # Back-propegate the gradient from the selected output-logit
     prediction_logit.backward(retain_graph=retain_graph)
+
+    token_ids_tensor_one_hot_grad = torch.cat(
+        [encoder_token_ids_tensor_one_hot.grad, decoder_token_ids_tensor_one_hot.grad], dim=1
+    )[0] if decoder_token_ids_tensor_one_hot is not None else encoder_token_ids_tensor_one_hot.grad
 
     # token_ids_tensor_one_hot.grad is the gradient propegated to ever embedding dimension of
     # the input tokens.
     if norm:  # norm calculates a scalar value (L2 Norm)
-        token_importance_raw = torch.norm(token_ids_tensor_one_hot.grad, dim=1)
+        token_importance_raw = torch.norm(token_ids_tensor_one_hot_grad, dim=1)
         # print('token_importance_raw', token_ids_tensor_one_hot.grad.shape,
         # np.count_nonzero(token_ids_tensor_one_hot.detach().numpy(), axis=1))
 
         # Normalize the values so they add up to 1
         token_importance = token_importance_raw / torch.sum(token_importance_raw)
     else:
-        token_importance = torch.sum(token_ids_tensor_one_hot.grad, dim=1)  # Only one value, all others are zero
+        token_importance = torch.sum(token_ids_tensor_one_hot_grad, dim=1)  # Only one value, all others are zero
 
-    token_ids_tensor_one_hot.grad.data.zero_()
+    encoder_token_ids_tensor_one_hot.grad.data.zero_()
+    if decoder_token_ids_tensor_one_hot is not None:
+        decoder_token_ids_tensor_one_hot.grad.data.zero_()
+
     return token_importance
 
 
@@ -53,7 +70,7 @@ def gradient_x_inputs_attribution(prediction_logit, encoder_inputs_embeds, decod
                                   retain_graph=True):
 
     if decoder_inputs_embeds is not None:
-        # TODO: Verify if this makes sense!
+        # only works in batches of 1
         assert len(decoder_inputs_embeds.shape) == 3 and decoder_inputs_embeds.shape[0] == 1
         assert len(encoder_inputs_embeds.shape) == 3 and encoder_inputs_embeds.shape[0] == 1
 
@@ -96,23 +113,25 @@ def gradient_x_inputs_attribution(prediction_logit, encoder_inputs_embeds, decod
 def compute_saliency_scores(prediction_logit,
                             encoder_token_ids_tensor_one_hot,
                             encoder_inputs_embeds,
-                            decoder_token_ids_tensor_one_hot,
-                            decoder_inputs_embeds,
+                            decoder_token_ids_tensor_one_hot: Optional = None,
+                            decoder_inputs_embeds: Optional = None,
                             gradient_kwargs={},
                             gradient_x_input_kwargs={}):
 
     results = {}
 
-    results['grad_x_input'] = gradient_x_inputs_attribution(prediction_logit=prediction_logit,
-                                                            encoder_inputs_embeds=encoder_inputs_embeds,
-                                                            decoder_inputs_embeds=decoder_inputs_embeds,
-                                                            retain_graph=True,
-                                                            **gradient_x_input_kwargs)
+    results['grad_x_input'] = gradient_x_inputs_attribution(
+        prediction_logit=prediction_logit,
+        encoder_inputs_embeds=encoder_inputs_embeds,
+        decoder_inputs_embeds=decoder_inputs_embeds,
+        **gradient_x_input_kwargs
+    )
 
-    results['gradient'] = saliency(prediction_logit=prediction_logit,
-                                   encoder_token_ids_tensor_one_hot=encoder_token_ids_tensor_one_hot,
-                                   decoder_token_ids_tensor_one_hot=decoder_token_ids_tensor_one_hot,
-                                   retain_graph=False,
-                                   **gradient_kwargs)
+    results['gradient'] = saliency(
+        prediction_logit=prediction_logit,
+        encoder_token_ids_tensor_one_hot=encoder_token_ids_tensor_one_hot,
+        decoder_token_ids_tensor_one_hot=decoder_token_ids_tensor_one_hot,
+        **gradient_kwargs
+    )
 
     return results

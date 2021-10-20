@@ -14,10 +14,8 @@ Usage:
 __version__ = '0.0.14'
 
 from typing import Optional, List
-
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel, AutoModelForSeq2SeqLM
-
-from ecco.lm import LM, T5LM
+from ecco.lm import LM
 
 
 def from_pretrained(hf_model_id: str,

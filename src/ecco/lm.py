@@ -4,15 +4,11 @@ import random
 import re
 from operator import attrgetter
 from typing import Optional, List, Tuple
-
 import transformers
 import yaml
 from IPython import display as d
 from torch.nn import functional as F
-from transformers.modeling_outputs import Seq2SeqLMOutput
-
 import ecco
-import ecco.attribution_enc_dec as attrib_ed
 from ecco.attribution import *
 from ecco.output import OutputSeq
 
