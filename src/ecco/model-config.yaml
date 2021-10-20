@@ -12,7 +12,6 @@ gpt2-medium:
 gpt2-xl:
     embedding: "transformer.wte.weight"
     type: 'causal'
-    needs_batching: False
     activations:
         - 'mlp\.c_proj'
 distilgpt2:
@@ -92,22 +91,22 @@ roberta-large:
 # ENCODER DECODER MODELS
 # T5
 'tscholak/1wnr382e':
-    embedding: 'shared'
+    embedding: 'shared.weight'
     type: 'enc-dec'
     activations:
         - 'wo' #Note that this will be both encoder and decoder layers
 'valhalla/t5-small-qg-hl':
-    embedding: 'shared'
+    embedding: 'shared.weight'
     type: 'enc-dec'
     activations:
         - 'wo' #Note that this will be both encoder and decoder layers
 'valhalla/t5-small-qa-qg-hl':
-    embedding: 'shared'
+    embedding: 'shared.weight'
     type: 'enc-dec'
     activations:
         - 'wo' #Note that this will be both encoder and decoder layers
 'valhalla/t5-base-e2e-qg':
-    embedding: 'shared'
+    embedding: 'shared.weight'
     type: 'enc-dec'
     activations:
         - 'wo' #Note that this will be both encoder and decoder layers

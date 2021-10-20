@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 from sklearn import decomposition
-from typing import Optional, List
+from typing import Dict, Optional, List
 
 
 class OutputSeq:
@@ -186,42 +186,42 @@ class OutputSeq:
 
     def saliency(self, attr_method: Optional[str] = 'grad_x_input', style="minimal", **kwargs):
         """
-Explorable showing saliency of each token generation step.
-Hovering-over or tapping an output token imposes a saliency map on other tokens
-showing their importance as features to that prediction.
+            Explorable showing saliency of each token generation step.
+            Hovering-over or tapping an output token imposes a saliency map on other tokens
+            showing their importance as features to that prediction.
 
-Examples:
+            Examples:
 
-```python
-import ecco
-lm = ecco.from_pretrained('distilgpt2')
-text= "The countries of the European Union are:\n1. Austria\n2. Belgium\n3. Bulgaria\n4."
-output = lm.generate(text, generate=20, do_sample=True)
+            ```python
+            import ecco
+            lm = ecco.from_pretrained('distilgpt2')
+            text= "The countries of the European Union are:\n1. Austria\n2. Belgium\n3. Bulgaria\n4."
+            output = lm.generate(text, generate=20, do_sample=True)
 
-# Show saliency explorable
-output.saliency()
-```
+            # Show saliency explorable
+            output.saliency()
+            ```
 
-Which creates the following interactive explorable:
-![input saliency example 1](../../img/saliency_ex_1.png)
+            Which creates the following interactive explorable:
+            ![input saliency example 1](../../img/saliency_ex_1.png)
 
-If we want more details on the saliency values, we can use the detailed view:
+            If we want more details on the saliency values, we can use the detailed view:
 
-```python
-# Show detailed explorable
-output.saliency(style="detailed")
-```
+            ```python
+            # Show detailed explorable
+            output.saliency(style="detailed")
+            ```
 
-Which creates the following interactive explorable:
+            Which creates the following interactive explorable:
 
-![input saliency example 2 - detailed](../../img/saliency_ex_2.png)
+            ![input saliency example 2 - detailed](../../img/saliency_ex_2.png)
 
 
-Details:
-This view shows the Gradient * Inputs method of input saliency. The attribution values are calculated across the
-embedding dimensions, then we use the L2 norm to calculate a score for each token (from the values of its embeddings dimension)
-To get a percentage value, we normalize the scores by dividing by the sum of the attribution scores for all
-the tokens in the sequence.
+            Details:
+            This view shows the Gradient * Inputs method of input saliency. The attribution values are calculated across the
+            embedding dimensions, then we use the L2 norm to calculate a score for each token (from the values of its embeddings dimension)
+            To get a percentage value, we normalize the scores by dividing by the sum of the attribution scores for all
+            the tokens in the sequence.
         """
         position = self.n_input_tokens
 
@@ -305,15 +305,15 @@ the tokens in the sequence.
 
     def layer_predictions(self, position: int = 1, topk: Optional[int] = 10, layer: Optional[int] = None, **kwargs):
         """
-        Visualization plotting the topk predicted tokens after each layer (using its hidden state).
+            Visualization plotting the topk predicted tokens after each layer (using its hidden state).
 
-        Example:
-        ![prediction scores](../../img/layer_predictions_ex_london.png)
+            Example:
+            ![prediction scores](../../img/layer_predictions_ex_london.png)
 
-        Args:
-            position: The index of the output token to trace
-            topk: Number of tokens to show for each layer
-            layer: None shows all layers. Can also pass an int with the layer id to show only that layer
+            Args:
+                position: The index of the output token to trace
+                topk: Number of tokens to show for each layer
+                layer: None shows all layers. Can also pass an int with the layer id to show only that layer
         """
 
         hidden_states = self._get_hidden_states()
@@ -559,13 +559,13 @@ the tokens in the sequence.
 class NMF:
     """ Conducts NMF and holds the models and components """
 
-    def __init__(self, activations: np.ndarray,
+    def __init__(self, activations: Dict[str, np.ndarray],
                  n_input_tokens: int = 0,
                  token_ids: torch.Tensor = torch.Tensor(0),
                  _path: str = '',
                  n_components: int = 10,
-                 # from_layer: Optional[int] = None,
-                 # to_layer: Optional[int] = None,
+                 from_layer: Optional[int] = None,
+                 to_layer: Optional[int] = None,
                  tokens: Optional[List[str]] = None,
                  collect_activations_layer_nums: Optional[List[int]] = None,
                  **kwargs):
@@ -594,8 +594,8 @@ class NMF:
         self.token_ids = token_ids
         self.n_input_tokens = n_input_tokens
 
-        from_layer = kwargs['from_layer'] if 'from_layer' in kwargs else None
-        to_layer = kwargs['to_layer'] if 'to_layer' in kwargs else None
+        # Joining Encoder and Decoder (if exists) together
+        activations = np.concatenate(list(activations.values()), axis=-1)
 
         merged_act = self.reshape_activations(activations,
                                               from_layer,
@@ -672,6 +672,7 @@ class NMF:
             available = sorted(layer_nums_to_row_ixs.keys())
             raise ValueError(f"Not all layers between from_layer ({from_layer}) and to_layer ({to_layer}) "
                              f"have recorded activations. Layers with recorded activations are: {available}")
+
         row_ixs = [layer_nums_to_row_ixs[layer_num] for layer_num in layer_nums]
         activation_rows = [activations[:, row_ix] for row_ix in row_ixs]
         # Merge 'layers' and 'neuron' dimensions. Sending activations down from

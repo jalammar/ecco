@@ -1,3 +1,5 @@
+from collections import defaultdict
+import inspect
 import json
 import os
 import random
@@ -5,6 +7,7 @@ import re
 
 import transformers
 import ecco
+import numpy as np
 
 from operator import attrgetter
 from typing import Any, Dict, Optional, List, Tuple
@@ -72,9 +75,9 @@ class LM(object):
         # Neuron Activation
         self.collect_activations_flag = collect_activations_flag
         self.collect_activations_layer_nums = collect_activations_layer_nums
-
         try:
             self.model_config = config[self.model_name]
+            self.model_type = self.model_config['type']
             self.model_embeddings = self.model_config['embedding']
             embeddings_layer_name = self.model_config['embedding']
             embed_retriever = attrgetter(embeddings_layer_name)
@@ -95,8 +98,8 @@ class LM(object):
         # d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
 
     def _reset(self):
-        self._all_activations_dict = {}
-        self.activations = []
+        self._all_activations_dict = defaultdict(dict)
+        self.activations = defaultdict(dict)
         self.all_activations = []
         self.generation_activations = []
         self.neurons_to_inhibit = {}
@@ -133,15 +136,14 @@ class LM(object):
             'attention_mask': encoder_attention_mask,
             'decoder_inputs_embeds': decoder_inputs_embeds
         }
+        
         output = self.model(
             # TODO: This re-forwarding encoder side is expensive, can we optimise or is it needed everytime for fresh
             #       backward ?
-            inputs_embeds=encoder_inputs_embeds,
-            decoder_inputs_embeds=decoder_inputs_embeds,
+            inputs_embeds=encoder_inputs_embeds,          
             use_cache=False,
             return_dict=True,
-            **{ k: v for k, v in extra_kwargs.items() if k in self.model.__call__.__code__.co_varnames}
-            # TODO: check if this is being passed correctly to self.model when in seq2seq
+            **{ k: v for k, v in extra_kwargs.items() if k in inspect.signature(self.model.forward).parameters}
         )
 
         predict = output.logits
@@ -174,21 +176,23 @@ class LM(object):
 
         # detach(): don't need grads here
         # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
-        if getattr(output, "hidden_states", None) is not None:
-            hs_list = []
-            for idx, layer_hs in enumerate(output.hidden_states[0]):
-                # in Hugging Face Transformers v4, there's an extra index for batch
-                if len(layer_hs.shape) == 3:  # If there's a batch dimension, pick the first oen
-                    hs = layer_hs.cpu().detach()[0].unsqueeze(0)  # Adding a dimension to concat to later
-                # Earlier versions are only 2 dimensional
-                # But also, in v4, for GPT2, all except the last one would have 3 dims, the last layer
-                # would only have two dims
-                else:
-                    hs = layer_hs.cpu().detach().unsqueeze(0)
+        for attributes in ["hidden_states", "encoder_hidden_states", "decoder_hidden_states"]:
+            out_attr = getattr(output, attributes, None)
+            if out_attr is not None:
+                hs_list = []
+                for idx, layer_hs in enumerate(out_attr):
+                    # in Hugging Face Transformers v4, there's an extra index for batch
+                    if len(layer_hs.shape) == 3:  # If there's a batch dimension, pick the first oen
+                        hs = layer_hs.cpu().detach()[0].unsqueeze(0)  # Adding a dimension to concat to later
+                    # Earlier versions are only 2 dimensional
+                    # But also, in v4, for GPT2, all except the last one would have 3 dims, the last layer
+                    # would only have two dims
+                    else:
+                        hs = layer_hs.cpu().detach().unsqueeze(0)
 
-                hs_list.append(hs)
+                    hs_list.append(hs)
 
-            output.hidden_states[0] = torch.cat(hs_list, dim=0)
+                out_attr = torch.cat(hs_list, dim=0)
 
         return prediction_id, output
 
@@ -251,7 +255,7 @@ class LM(object):
         else:
             attention_mask = None
 
-        if getattr(self.model, '_prepare_decoder_input_ids_for_generation'):
+        if self.model_type == 'enc-dec':
             assert len(input_ids.size()) == 2 # will break otherwise
             decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_ids, None, None)
         else:
@@ -279,10 +283,17 @@ class LM(object):
                 assert len(decoder_input_ids.size()) == 2 # will break otherwise
                 decoder_input_ids = torch.cat([decoder_input_ids, torch.tensor([[output_token_id]])], dim=-1)
             else:
-                input_ids = torch.cat([input_ids[0], torch.tensor([output_token_id])])
+                input_ids = torch.cat([input_ids, torch.tensor([[output_token_id]])], dim=-1)
+
+                # Recomputing Attention Mask
+                if getattr(self.model, '_prepare_attention_mask_for_generation'):
+                    assert len(input_ids.size()) == 2 # will break otherwise
+                    attention_mask = self.model._prepare_attention_mask_for_generation(input_ids, pad_token_id, eos_token_id)
+                    attention_mask = self.to(attention_mask)
 
             if self.verbose:
                 self.display_token(viz_id, output_token_id.cpu().numpy(), cur_len)
+
             cur_len = cur_len + 1
 
             if output_token_id == eos_token_id:
@@ -290,27 +301,26 @@ class LM(object):
 
         # Turn activations from dict to a proper array
         activations_dict = self._all_activations_dict
-        if activations_dict != {}:
-            self.activations = activations_dict_to_array(activations_dict)
+        for layer_type, activations in activations_dict.items():
+            self.activations[layer_type] = activations_dict_to_array(activations)
 
-        encoder_hidden_states = getattr(output, "hidden_states", output.encoder_hidden_states)[0]
-        decoder_hidden_states = getattr(output, "decoder_hidden_states", [None])[0]
-        from ipdb import set_trace; set_trace()
+
+        encoder_hidden_states = getattr(output, "hidden_states", getattr(output, "encoder_hidden_states", None))
+        decoder_hidden_states = getattr(output, "decoder_hidden_states", None)
 
         if decoder_input_ids is not None:
             assert len(decoder_input_ids.size()) == 2
             all_token_ids = torch.cat([input_ids, decoder_input_ids], dim=-1)[0]
         else:
             all_token_ids = input_ids[0]
+            
         tokens = []
         for i in all_token_ids:
             token = self.tokenizer.decode([i])
             tokens.append(token)
 
         attributions = self.attributions
-        attn = getattr(output, "attentions", [None])[0]
-
-        from ipdb import set_trace; set_trace()
+        attn = getattr(output, "attentions", None)
 
         return OutputSeq(**{'tokenizer': self.tokenizer,
                             'token_ids': all_token_ids.unsqueeze(0),  # Add a batch dimension
@@ -377,8 +387,8 @@ class LM(object):
 
         # Turn activations from dict to a proper array
         activations_dict = self._all_activations_dict
-        if activations_dict != {}:
-            self.activations = activations_dict_to_array(activations_dict)
+        for layer_type, activations in activations_dict.items():
+            self.activations[layer_type] = activations_dict_to_array(activations)
 
         encoder_hidden_states = getattr(output, "hidden_states", output.encoder_hidden_states)[0]
         decoder_hidden_states = getattr(output, "decoder_hidden_states", [None])[0]
@@ -409,7 +419,7 @@ class LM(object):
         Takes the token ids of a sequence, returns a matrix of their embeddings.
         """
 
-        embedding_matrix = getattr(self.model_embeddings, 'weight', self.model_embeddings)
+        embedding_matrix = self.model_embeddings
 
         vocab_size = embedding_matrix.shape[0]
 
@@ -424,9 +434,7 @@ class LM(object):
             # Add hooks to capture activations in every FFNN
 
             if re.search(self.collect_activations_layer_name_sig, name):
-
-                from ipdb import set_trace; set_trace()
-
+                
                 # print("mlp.c_proj", self.collect_activations_flag , name)
                 if self.collect_activations_flag:
                     self._hooks[name] = module.register_forward_hook(
@@ -460,6 +468,7 @@ class LM(object):
         # \d+ means look for one or multiple digits
         # (?=\.) means look for a period after the int
         layer_number = re.search("(?<=\.)\d+(?=\.)", name).group(0)
+        layer_type = 'decoder' if name.startswith('decoder.') else 'encoder'
         # print("layer number: ", layer_number)
 
         collecting_this_layer = (self.collect_activations_layer_nums is None) or (
@@ -468,16 +477,14 @@ class LM(object):
         if collecting_this_layer:
             # Initialize the layer's key the first time we encounter it
             if layer_number not in self._all_activations_dict:
-                self._all_activations_dict[layer_number] = [0]
+                self._all_activations_dict[layer_type][layer_number] = [0]
 
             # For MLM, we only run one inference step. We save it.
-            # For LM, we could be running multiple inference stesp with generate(). In that case,
+            # For Causal LM, we could be running multiple inference steps with generate(). In that case,
             # overwrite the previous step activations. This collects all activations in the last step
             # Assuming all input tokens are presented as input, no "past"
             # The inputs to c_proj already pass through the gelu activation function
-            self._all_activations_dict[layer_number] = input_[0].detach().cpu().numpy()
-
-        from ipdb import set_trace; set_trace()
+            self._all_activations_dict[layer_type][layer_number] = input_[0].detach().cpu().numpy()
 
     def _inhibit_neurons_hook(self, name: str, input_tensor):
         """
