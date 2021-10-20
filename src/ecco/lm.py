@@ -303,7 +303,6 @@ class LM(object):
         for layer_type, activations in activations_dict.items():
             self.activations[layer_type] = activations_dict_to_array(activations)
 
-
         encoder_hidden_states = getattr(output, "hidden_states", getattr(output, "encoder_hidden_states", None))
         decoder_hidden_states = getattr(output, "decoder_hidden_states", None)
 
@@ -389,15 +388,15 @@ class LM(object):
         for layer_type, activations in activations_dict.items():
             self.activations[layer_type] = activations_dict_to_array(activations)
 
-        encoder_hidden_states = getattr(output, "hidden_states", output.encoder_hidden_states)[0]
-        decoder_hidden_states = getattr(output, "decoder_hidden_states", [None])[0]
+        encoder_hidden_states = getattr(output, "hidden_states", getattr(output, "encoder_hidden_states", None))
+        decoder_hidden_states = getattr(output, "decoder_hidden_states", None)
 
         tokens = []
         for i in input_tokens['input_ids']:
             token = self.tokenizer.convert_ids_to_tokens(i)
             tokens.append(token)
 
-        attn = getattr(output, "attentions", [None])[0]
+        attn = getattr(output, "attentions", None)
         return OutputSeq(**{'tokenizer': self.tokenizer,
                             'token_ids': input_tokens['input_ids'],
                             'n_input_tokens': n_input_tokens,
