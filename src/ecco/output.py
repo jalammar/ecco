@@ -424,8 +424,7 @@ class OutputSeq:
         if self.model_type == 'causal':
             position = dec_hidden_states[0].shape[1] - self.n_input_tokens + 1
         elif self.model_type == 'enc-dec':
-            # In enc-dec LMs, the position is relative. By that means, position self.n_input_tokens + 1 is the first generated token
-            position = dec_hidden_states[0].shape[1] + 1
+            position = dec_hidden_states[0].shape[1]
         else:
             raise NotImplemented(f"model_type={self.model_type} not supported")
 
@@ -447,7 +446,7 @@ class OutputSeq:
                 sorted = torch.argsort(logits)
 
                 # What token was sampled in this position?
-                offset = 0 if self.model_type == 'enc-dec' else self.n_input_tokens
+                offset = self.n_input_tokens + 1 if self.model_type == 'enc-dec' else self.n_input_tokens
                 token_id = torch.tensor(self.token_ids[0][offset + j])
 
                 # token_id = self.token_ids.clone().detach()[self.n_input_tokens + j]
@@ -463,7 +462,8 @@ class OutputSeq:
                     token_found_mask[i, j] = 0
 
         input_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens - 1:-1]]
-        output_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens:]]
+        offset = self.n_input_tokens + 1 if self.model_type == 'enc-dec' else self.n_input_tokens
+        output_tokens = [repr(t) for t in self.tokens[0][offset:]]
 
         lm_plots.plot_inner_token_rankings(input_tokens,
                                            output_tokens,
