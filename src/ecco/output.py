@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 from sklearn import decomposition
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple, Union
 
 
 class OutputSeq:
@@ -54,6 +54,7 @@ class OutputSeq:
                  collect_activations_layer_nums=None,
                  attention=None,
                  model_outputs=None,
+                 model_type: str= 'mlm',
                  lm_head=None,
                  device='cpu'):
         """
@@ -92,13 +93,17 @@ class OutputSeq:
         self.attention_values = attention
         self.lm_head = lm_head
         self.device = device
+        self.model_type = model_type
         self._path = os.path.dirname(ecco.__file__)
 
-    def _get_hidden_states(self):
-        return self.decoder_hidden_states
+    def _get_hidden_states(self) -> Tuple[Union[Tuple[torch.Tensor], None], Union[Tuple[torch.Tensor], None]]:
+        """
+        Returns a tuple with (encoder hidden states, decoder hidden states)
+        """
+        return (self.encoder_hidden_states, self.decoder_hidden_states)
 
     def __str__(self):
-        return "<LMOutput '{}' # of lm outputs: {}>".format(self.output_text, len(self._get_hidden_states()))
+        return "<LMOutput '{}' # of lm outputs: {}>".format(self.output_text, len(self._get_hidden_states()[1]))
 
     def to(self, tensor: torch.Tensor):
         if self.device == 'cuda':
@@ -316,33 +321,49 @@ class OutputSeq:
                 layer: None shows all layers. Can also pass an int with the layer id to show only that layer
         """
 
-        hidden_states = self._get_hidden_states()
+        assert self.model_type != 'mlm', "method not supported for Masked-LMs"
+
+        _, dec_hidden_states = self._get_hidden_states()
+        assert dec_hidden_states is not None, "decoder hidden states not found"
 
         if position == 0:
             raise ValueError(f"'position' is set to 0. There is never a hidden state associated with this position."
                              f"Possible values are 1 and above -- the position of the token of interest in the sequence")
-        # watch = self.to(torch.tensor([self.token_ids[self.n_input_tokens]]))
-        # There is one lm output per generated token. To get the index
-        output_index = position - self.n_input_tokens
+
+        if self.model_type == 'enc-dec':
+            # For enc-dec LMs, the position starts at the first generated token, not as in causal LMs
+            # In enc-dec LMs, the position is relative. By that means, position self.n_input_tokens is the first generated token
+            new_position = position - self.n_input_tokens
+            assert new_position >= 0, f"position={position} not supported, minimum is " \
+                                      f"position={self.n_input_tokens} for the first generated token"
+            position = new_position
+
         if layer is not None:
             # If a layer is specified, choose it only.
-            hidden_states = hidden_states[layer + 1].unsqueeze(0)
+            assert dec_hidden_states is not None
+            dec_hidden_states = dec_hidden_states[layer].unsqueeze(0)
         else:
-            # include all layers except the first TODO: is this the same for enc-dec architectures?
-            hidden_states = hidden_states[1:]
+            # TODO: make sure we don't use the embedding layer
+            # dec_hidden_states = dec_hidden_states[1:]
+            pass
 
         k = topk
         top_tokens = []
         probs = []
         data = []
 
-        for layer_no, h in enumerate(hidden_states):
+        # loop through layer levels
+        for layer_no, h in enumerate(dec_hidden_states):  # TODO: make sure we are not using the embedding layer
+
             hidden_state = h[0][position - 1] # [0] to skip batch size dimension
+
             # Use lm_head to project the layer's hidden state to output vocabulary
             logits = self.lm_head(self.to(hidden_state))
             softmax = F.softmax(logits, dim=-1)
+
             # softmax dims are (number of words in vocab) - 50257 in GPT2
             sorted_softmax = self.to(torch.argsort(softmax))
+
             # Not currently used. If we're "watching" a specific token, this gets its ranking
             # idx = sorted_softmax.shape[0] - torch.nonzero((sorted_softmax == watch)).flatten()
 
@@ -354,7 +375,6 @@ class OutputSeq:
             # Package in output format
             layer_data = []
             for idx, (token, prob) in enumerate(zip(layer_top_tokens, layer_probs)):
-                # print(layer_no, idx, token)
                 layer_num = layer if layer is not None else layer_no
                 layer_data.append({'token': token,
                                    'prob': str(prob),
@@ -394,30 +414,46 @@ class OutputSeq:
         ![Rankings watch](../../img/rankings_ex_eu_1.png)
         """
 
-        hidden_states = self._get_hidden_states()
+        assert self.model_type != 'mlm', "method not supported for Masked-LMs"
 
-        n_layers = len(hidden_states)
-        position = hidden_states[0].shape[1] - self.n_input_tokens + 1
+        _, dec_hidden_states = self._get_hidden_states()
+        assert dec_hidden_states is not None, "decoder hidden states not found"
 
-        predicted_tokens = np.empty((n_layers - 1, position), dtype='U25')
-        rankings = np.zeros((n_layers - 1, position), dtype=np.int32)
-        token_found_mask = np.ones((n_layers - 1, position))
+        n_layers_dec = len(dec_hidden_states)
+
+        if self.model_type == 'causal':
+            position = dec_hidden_states[0].shape[1] - self.n_input_tokens + 1
+        elif self.model_type == 'enc-dec':
+            # In enc-dec LMs, the position is relative. By that means, position self.n_input_tokens + 1 is the first generated token
+            position = dec_hidden_states[0].shape[1] + 1
+        else:
+            raise NotImplemented(f"model_type={self.model_type} not supported")
+
+        rankings = np.zeros((n_layers_dec, position), dtype=np.int32)
+        predicted_tokens = np.empty((n_layers_dec, position), dtype='U25')
+        token_found_mask = np.ones((n_layers_dec, position))
 
         # loop through layer levels
-        for i, level in enumerate(hidden_states[1:]):  # Skip the embedding layer TODO: is this the same for enc-dec architectures?
+        for i, level in enumerate(dec_hidden_states):  # TODO: make sure we are not using the embedding layer
             # Loop through generated/output positions
-            for j, hidden_state in enumerate(level[0][self.n_input_tokens - 1:]): # [0] to skip batch size dimension
+            offset = 0 if self.model_type == 'enc-dec' else self.n_input_tokens - 1
+            for j, hidden_state in enumerate(level[0][offset:]): # [0] to skip batch size dimension
+
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
                 logits = self.lm_head(self.to(hidden_state))
+
                 # Sort by score (ascending)
                 sorted = torch.argsort(logits)
-                # What token was sampled in this position?
 
-                token_id = torch.tensor(self.token_ids[0][self.n_input_tokens + j])
+                # What token was sampled in this position?
+                offset = 0 if self.model_type == 'enc-dec' else self.n_input_tokens
+                token_id = torch.tensor(self.token_ids[0][offset + j])
+
                 # token_id = self.token_ids.clone().detach()[self.n_input_tokens + j]
                 # What's the index of the sampled token in the sorted list?
                 r = torch.nonzero((sorted == token_id)).flatten()
+
                 # subtract to get ranking (where 1 is the top scoring, because sorting was in ascending order)
                 ranking = sorted.shape[0] - r
                 token = self.tokenizer.decode([token_id])
@@ -428,16 +464,20 @@ class OutputSeq:
 
         input_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens - 1:-1]]
         output_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens:]]
+
         lm_plots.plot_inner_token_rankings(input_tokens,
                                            output_tokens,
                                            rankings,
                                            **kwargs)
 
         if 'printJson' in kwargs and kwargs['printJson']:
-            data = {'input_tokens': input_tokens,
-                    'output_tokens': output_tokens,
-                    'rankings': rankings,
-                    'predicted_tokens': predicted_tokens}
+            data = {
+                'input_tokens': input_tokens,
+                'output_tokens': output_tokens,
+                'rankings': rankings,
+                'predicted_tokens': predicted_tokens,
+                'token_found_mask': token_found_mask
+            }
             print(data)
             return data
 
@@ -448,30 +488,48 @@ class OutputSeq:
 
         ![Rankings plot](../../img/ranking_watch_ex_is_are_1.png)
         """
+
+        assert self.model_type != 'mlm', "method not supported for Masked-LMs"
+
+        _, dec_hidden_states = self._get_hidden_states()
+        assert dec_hidden_states is not None, "decoder hidden states not found"
+
         if position != -1:
-            position = position - 1  # e.g. position 5 corresponds to activation 4
+            if self.model_type == 'causal':
+                position = position - 1  # e.g. position 5 corresponds to hidden state 4
+            elif self.model_type == 'enc-dec':
+                # In enc-dec LMs, the position is relative. By that means, position self.n_input_tokens + 1 is the first generated token
+                new_position = position - 1 - self.n_input_tokens
+                assert new_position >= 0, f"position={position} not supported, minimum is " \
+                                          f"position={self.n_input_tokens + 1} for the first generated token"
+                position = new_position
+            else:
+                raise NotImplemented(f"model_type={self.model_type} not supported")
 
-        hidden_states = self._get_hidden_states()
-
-        n_layers = len(hidden_states)
+        n_layers_dec = len(dec_hidden_states) if dec_hidden_states is not None else 0
         n_tokens_to_watch = len(watch)
-
-        rankings = np.zeros((n_layers - 1, n_tokens_to_watch), dtype=np.int32)
+        rankings = np.zeros((n_layers_dec, n_tokens_to_watch), dtype=np.int32)
 
         # loop through layer levels
-        for i, level in enumerate(hidden_states[1:]):  # Skip the embedding layer TODO: is this the same for enc-dec architectures?
+        for i, level in enumerate(dec_hidden_states):  # TODO: make sure we are not using the embedding layer
             # Loop through generated/output positions
             for j, token_id in enumerate(watch):
+
                 hidden_state = level[0][position] # [0] to skip batch size dimension
+
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
                 logits = self.lm_head(self.to(hidden_state))
+
                 # Sort by score (ascending)
                 sorted = torch.argsort(logits)
+
                 # What token was sampled in this position?
                 token_id = torch.tensor(token_id)
+
                 # What's the index of the sampled token in the sorted list?
                 r = torch.nonzero((sorted == token_id)).flatten()
+
                 # subtract to get ranking (where 1 is the top scoring, because sorting was in ascending order)
                 ranking = sorted.shape[0] - r
                 rankings[i, j] = int(ranking)
@@ -479,9 +537,8 @@ class OutputSeq:
         input_tokens = [t for t in self.tokens[0]]
         output_tokens = [repr(self.tokenizer.decode(t)) for t in watch]
 
-        lm_plots.plot_inner_token_rankings_watch(input_tokens,
-                                                 output_tokens,
-                                                 rankings)
+        lm_plots.plot_inner_token_rankings_watch(input_tokens, output_tokens, rankings,
+                                                 position + self.n_input_tokens if self.model_type == 'enc-dec' else position)
 
         if 'printJson' in kwargs and kwargs['printJson']:
             data = {'input_tokens': input_tokens,

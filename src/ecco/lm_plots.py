@@ -5,12 +5,12 @@ from matplotlib.patches import Rectangle
 from matplotlib.cm import get_cmap
 import copy
 import warnings
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.colors import ListedColormap
 import matplotlib as mpl
 from matplotlib.ticker import FuncFormatter
-from matplotlib import colorbar
-from typing import Optional, List
+from typing import Optional, List, Dict
 import sys
+
 
 def plot_activations(tokens, activations, vmin=0, vmax=2, height=60,
                      width_scale_per_item=1,
@@ -263,14 +263,13 @@ def plot_logit_lens(tokens,
 
 def plot_inner_token_rankings_watch(input_tokens,
                                     output_tokens,
-                                    rankings,
+                                    rankings: np.ndarray,
+                                    position: int,
                                     vmin: Optional[int] = 2,  # Good range for topk 50
                                     vmax: Optional[int] = 5000,
                                     show_inputs: Optional[bool] = False,
                                     save_file_path: Optional[str] = None
                                     ):
-    # print(rankings.shape)
-    start_token = 0
 
     n_columns = len(output_tokens)
     n_rows = rankings.shape[0]
@@ -326,7 +325,7 @@ def plot_inner_token_rankings_watch(input_tokens,
     ax.set_xlabel('Output Token', fontsize=14)
 
     # Layer names label at the left
-    ylabels = ["Layer {}".format(n) for n in range(rankings.shape[0])]
+    ylabels = ["Decoder Layer {}".format(n) for n in range(rankings.shape[0])]
     ax.set_yticklabels(ylabels, fontsize=14, rotation=0)
     # ax.set_ylabel('Output Token')
 
@@ -340,9 +339,7 @@ def plot_inner_token_rankings_watch(input_tokens,
     else:
         ax2.set_xticks([])
 
-    # plt.title('Rankings of watched tokens\n', fontsize=28)
-    # print(input_tokens)
-    plt.title(' '.join(input_tokens[:-1]) + ' ____\n', fontsize=14)
+    plt.title(' '.join(input_tokens[:position + 1]) + ' ____\n', fontsize=14)
 
     if save_file_path is not None:
         try:
@@ -362,8 +359,6 @@ def plot_inner_token_rankings(input_tokens,
                               save_file_path: Optional[str] = None,
                               **kwargs
                               ):
-    # print(rankings.shape)
-    start_token = 0
 
     n_columns = len(input_tokens)
     n_rows = rankings.shape[0]
@@ -447,5 +442,3 @@ def plot_inner_token_rankings(input_tokens,
             e = sys.exc_info()[0]
             print("<p>Error: (likely ./tmp/ folder does not exist or can't be created). %s</p>" % e)
             raise
-
-# plt.title('How did previous layers rank the sampled output token\n', fontsize=28)

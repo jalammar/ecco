@@ -263,6 +263,7 @@ class LM(object):
         # Print output
         if self.verbose:
             viz_id = self.display_input_sequence(input_ids[0])
+            n_printed_tokens = n_input_tokens
 
         while cur_len < max_length:
             output_token_id, output = self._generate_token(encoder_input_ids=input_ids,
@@ -291,7 +292,18 @@ class LM(object):
                     attention_mask = self.to(attention_mask)
 
             if self.verbose:
-                self.display_token(viz_id, output_token_id.cpu().numpy(), cur_len)
+
+                offset = n_input_tokens if decoder_input_ids is not None else 0
+                generated_token_ids = decoder_input_ids if decoder_input_ids is not None else input_ids
+
+                # More than one token can be generated at once (e.g., automatic split/pad tokens)
+                while len(generated_token_ids[0]) + offset != n_printed_tokens:
+                    self.display_token(
+                        viz_id,
+                        generated_token_ids[0][n_printed_tokens - offset].cpu().numpy(),
+                        cur_len
+                    )
+                    n_printed_tokens += 1
 
             cur_len = cur_len + 1
 
@@ -303,9 +315,8 @@ class LM(object):
         for layer_type, activations in activations_dict.items():
             self.activations[layer_type] = activations_dict_to_array(activations)
 
-
-        decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
         encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
+        decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
 
         if decoder_input_ids is not None:
             assert len(decoder_input_ids.size()) == 2
@@ -323,7 +334,7 @@ class LM(object):
 
         return OutputSeq(**{'tokenizer': self.tokenizer,
                             'token_ids': all_token_ids.unsqueeze(0),  # Add a batch dimension
-                            'n_input_tokens': n_input_tokens if decoder_input_ids is None else n_input_tokens + 1, # we want the decoder priming token to be considered as input
+                            'n_input_tokens': n_input_tokens,
                             'output_text': self.tokenizer.decode(all_token_ids),
                             'tokens': [tokens],  # Add a batch dimension
                             'encoder_hidden_states': encoder_hidden_states,
@@ -334,6 +345,7 @@ class LM(object):
                             'activations': self.activations,
                             'collect_activations_layer_nums': self.collect_activations_layer_nums,
                             'lm_head': self.model.lm_head,
+                            'model_type': self.model_type,
                             'device': self.device})
 
     def __call__(self,
@@ -351,8 +363,6 @@ class LM(object):
         inputs = lm.tokenizer("Hello computer", return_tensors="pt")
         output = lm(inputs)
         ```
-
-        # TODO: Adapt this for Seq2Seq models
 
         Args:
             input_tokens: tuple returned by tokenizer( TEXT, return_tensors="pt").
@@ -373,7 +383,6 @@ class LM(object):
 
         # Remove downstream. For now setting to batch length
         n_input_tokens = len(input_tokens['input_ids'][0])
-        # self.attributions = {}
 
         # model
         if 'bert' in self.model_name:
@@ -389,8 +398,8 @@ class LM(object):
         for layer_type, activations in activations_dict.items():
             self.activations[layer_type] = activations_dict_to_array(activations)
 
-        decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
         encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
+        decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
 
         tokens = []
         for i in input_tokens['input_ids']:
@@ -411,6 +420,7 @@ class LM(object):
                             'activations': self.activations,
                             'collect_activations_layer_nums': self.collect_activations_layer_nums,
                             'lm_head': lm_head,
+                            'model_type': self.model_type,
                             'device': self.device})
 
     def _get_embeddings(self, input_ids) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
