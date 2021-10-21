@@ -5,12 +5,12 @@ from matplotlib.patches import Rectangle
 from matplotlib.cm import get_cmap
 import copy
 import warnings
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.colors import ListedColormap
 import matplotlib as mpl
 from matplotlib.ticker import FuncFormatter
-from matplotlib import colorbar
-from typing import Optional, List
+from typing import Optional, List, Dict
 import sys
+
 
 def plot_activations(tokens, activations, vmin=0, vmax=2, height=60,
                      width_scale_per_item=1,
@@ -263,17 +263,16 @@ def plot_logit_lens(tokens,
 
 def plot_inner_token_rankings_watch(input_tokens,
                                     output_tokens,
-                                    rankings,
+                                    rankings: Dict[str, np.ndarray],
+                                    position: int,
                                     vmin: Optional[int] = 2,  # Good range for topk 50
                                     vmax: Optional[int] = 5000,
                                     show_inputs: Optional[bool] = False,
                                     save_file_path: Optional[str] = None
                                     ):
-    # print(rankings.shape)
-    start_token = 0
 
     n_columns = len(output_tokens)
-    n_rows = rankings.shape[0]
+    n_rows = sum(v.shape[0] for v in rankings.values())
     fsize = (1 + 0.9 * n_columns,  # Make figure wider if more columns
              1 + 0.4 * n_rows)  # Make taller if more layers
     fig, (ax, cax) = plt.subplots(nrows=1, ncols=2,
@@ -293,12 +292,13 @@ def plot_inner_token_rankings_watch(input_tokens,
     comma_fmt = FuncFormatter(lambda x, p: format(int(x), ','))
 
     norm = mpl.colors.LogNorm(vmin=vmin, vmax=vmax)
-    g = sns.heatmap(rankings,
+    rankings_tensors = np.concatenate(list(rankings.values()), axis=0)
+    g = sns.heatmap(rankings_tensors,
                     # mask=token_found_mask[:,start_token:],
                     cmap=v,
                     fmt="d",
                     ax=ax,
-                    annot=rankings,
+                    annot=rankings_tensors,
                     cbar=False,
                     norm=norm,
                     linewidths=0.5,
@@ -326,7 +326,7 @@ def plot_inner_token_rankings_watch(input_tokens,
     ax.set_xlabel('Output Token', fontsize=14)
 
     # Layer names label at the left
-    ylabels = ["Layer {}".format(n) for n in range(rankings.shape[0])]
+    ylabels = ["{} Layer {}".format(k, n) for k, v in rankings.items() for n in range(v.shape[0])]
     ax.set_yticklabels(ylabels, fontsize=14, rotation=0)
     # ax.set_ylabel('Output Token')
 
@@ -340,9 +340,7 @@ def plot_inner_token_rankings_watch(input_tokens,
     else:
         ax2.set_xticks([])
 
-    # plt.title('Rankings of watched tokens\n', fontsize=28)
-    # print(input_tokens)
-    plt.title(' '.join(input_tokens[:-1]) + ' ____\n', fontsize=14)
+    plt.title(' '.join(input_tokens[:position + 1]) + ' ____\n', fontsize=14)
 
     if save_file_path is not None:
         try:

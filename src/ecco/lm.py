@@ -263,6 +263,7 @@ class LM(object):
         # Print output
         if self.verbose:
             viz_id = self.display_input_sequence(input_ids[0])
+            n_printed_tokens = n_input_tokens
 
         while cur_len < max_length:
             output_token_id, output = self._generate_token(encoder_input_ids=input_ids,
@@ -291,7 +292,18 @@ class LM(object):
                     attention_mask = self.to(attention_mask)
 
             if self.verbose:
-                self.display_token(viz_id, output_token_id.cpu().numpy(), cur_len)
+
+                offset = n_input_tokens if decoder_input_ids is not None else 0
+                generated_token_ids = decoder_input_ids if decoder_input_ids is not None else input_ids
+
+                # More than one token can be generated at once (e.g., automatic split/pad tokens)
+                while len(generated_token_ids[0]) + offset != n_printed_tokens:
+                    self.display_token(
+                        viz_id,
+                        generated_token_ids[0][n_printed_tokens - offset].cpu().numpy(),
+                        cur_len
+                    )
+                    n_printed_tokens += 1
 
             cur_len = cur_len + 1
 
@@ -333,6 +345,7 @@ class LM(object):
                             'activations': self.activations,
                             'collect_activations_layer_nums': self.collect_activations_layer_nums,
                             'lm_head': self.model.lm_head,
+                            'model_type': self.model_type,
                             'device': self.device})
 
     def __call__(self,
@@ -410,6 +423,7 @@ class LM(object):
                             'activations': self.activations,
                             'collect_activations_layer_nums': self.collect_activations_layer_nums,
                             'lm_head': lm_head,
+                            'model_type': self.model_type,
                             'device': self.device})
 
     def _get_embeddings(self, input_ids) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
