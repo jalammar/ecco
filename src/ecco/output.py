@@ -332,7 +332,11 @@ class OutputSeq:
 
         if self.model_type == 'enc-dec':
             # For enc-dec LMs, the position starts at the first generated token, not as in causal LMs
-            position = position - self.n_input_tokens
+            # In enc-dec LMs, the position is relative. By that means, position self.n_input_tokens is the first generated token
+            new_position = position - self.n_input_tokens
+            assert new_position >= 0, f"position={position} not supported, minimum is " \
+                                      f"position={self.n_input_tokens} for the first generated token"
+            position = new_position
 
         if layer is not None:
             # If a layer is specified, choose it only.
@@ -420,7 +424,7 @@ class OutputSeq:
         if self.model_type == 'causal':
             position = dec_hidden_states[0].shape[1] - self.n_input_tokens + 1
         elif self.model_type == 'enc-dec':
-            # In enc-dec LMs, the position is relative. By that means, position 0 is the first generated token
+            # In enc-dec LMs, the position is relative. By that means, position self.n_input_tokens + 1 is the first generated token
             position = dec_hidden_states[0].shape[1] + 1
         else:
             raise NotImplemented(f"model_type={self.model_type} not supported")
@@ -432,7 +436,8 @@ class OutputSeq:
         # loop through layer levels
         for i, level in enumerate(dec_hidden_states):  # TODO: make sure we are not using the embedding layer
             # Loop through generated/output positions
-            for j, hidden_state in enumerate(level[0][self.n_input_tokens - 1:]): # [0] to skip batch size dimension
+            offset = 0 if self.model_type == 'enc-dec' else self.n_input_tokens - 1
+            for j, hidden_state in enumerate(level[0][offset:]): # [0] to skip batch size dimension
 
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
@@ -442,7 +447,8 @@ class OutputSeq:
                 sorted = torch.argsort(logits)
 
                 # What token was sampled in this position?
-                token_id = torch.tensor(self.token_ids[0][self.n_input_tokens + j])
+                offset = 0 if self.model_type == 'enc-dec' else self.n_input_tokens
+                token_id = torch.tensor(self.token_ids[0][offset + j])
 
                 # token_id = self.token_ids.clone().detach()[self.n_input_tokens + j]
                 # What's the index of the sampled token in the sorted list?
@@ -458,6 +464,7 @@ class OutputSeq:
 
         input_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens - 1:-1]]
         output_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens:]]
+
         lm_plots.plot_inner_token_rankings(input_tokens,
                                            output_tokens,
                                            rankings,
@@ -491,7 +498,7 @@ class OutputSeq:
             if self.model_type == 'causal':
                 position = position - 1  # e.g. position 5 corresponds to hidden state 4
             elif self.model_type == 'enc-dec':
-                # In enc-dec LMs, the position is relative. By that means, position 0 is the first generated token
+                # In enc-dec LMs, the position is relative. By that means, position self.n_input_tokens + 1 is the first generated token
                 new_position = position - 1 - self.n_input_tokens
                 assert new_position >= 0, f"position={position} not supported, minimum is " \
                                           f"position={self.n_input_tokens + 1} for the first generated token"
@@ -530,7 +537,8 @@ class OutputSeq:
         input_tokens = [t for t in self.tokens[0]]
         output_tokens = [repr(self.tokenizer.decode(t)) for t in watch]
 
-        lm_plots.plot_inner_token_rankings_watch(input_tokens, output_tokens, rankings, position)
+        lm_plots.plot_inner_token_rankings_watch(input_tokens, output_tokens, rankings,
+                                                 position + self.n_input_tokens if self.model_type == 'enc-dec' else position)
 
         if 'printJson' in kwargs and kwargs['printJson']:
             data = {'input_tokens': input_tokens,

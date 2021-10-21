@@ -359,8 +359,6 @@ def plot_inner_token_rankings(input_tokens,
                               save_file_path: Optional[str] = None,
                               **kwargs
                               ):
-    # print(rankings.shape)
-    start_token = 0
 
     n_columns = len(input_tokens)
     n_rows = rankings.shape[0]
@@ -444,5 +442,3 @@ def plot_inner_token_rankings(input_tokens,
             e = sys.exc_info()[0]
             print("<p>Error: (likely ./tmp/ folder does not exist or can't be created). %s</p>" % e)
             raise
-
-# plt.title('How did previous layers rank the sampled output token\n', fontsize=28)

@@ -334,7 +334,7 @@ class LM(object):
 
         return OutputSeq(**{'tokenizer': self.tokenizer,
                             'token_ids': all_token_ids.unsqueeze(0),  # Add a batch dimension
-                            'n_input_tokens': n_input_tokens if decoder_input_ids is None else n_input_tokens + 1, # we want the decoder priming token to be considered as input
+                            'n_input_tokens': n_input_tokens,
                             'output_text': self.tokenizer.decode(all_token_ids),
                             'tokens': [tokens],  # Add a batch dimension
                             'encoder_hidden_states': encoder_hidden_states,
@@ -364,8 +364,6 @@ class LM(object):
         output = lm(inputs)
         ```
 
-        # TODO: Adapt this for Seq2Seq models
-
         Args:
             input_tokens: tuple returned by tokenizer( TEXT, return_tensors="pt").
                 contains key 'input_ids', its value tensor with input token ids.
@@ -385,7 +383,6 @@ class LM(object):
 
         # Remove downstream. For now setting to batch length
         n_input_tokens = len(input_tokens['input_ids'][0])
-        # self.attributions = {}
 
         # model
         if 'bert' in self.model_name:
