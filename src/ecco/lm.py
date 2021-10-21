@@ -318,6 +318,11 @@ class LM(object):
         encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
         decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
 
+        if self.model_type == 'causal':
+            # First hidden state of the causal model is the embedding layer, skip it
+            # FIXME: do this in a cleaner way
+            decoder_hidden_states = decoder_hidden_states[1:]
+
         if decoder_input_ids is not None:
             assert len(decoder_input_ids.size()) == 2
             all_token_ids = torch.cat([input_ids, decoder_input_ids], dim=-1)[0]
@@ -400,6 +405,11 @@ class LM(object):
 
         encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
         decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
+
+        if self.model_type == 'causal':
+            # First hidden state of the causal model is the embedding layer, skip it
+            # FIXME: do this in a cleaner way
+            decoder_hidden_states = decoder_hidden_states[1:]
 
         tokens = []
         for i in input_tokens['input_ids']:
