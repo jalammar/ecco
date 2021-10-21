@@ -95,7 +95,7 @@ class OutputSeq:
         self._path = os.path.dirname(ecco.__file__)
 
     def _get_hidden_states(self):
-        return self.decoder_hidden_states if self.decoder_hidden_states is not None else self.encoder_hidden_states
+        return self.decoder_hidden_states
 
     def __str__(self):
         return "<LMOutput '{}' # of lm outputs: {}>".format(self.output_text, len(self._get_hidden_states()))
@@ -328,7 +328,7 @@ class OutputSeq:
             # If a layer is specified, choose it only.
             hidden_states = hidden_states[layer + 1].unsqueeze(0)
         else:
-            # include all layers except the first
+            # include all layers except the first TODO: is this the same for enc-dec architectures?
             hidden_states = hidden_states[1:]
 
         k = topk
@@ -337,7 +337,7 @@ class OutputSeq:
         data = []
 
         for layer_no, h in enumerate(hidden_states):
-            hidden_state = h[position - 1]
+            hidden_state = h[0][position - 1] # [0] to skip batch size dimension
             # Use lm_head to project the layer's hidden state to output vocabulary
             logits = self.lm_head(self.to(hidden_state))
             softmax = F.softmax(logits, dim=-1)
@@ -397,16 +397,16 @@ class OutputSeq:
         hidden_states = self._get_hidden_states()
 
         n_layers = len(hidden_states)
-        position = hidden_states[0].shape[0] - self.n_input_tokens + 1
+        position = hidden_states[0].shape[1] - self.n_input_tokens + 1
 
         predicted_tokens = np.empty((n_layers - 1, position), dtype='U25')
         rankings = np.zeros((n_layers - 1, position), dtype=np.int32)
         token_found_mask = np.ones((n_layers - 1, position))
 
         # loop through layer levels
-        for i, level in enumerate(hidden_states[1:]):
+        for i, level in enumerate(hidden_states[1:]):  # Skip the embedding layer TODO: is this the same for enc-dec architectures?
             # Loop through generated/output positions
-            for j, hidden_state in enumerate(level[self.n_input_tokens - 1:]):
+            for j, hidden_state in enumerate(level[0][self.n_input_tokens - 1:]): # [0] to skip batch size dimension
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
                 logits = self.lm_head(self.to(hidden_state))
@@ -459,10 +459,10 @@ class OutputSeq:
         rankings = np.zeros((n_layers - 1, n_tokens_to_watch), dtype=np.int32)
 
         # loop through layer levels
-        for i, level in enumerate(hidden_states[1:]):  # Skip the embedding layer
+        for i, level in enumerate(hidden_states[1:]):  # Skip the embedding layer TODO: is this the same for enc-dec architectures?
             # Loop through generated/output positions
             for j, token_id in enumerate(watch):
-                hidden_state = level[position]
+                hidden_state = level[0][position] # [0] to skip batch size dimension
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
                 logits = self.lm_head(self.to(hidden_state))
