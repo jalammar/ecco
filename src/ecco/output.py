@@ -103,7 +103,7 @@ class OutputSeq:
         return (self.encoder_hidden_states, self.decoder_hidden_states)
 
     def __str__(self):
-        return "<LMOutput '{}' # of lm outputs: {}>".format(self.output_text, sum(len(v) for v in self._get_hidden_states()))
+        return "<LMOutput '{}' # of lm outputs: {}>".format(self.output_text, len(self._get_hidden_states()[1]))
 
     def to(self, tensor: torch.Tensor):
         if self.device == 'cuda':
@@ -308,8 +308,7 @@ class OutputSeq:
     #         # print(i.numpy())
     #         plt.show()
 
-    def layer_predictions(self, position: int = 1, topk: Optional[int] = 10, enc_layer: Optional[int] = None,
-                          dec_layer: Optional[int] = None,**kwargs):
+    def layer_predictions(self, position: int = 1, topk: Optional[int] = 10, layer: Optional[int] = None, **kwargs):
         """
             Visualization plotting the topk predicted tokens after each layer (using its hidden state).
 
@@ -324,7 +323,8 @@ class OutputSeq:
 
         assert self.model_type != 'mlm', "method not supported for Masked-LMs"
 
-        enc_hidden_states, dec_hidden_states = self._get_hidden_states()
+        _, dec_hidden_states = self._get_hidden_states()
+        assert dec_hidden_states is not None, "decoder hidden states not found"
 
         if position == 0:
             raise ValueError(f"'position' is set to 0. There is never a hidden state associated with this position."
@@ -334,19 +334,10 @@ class OutputSeq:
             # For enc-dec LMs, the position starts at the first generated token, not as in causal LMs
             position = position - self.n_input_tokens
 
-        if enc_layer is not None:
-            # If a layer is specified, choose it only.
-            assert enc_hidden_states is not None
-            enc_hidden_states = enc_hidden_states[enc_layer].unsqueeze(0)
-        else:
-            # TODO: make sure we don't use the embedding layer
-            # enc_hidden_states = enc_hidden_states[1:]
-            pass
-
-        if dec_layer is not None:
+        if layer is not None:
             # If a layer is specified, choose it only.
             assert dec_hidden_states is not None
-            dec_hidden_states = dec_hidden_states[dec_layer].unsqueeze(0)
+            dec_hidden_states = dec_hidden_states[layer].unsqueeze(0)
         else:
             # TODO: make sure we don't use the embedding layer
             # dec_hidden_states = dec_hidden_states[1:]
@@ -358,38 +349,36 @@ class OutputSeq:
         data = []
 
         # loop through layer levels
-        for layer_type, hidden_states, layer in [('encoder', enc_hidden_states, enc_layer),
-                                                 ('decoder', dec_hidden_states, dec_layer)]:
-            for layer_no, h in enumerate(hidden_states):  # TODO: make sure we are not using the embedding layer
+        for layer_no, h in enumerate(dec_hidden_states):  # TODO: make sure we are not using the embedding layer
 
-                hidden_state = h[0][position - 1] # [0] to skip batch size dimension
+            hidden_state = h[0][position - 1] # [0] to skip batch size dimension
 
-                # Use lm_head to project the layer's hidden state to output vocabulary
-                logits = self.lm_head(self.to(hidden_state))
-                softmax = F.softmax(logits, dim=-1)
+            # Use lm_head to project the layer's hidden state to output vocabulary
+            logits = self.lm_head(self.to(hidden_state))
+            softmax = F.softmax(logits, dim=-1)
 
-                # softmax dims are (number of words in vocab) - 50257 in GPT2
-                sorted_softmax = self.to(torch.argsort(softmax))
+            # softmax dims are (number of words in vocab) - 50257 in GPT2
+            sorted_softmax = self.to(torch.argsort(softmax))
 
-                # Not currently used. If we're "watching" a specific token, this gets its ranking
-                # idx = sorted_softmax.shape[0] - torch.nonzero((sorted_softmax == watch)).flatten()
+            # Not currently used. If we're "watching" a specific token, this gets its ranking
+            # idx = sorted_softmax.shape[0] - torch.nonzero((sorted_softmax == watch)).flatten()
 
-                layer_top_tokens = [self.tokenizer.decode(t) for t in sorted_softmax[-k:]][::-1]
-                top_tokens.append(layer_top_tokens)
-                layer_probs = softmax[sorted_softmax[-k:]].cpu().detach().numpy()[::-1]
-                probs.append(layer_probs.tolist())
+            layer_top_tokens = [self.tokenizer.decode(t) for t in sorted_softmax[-k:]][::-1]
+            top_tokens.append(layer_top_tokens)
+            layer_probs = softmax[sorted_softmax[-k:]].cpu().detach().numpy()[::-1]
+            probs.append(layer_probs.tolist())
 
-                # Package in output format
-                layer_data = []
-                for idx, (token, prob) in enumerate(zip(layer_top_tokens, layer_probs)):
-                    layer_num = layer if layer is not None else layer_no
-                    layer_data.append({'token': token,
-                                       'prob': str(prob),
-                                       'ranking': idx + 1,
-                                       'layer': layer_num
-                                       })
+            # Package in output format
+            layer_data = []
+            for idx, (token, prob) in enumerate(zip(layer_top_tokens, layer_probs)):
+                layer_num = layer if layer is not None else layer_no
+                layer_data.append({'token': token,
+                                   'prob': str(prob),
+                                   'ranking': idx + 1,
+                                   'layer': layer_num
+                                   })
 
-                data.append(layer_data)
+            data.append(layer_data)
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
         d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
@@ -423,10 +412,10 @@ class OutputSeq:
 
         assert self.model_type != 'mlm', "method not supported for Masked-LMs"
 
-        enc_hidden_states, dec_hidden_states = self._get_hidden_states()
+        _, dec_hidden_states = self._get_hidden_states()
+        assert dec_hidden_states is not None, "decoder hidden states not found"
 
-        n_layers_enc = len(enc_hidden_states) if enc_hidden_states is not None else 0
-        n_layers_dec = len(dec_hidden_states) if dec_hidden_states is not None else 0
+        n_layers_dec = len(dec_hidden_states)
 
         if self.model_type == 'causal':
             position = dec_hidden_states[0].shape[1] - self.n_input_tokens + 1
@@ -436,44 +425,36 @@ class OutputSeq:
         else:
             raise NotImplemented(f"model_type={self.model_type} not supported")
 
-        rankings, predicted_tokens, token_found_mask = {}, {}, {}
-        if n_layers_enc:
-            rankings['encoder'] = np.zeros((n_layers_enc, position), dtype=np.int32)
-            predicted_tokens['encoder'] = np.empty((n_layers_enc, position), dtype='U25')
-            token_found_mask['encoder'] = np.ones((n_layers_enc, position))
-        if n_layers_dec:
-            rankings['decoder'] = np.zeros((n_layers_dec, position), dtype=np.int32)
-            predicted_tokens['encoder'] = np.empty((n_layers_dec, position), dtype='U25')
-            token_found_mask['encoder'] = np.ones((n_layers_dec, position))
+        rankings = np.zeros((n_layers_dec, position), dtype=np.int32)
+        predicted_tokens = np.empty((n_layers_dec, position), dtype='U25')
+        token_found_mask = np.ones((n_layers_dec, position))
 
         # loop through layer levels
-        for layer_type, hidden_states in [('encoder', enc_hidden_states), ('decoder', dec_hidden_states)]:
-            if hidden_states is None: continue
-            for i, level in enumerate(hidden_states):  # TODO: make sure we are not using the embedding layer
-                # Loop through generated/output positions
-                for j, hidden_state in enumerate(level[0][self.n_input_tokens - 1:]): # [0] to skip batch size dimension
+        for i, level in enumerate(dec_hidden_states):  # TODO: make sure we are not using the embedding layer
+            # Loop through generated/output positions
+            for j, hidden_state in enumerate(level[0][self.n_input_tokens - 1:]): # [0] to skip batch size dimension
 
-                    # Project hidden state to vocabulary
-                    # (after debugging pain: ensure input is on GPU, if appropriate)
-                    logits = self.lm_head(self.to(hidden_state))
+                # Project hidden state to vocabulary
+                # (after debugging pain: ensure input is on GPU, if appropriate)
+                logits = self.lm_head(self.to(hidden_state))
 
-                    # Sort by score (ascending)
-                    sorted = torch.argsort(logits)
+                # Sort by score (ascending)
+                sorted = torch.argsort(logits)
 
-                    # What token was sampled in this position?
-                    token_id = torch.tensor(self.token_ids[0][self.n_input_tokens + j])
+                # What token was sampled in this position?
+                token_id = torch.tensor(self.token_ids[0][self.n_input_tokens + j])
 
-                    # token_id = self.token_ids.clone().detach()[self.n_input_tokens + j]
-                    # What's the index of the sampled token in the sorted list?
-                    r = torch.nonzero((sorted == token_id)).flatten()
+                # token_id = self.token_ids.clone().detach()[self.n_input_tokens + j]
+                # What's the index of the sampled token in the sorted list?
+                r = torch.nonzero((sorted == token_id)).flatten()
 
-                    # subtract to get ranking (where 1 is the top scoring, because sorting was in ascending order)
-                    ranking = sorted.shape[0] - r
-                    token = self.tokenizer.decode([token_id])
-                    predicted_tokens[layer_type][i, j] = token
-                    rankings[layer_type][i, j] = int(ranking)
-                    if token_id == self.token_ids[0][j + 1]:
-                        token_found_mask[layer_type][i, j] = 0
+                # subtract to get ranking (where 1 is the top scoring, because sorting was in ascending order)
+                ranking = sorted.shape[0] - r
+                token = self.tokenizer.decode([token_id])
+                predicted_tokens[i, j] = token
+                rankings[i, j] = int(ranking)
+                if token_id == self.token_ids[0][j + 1]:
+                    token_found_mask[i, j] = 0
 
         input_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens - 1:-1]]
         output_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens:]]
@@ -503,7 +484,8 @@ class OutputSeq:
 
         assert self.model_type != 'mlm', "method not supported for Masked-LMs"
 
-        enc_hidden_states, dec_hidden_states = self._get_hidden_states()
+        _, dec_hidden_states = self._get_hidden_states()
+        assert dec_hidden_states is not None, "decoder hidden states not found"
 
         if position != -1:
             if self.model_type == 'causal':
@@ -517,41 +499,33 @@ class OutputSeq:
             else:
                 raise NotImplemented(f"model_type={self.model_type} not supported")
 
-        n_layers_enc = len(enc_hidden_states) if enc_hidden_states is not None else 0
         n_layers_dec = len(dec_hidden_states) if dec_hidden_states is not None else 0
         n_tokens_to_watch = len(watch)
-
-        rankings = {}
-        if n_layers_enc:
-            rankings['encoder'] = np.zeros((n_layers_enc, n_tokens_to_watch), dtype=np.int32)
-        if n_layers_dec:
-            rankings['decoder'] = np.zeros((n_layers_dec, n_tokens_to_watch), dtype=np.int32)
+        rankings = np.zeros((n_layers_dec, n_tokens_to_watch), dtype=np.int32)
 
         # loop through layer levels
-        for layer_type, hidden_states in [('encoder', enc_hidden_states), ('decoder', dec_hidden_states)]:
-            if hidden_states is None: continue
-            for i, level in enumerate(hidden_states):  # TODO: make sure we are not using the embedding layer
-                # Loop through generated/output positions
-                for j, token_id in enumerate(watch):
+        for i, level in enumerate(dec_hidden_states):  # TODO: make sure we are not using the embedding layer
+            # Loop through generated/output positions
+            for j, token_id in enumerate(watch):
 
-                    hidden_state = level[0][position] # [0] to skip batch size dimension
+                hidden_state = level[0][position] # [0] to skip batch size dimension
 
-                    # Project hidden state to vocabulary
-                    # (after debugging pain: ensure input is on GPU, if appropriate)
-                    logits = self.lm_head(self.to(hidden_state))
+                # Project hidden state to vocabulary
+                # (after debugging pain: ensure input is on GPU, if appropriate)
+                logits = self.lm_head(self.to(hidden_state))
 
-                    # Sort by score (ascending)
-                    sorted = torch.argsort(logits)
+                # Sort by score (ascending)
+                sorted = torch.argsort(logits)
 
-                    # What token was sampled in this position?
-                    token_id = torch.tensor(token_id)
+                # What token was sampled in this position?
+                token_id = torch.tensor(token_id)
 
-                    # What's the index of the sampled token in the sorted list?
-                    r = torch.nonzero((sorted == token_id)).flatten()
+                # What's the index of the sampled token in the sorted list?
+                r = torch.nonzero((sorted == token_id)).flatten()
 
-                    # subtract to get ranking (where 1 is the top scoring, because sorting was in ascending order)
-                    ranking = sorted.shape[0] - r
-                    rankings[layer_type][i, j] = int(ranking)
+                # subtract to get ranking (where 1 is the top scoring, because sorting was in ascending order)
+                ranking = sorted.shape[0] - r
+                rankings[i, j] = int(ranking)
 
         input_tokens = [t for t in self.tokens[0]]
         output_tokens = [repr(self.tokenizer.decode(t)) for t in watch]

@@ -263,7 +263,7 @@ def plot_logit_lens(tokens,
 
 def plot_inner_token_rankings_watch(input_tokens,
                                     output_tokens,
-                                    rankings: Dict[str, np.ndarray],
+                                    rankings: np.ndarray,
                                     position: int,
                                     vmin: Optional[int] = 2,  # Good range for topk 50
                                     vmax: Optional[int] = 5000,
@@ -272,7 +272,7 @@ def plot_inner_token_rankings_watch(input_tokens,
                                     ):
 
     n_columns = len(output_tokens)
-    n_rows = sum(v.shape[0] for v in rankings.values())
+    n_rows = rankings.shape[0]
     fsize = (1 + 0.9 * n_columns,  # Make figure wider if more columns
              1 + 0.4 * n_rows)  # Make taller if more layers
     fig, (ax, cax) = plt.subplots(nrows=1, ncols=2,
@@ -292,13 +292,12 @@ def plot_inner_token_rankings_watch(input_tokens,
     comma_fmt = FuncFormatter(lambda x, p: format(int(x), ','))
 
     norm = mpl.colors.LogNorm(vmin=vmin, vmax=vmax)
-    rankings_tensors = np.concatenate(list(rankings.values()), axis=0)
-    g = sns.heatmap(rankings_tensors,
+    g = sns.heatmap(rankings,
                     # mask=token_found_mask[:,start_token:],
                     cmap=v,
                     fmt="d",
                     ax=ax,
-                    annot=rankings_tensors,
+                    annot=rankings,
                     cbar=False,
                     norm=norm,
                     linewidths=0.5,
@@ -326,7 +325,7 @@ def plot_inner_token_rankings_watch(input_tokens,
     ax.set_xlabel('Output Token', fontsize=14)
 
     # Layer names label at the left
-    ylabels = ["{} Layer {}".format(k, n) for k, v in rankings.items() for n in range(v.shape[0])]
+    ylabels = ["Decoder Layer {}".format(n) for n in range(rankings.shape[0])]
     ax.set_yticklabels(ylabels, fontsize=14, rotation=0)
     # ax.set_ylabel('Output Token')
 

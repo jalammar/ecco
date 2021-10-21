@@ -315,8 +315,8 @@ class LM(object):
         for layer_type, activations in activations_dict.items():
             self.activations[layer_type] = activations_dict_to_array(activations)
 
-        encoder_hidden_states = getattr(output, "hidden_states", getattr(output, "encoder_hidden_states", None))
-        decoder_hidden_states = getattr(output, "decoder_hidden_states", None)
+        encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
+        decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
 
         if decoder_input_ids is not None:
             assert len(decoder_input_ids.size()) == 2
@@ -401,8 +401,8 @@ class LM(object):
         for layer_type, activations in activations_dict.items():
             self.activations[layer_type] = activations_dict_to_array(activations)
 
-        encoder_hidden_states = getattr(output, "hidden_states", getattr(output, "encoder_hidden_states", None))
-        decoder_hidden_states = getattr(output, "decoder_hidden_states", None)
+        encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
+        decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
 
         tokens = []
         for i in input_tokens['input_ids']:
