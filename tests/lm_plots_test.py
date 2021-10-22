@@ -70,7 +70,8 @@ def ranking_watch_data_1():
                                  [16, 64],
                                  [14, 24],
                                  [9, 16],
-                                 [12, 1]])}
+                                 [12, 1]]),
+           'position': 7}
 
 
 @pytest.fixture(scope="session", autouse=True)

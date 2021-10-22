@@ -487,7 +487,7 @@ class LM(object):
         # \d+ means look for one or multiple digits
         # (?=\.) means look for a period after the int
         layer_number = re.search("(?<=\.)\d+(?=\.)", name).group(0)
-        layer_type = 'decoder' if name.startswith('decoder.') else 'encoder'
+        layer_type = 'encoder' if name.startswith('encoder.') else 'decoder'
         # print("layer number: ", layer_number)
 
         collecting_this_layer = (self.collect_activations_layer_nums is None) or (
