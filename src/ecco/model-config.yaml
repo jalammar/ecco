@@ -129,13 +129,29 @@ facebook/bart-large-mnli:
 
 # DUMMY MODELS
 'sshleifer/tiny-gpt2':
+  embedding: "transformer.wte.weight"
+  type: 'causal'
+  activations:
+    - 'mlp.c_proj'
+'julien-c/bert-xsmall-dummy':
+  embedding: "embeddings.word_embeddings"
+  type: 'mlm'
+  activations:
+    - '\d+\.output\.dense'
+
+#EleutherAI
+EleutherAI/gpt-neo-125M:
     embedding: "transformer.wte.weight"
     type: 'causal'
     activations:
-        - 'mlp.c_proj'
-'julien-c/bert-xsmall-dummy':
-    embedding: "embeddings.word_embeddings"
-    type: 'mlm'
+    - 'mlp\.c_proj'
+EleutherAI/gpt-neo-1.3B:
+    embedding: "transformer.wte.weight"
+    type: 'causal'
     activations:
-        - '\d+\.output\.dense'
-
+    - 'mlp\.c_proj'
+EleutherAI/gpt-neo-2.7B:
+    embedding: "transformer.wte.weight"
+    type: 'causal'
+    activations:
+    - 'mlp\.c_proj'

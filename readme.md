@@ -4,7 +4,11 @@
 [![Supported versions](https://img.shields.io/pypi/pyversions/ecco.svg)](https://pypi.org/project/ecco)
 
 
-Ecco is a python library for exploring and explaining Natural Language Processing models using interactive visualizations.
+Ecco is a python library for exploring and explaining Natural Language Processing models using interactive visualizations. Read the paper: 
+>[Ecco: An Open Source Library for the Explainability of Transformer Language Models](https://aclanthology.org/2021.acl-demo.30/)
+> Association for Computational Linguistics (ACL) System Demonstrations, 2021
+
+
 
 Ecco provides multiple interfaces to aid the explanation and intuition of [Transformer](https://jalammar.github.io/illustrated-transformer/)-based language models. Read: [Interfaces for Explaining Transformer Language Models](https://jalammar.github.io/explaining-transformers/).
 
@@ -16,6 +20,17 @@ Ecco is not concerned with training or fine-tuning models. Only exploring and un
 
 Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
 
+
+Bibtex for citations:
+```bibtex
+@inproceedings{alammar-2021-ecco,
+    title = "Ecco: An Open Source Library for the Explainability of Transformer Language Models",
+    author = "Alammar, J",
+    booktitle = "Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing: System Demonstrations",
+    year = "2021",
+    publisher = "Association for Computational Linguistics",
+}
+```
 
 ## Tutorials
 - Video: [Take A Look Inside Language Models With Ecco](https://www.youtube.com/watch?v=rHrItfNeuh0). \[<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Language_Models_and_Ecco_PyData_Khobar.ipynb">Colab Notebook</a>]

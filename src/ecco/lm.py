@@ -15,6 +15,13 @@ from IPython import display as d
 from torch.nn import functional as F
 from ecco.attribution import *
 from ecco.output import OutputSeq
+from typing import Optional, Any, List
+from pprint import pprint
+from operator import attrgetter
+import re
+
+from transformers import GPT2Model
+from ecco.util import load_config
 
 
 class LM(object):
@@ -43,7 +50,7 @@ class LM(object):
                  collect_activations_flag: Optional[bool] = False,
                  collect_activations_layer_nums: Optional[List[int]] = None,  # None --> collect for all layers
                  verbose: Optional[bool] = True,
-                 gpu: Optional[bool] = True, 
+                 gpu: Optional[bool] = True
                  ):
         """
         Creates an LM object given a model and tokenizer.
@@ -75,8 +82,11 @@ class LM(object):
         # Neuron Activation
         self.collect_activations_flag = collect_activations_flag
         self.collect_activations_layer_nums = collect_activations_layer_nums
+
+        # For each model, this indicates the layer whose activations
+        # we will collect
+        self.model_config = load_config(self.model_name)
         try:
-            self.model_config = config[self.model_name]
             self.model_type = self.model_config['type']
             embeddings_layer_name = self.model_config['embedding']
             embed_retriever = attrgetter(embeddings_layer_name)
@@ -84,9 +94,8 @@ class LM(object):
             self.collect_activations_layer_name_sig = self.model_config['activations'][0]
         except KeyError:
             raise ValueError(
-                f"The model '{self.model_name}' is not defined in Ecco's 'model-config.yaml' file and"
-                f" so is not explicitly supported yet. Supported models are:",
-                list(config.keys())) from KeyError()
+                   f"The model '{self.model_name}' is not correctly configured in Ecco's 'model-config.yaml' file"
+            ) from KeyError()
 
         self._hooks = {}
         self._reset()
@@ -135,11 +144,11 @@ class LM(object):
             'attention_mask': encoder_attention_mask,
             'decoder_inputs_embeds': decoder_inputs_embeds
         }
-        
+
         output = self.model(
             # TODO: This re-forwarding encoder side is expensive, can we optimise or is it needed everytime for fresh
             #       backward ?
-            inputs_embeds=encoder_inputs_embeds,          
+            inputs_embeds=encoder_inputs_embeds,
             use_cache=False,
             return_dict=True,
             **{ k: v for k, v in extra_kwargs.items() if k in inspect.signature(self.model.forward).parameters}
@@ -328,7 +337,7 @@ class LM(object):
             all_token_ids = torch.cat([input_ids, decoder_input_ids], dim=-1)[0]
         else:
             all_token_ids = input_ids[0]
-            
+
         tokens = []
         for i in all_token_ids:
             token = self.tokenizer.decode([i])
@@ -377,7 +386,7 @@ class LM(object):
             attribution: Flag indicating whether to calculate attribution/saliency
         """
 
-        if not hasattr(input_tokens, 'input_ids'):
+        if 'input_ids' not in input_tokens:
             raise ValueError("Parameter 'input_tokens' needs to have the attribute 'input_ids'."
                              "Verify it was produced by the appropriate tokenizer with the "
                              "parameter return_tensors=\"pt\".")
@@ -435,7 +444,15 @@ class LM(object):
 
     def _get_embeddings(self, input_ids) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
         """
-        Takes the token ids of a sequence, returns a matrix of their embeddings.
+        Get token embeddings and one-hot vector into vocab. It's done via matrix multiplication
+        so that gradient attribution is available when needed.
+        Args:
+            input_ids: Int tensor containing token ids. Of length (sequence length).
+            Generally returned from the the tokenizer such as
+            lm.tokenizer(text, return_tensors="pt")['input_ids'][0]
+        Returns:
+            inputs_embeds: Embeddings of the tokens. Dimensions are (sequence_len, d_embed)
+            token_ids_tensor_one_hot: Dimensions are (sequence_len, vocab_size)
         """
 
         embedding_matrix = self.model_embeddings
@@ -453,7 +470,7 @@ class LM(object):
             # Add hooks to capture activations in every FFNN
 
             if re.search(self.collect_activations_layer_name_sig, name):
-                
+
                 # print("mlp.c_proj", self.collect_activations_flag , name)
                 if self.collect_activations_flag:
                     self._hooks[name] = module.register_forward_hook(
