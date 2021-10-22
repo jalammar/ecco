@@ -230,11 +230,14 @@ class LM(object):
                 consults top_k and/or top_p to generate more itneresting output.
             attribution: If True, the object will calculate input saliency/attribution.
         """
+
+        assert self.model_type != 'mlm', "generate method not supported for MLMs"
+
         top_k = top_k if top_k is not None else self.model.config.top_k
         top_p = top_p if top_p is not None else self.model.config.top_p
         temperature = temperature if temperature is not None else self.model.config.temperature
-        do_sample = do_sample if do_sample is not None else self.model.config.task_specific_params['text-generation'][
-            'do_sample']
+        do_sample = do_sample if do_sample is not None else self.model.config.task_specific_params.get('text-generation', {}).get('do_sample', False)
+
         pad_token_id = self.model.config.pad_token_id
         eos_token_id = self.model.config.eos_token_id
 
@@ -327,10 +330,17 @@ class LM(object):
         encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
         decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
 
-        if self.model_type == 'causal':
+        if self.model_type in ['causal', 'mlm']:
             # First hidden state of the causal model is the embedding layer, skip it
             # FIXME: do this in a cleaner way
+            embedding_states = decoder_hidden_states[0]
             decoder_hidden_states = decoder_hidden_states[1:]
+        elif self.model_type == 'enc-dec':
+            # TODO: confirm this
+            embedding_states = encoder_hidden_states[0]
+            encoder_hidden_states = encoder_hidden_states[1:]
+        else:
+            raise NotImplemented(f"model type {self.model_type} not found")
 
         if decoder_input_ids is not None:
             assert len(decoder_input_ids.size()) == 2
@@ -351,6 +361,7 @@ class LM(object):
                             'n_input_tokens': n_input_tokens,
                             'output_text': self.tokenizer.decode(all_token_ids),
                             'tokens': [tokens],  # Add a batch dimension
+                            'embedding_states': embedding_states,
                             'encoder_hidden_states': encoder_hidden_states,
                             'decoder_hidden_states': decoder_hidden_states,
                             'attention': attn,
@@ -399,13 +410,18 @@ class LM(object):
         n_input_tokens = len(input_tokens['input_ids'][0])
 
         # model
-        if 'bert' in self.model_name:
+        if self.model_type == 'mlm':
             output = self.model(**input_tokens, return_dict=True)
             lm_head = None
-        else:
+        elif self.model_type == 'causal':
             output = self.model(**input_tokens, return_dict=True, use_cache=False)
-            predict = output.logits
             lm_head = self.model.lm_head
+        elif self.model_type == 'enc-dec':
+            decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_tokens['input_ids'], None, None)
+            output = self.model(**input_tokens, decoder_input_ids=decoder_input_ids, return_dict=True, use_cache=False)
+            lm_head = self.model.lm_head
+        else:
+            raise NotImplemented(f"model type {self.model_type} not found")
 
         # Turn activations from dict to a proper array
         activations_dict = self._all_activations_dict
@@ -415,10 +431,17 @@ class LM(object):
         encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
         decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
 
-        if self.model_type == 'causal':
+        if self.model_type in ['causal', 'mlm']:
             # First hidden state of the causal model is the embedding layer, skip it
             # FIXME: do this in a cleaner way
+            embedding_states = decoder_hidden_states[0]
             decoder_hidden_states = decoder_hidden_states[1:]
+        elif self.model_type == 'enc-dec':
+            embedding_states = encoder_hidden_states[0]
+            encoder_hidden_states = encoder_hidden_states[1:]
+        else:
+            raise NotImplemented(f"model type {self.model_type} not found")
+
 
         tokens = []
         for i in input_tokens['input_ids']:
@@ -431,6 +454,7 @@ class LM(object):
                             'n_input_tokens': n_input_tokens,
                             # 'output_text': self.tokenizer.decode(input_ids),
                             'tokens': tokens,
+                            'embedding_states': embedding_states,
                             'encoder_hidden_states': encoder_hidden_states,
                             'decoder_hidden_states': decoder_hidden_states,
                             'attention': attn,
@@ -634,6 +658,7 @@ class LM(object):
 
 
 def sample_output_token(scores, do_sample, temperature, top_k, top_p):
+    # TODO: Add beam search in here
     if do_sample:
         # Temperature (higher temperature => more likely to sample low probability tokens)
         if temperature != 1.0:

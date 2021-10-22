@@ -49,6 +49,7 @@ class OutputSeq:
                  tokens=None,
                  encoder_hidden_states=None,
                  decoder_hidden_states=None,
+                 embedding_states=None,
                  attribution=None,
                  activations=None,
                  collect_activations_layer_nums=None,
@@ -86,6 +87,7 @@ class OutputSeq:
         self.tokens = tokens
         self.encoder_hidden_states = encoder_hidden_states
         self.decoder_hidden_states = decoder_hidden_states
+        self.embedding_states = embedding_states
         self.attribution = attribution
         self.activations = activations
         self.collect_activations_layer_nums = collect_activations_layer_nums
@@ -95,6 +97,9 @@ class OutputSeq:
         self.device = device
         self.model_type = model_type
         self._path = os.path.dirname(ecco.__file__)
+
+    def _get_encoder_hidden_states(self):
+        return self.encoder_hidden_states if self.encoder_hidden_states is not None else self.decoder_hidden_states
 
     def _get_hidden_states(self) -> Tuple[Union[Tuple[torch.Tensor], None], Union[Tuple[torch.Tensor], None]]:
         """
@@ -342,10 +347,7 @@ class OutputSeq:
             # If a layer is specified, choose it only.
             assert dec_hidden_states is not None
             dec_hidden_states = dec_hidden_states[layer].unsqueeze(0)
-        else:
-            # TODO: make sure we don't use the embedding layer
-            # dec_hidden_states = dec_hidden_states[1:]
-            pass
+
 
         k = topk
         top_tokens = []
@@ -353,7 +355,7 @@ class OutputSeq:
         data = []
 
         # loop through layer levels
-        for layer_no, h in enumerate(dec_hidden_states):  # TODO: make sure we are not using the embedding layer
+        for layer_no, h in enumerate(dec_hidden_states):
 
             hidden_state = h[0][position - 1] # [0] to skip batch size dimension
 
@@ -433,7 +435,7 @@ class OutputSeq:
         token_found_mask = np.ones((n_layers_dec, position))
 
         # loop through layer levels
-        for i, level in enumerate(dec_hidden_states):  # TODO: make sure we are not using the embedding layer
+        for i, level in enumerate(dec_hidden_states):
             # Loop through generated/output positions
             offset = 0 if self.model_type == 'enc-dec' else self.n_input_tokens - 1
             for j, hidden_state in enumerate(level[0][offset:]): # [0] to skip batch size dimension
@@ -511,7 +513,7 @@ class OutputSeq:
         rankings = np.zeros((n_layers_dec, n_tokens_to_watch), dtype=np.int32)
 
         # loop through layer levels
-        for i, level in enumerate(dec_hidden_states):  # TODO: make sure we are not using the embedding layer
+        for i, level in enumerate(dec_hidden_states):
             # Loop through generated/output positions
             for j, token_id in enumerate(watch):
 
