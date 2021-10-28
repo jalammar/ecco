@@ -328,15 +328,11 @@ class LM(object):
         encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
         decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
 
-        if self.model_type in ['causal', 'mlm']:
+        if self.model_type in ['causal', 'mlm', 'enc-dec']:
             # First hidden state of the causal model is the embedding layer, skip it
             # FIXME: do this in a cleaner way
             embedding_states = decoder_hidden_states[0]
             decoder_hidden_states = decoder_hidden_states[1:]
-        elif self.model_type == 'enc-dec':
-            # TODO: confirm this
-            embedding_states = encoder_hidden_states[0]
-            encoder_hidden_states = encoder_hidden_states[1:]
         else:
             raise NotImplemented(f"model type {self.model_type} not found")
 

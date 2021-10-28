@@ -348,7 +348,6 @@ class OutputSeq:
             assert dec_hidden_states is not None
             dec_hidden_states = dec_hidden_states[layer].unsqueeze(0)
 
-
         k = topk
         top_tokens = []
         probs = []
