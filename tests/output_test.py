@@ -149,7 +149,7 @@ def output_seq_1():
                                    'n_input_tokens': 4,
                                    'output_text': ' 1, 1, 2',
                                    'tokens': [[' 1', ',', ' 1', ',', ' 2']],
-                                   'decoder_hidden_states': [torch.rand(1, 4, 768) for i in range(6)],
+                                   'decoder_hidden_states': torch.rand(6, 4, 768),
                                    'attention': None,
                                    'model_outputs': None,
                                    'attribution': {'gradient': [

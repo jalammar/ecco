@@ -101,7 +101,7 @@ class OutputSeq:
     def _get_encoder_hidden_states(self):
         return self.encoder_hidden_states if self.encoder_hidden_states is not None else self.decoder_hidden_states
 
-    def _get_hidden_states(self) -> Tuple[Union[Tuple[torch.Tensor], None], Union[Tuple[torch.Tensor], None]]:
+    def _get_hidden_states(self) -> Tuple[Union[torch.Tensor, None], Union[torch.Tensor, None]]:
         """
         Returns a tuple with (encoder hidden states, decoder hidden states)
         """
@@ -357,7 +357,7 @@ class OutputSeq:
         # loop through layer levels
         for layer_no, h in enumerate(dec_hidden_states):
 
-            hidden_state = h[0][position - 1] # [0] to skip batch size dimension
+            hidden_state = h[position - 1]
 
             # Use lm_head to project the layer's hidden state to output vocabulary
             logits = self.lm_head(self.to(hidden_state))
@@ -424,9 +424,9 @@ class OutputSeq:
         n_layers_dec = len(dec_hidden_states)
 
         if self.model_type == 'causal':
-            position = dec_hidden_states[0].shape[1] - self.n_input_tokens + 1
+            position = dec_hidden_states.shape[1] - self.n_input_tokens + 1
         elif self.model_type == 'enc-dec':
-            position = dec_hidden_states[0].shape[1]
+            position = dec_hidden_states.shape[1]
         else:
             raise NotImplemented(f"model_type={self.model_type} not supported")
 
@@ -438,7 +438,7 @@ class OutputSeq:
         for i, level in enumerate(dec_hidden_states):
             # Loop through generated/output positions
             offset = 0 if self.model_type == 'enc-dec' else self.n_input_tokens - 1
-            for j, hidden_state in enumerate(level[0][offset:]): # [0] to skip batch size dimension
+            for j, hidden_state in enumerate(level[offset:]):
 
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
@@ -517,7 +517,7 @@ class OutputSeq:
             # Loop through generated/output positions
             for j, token_id in enumerate(watch):
 
-                hidden_state = level[0][position] # [0] to skip batch size dimension
+                hidden_state = level[position]
 
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
