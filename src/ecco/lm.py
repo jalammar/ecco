@@ -194,7 +194,7 @@ class LM(object):
 
                 setattr(output, attributes, torch.cat(hs_list, dim=0))
 
-        if getattr(output, "hidden_states", None):
+        if getattr(output, "hidden_states", None) is not None:
             assert getattr(output, "encoder_hidden_states", None) is None \
                    and getattr(output, "decoder_hidden_states", None) is None, \
                 "Not expected to have encoder_hidden_states/decoder_hidden_states with 'hidden_states'"
