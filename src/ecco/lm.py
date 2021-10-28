@@ -3,25 +3,17 @@ import inspect
 import json
 import os
 import random
-import re
-
 import transformers
 import ecco
 import numpy as np
-
-from operator import attrgetter
 from typing import Any, Dict, Optional, List, Tuple
 from IPython import display as d
 from torch.nn import functional as F
 from ecco.attribution import *
 from ecco.output import OutputSeq
 from typing import Optional, Any, List
-from pprint import pprint
 from operator import attrgetter
 import re
-
-from transformers import GPT2Model
-from ecco.util import load_config
 
 
 class LM(object):
@@ -85,7 +77,7 @@ class LM(object):
 
         # For each model, this indicates the layer whose activations
         # we will collect
-        self.model_config = load_config(self.model_name)
+        self.model_config = config
         try:
             self.model_type = self.model_config['type']
             embeddings_layer_name = self.model_config['embedding']
@@ -146,8 +138,8 @@ class LM(object):
         }
 
         output = self.model(
-            # TODO: This re-forwarding encoder side is expensive, can we optimise or is it needed everytime for fresh
-            #       backward ?
+            # TODO: This re-forwarding encoder side is expensive, can we optimise or is it needed everytime for fresh backward?
+            #       We need to keep this for input_saliency, but it can be optimized for other visualizations such as token likelihoods
             inputs_embeds=encoder_inputs_embeds,
             use_cache=False,
             return_dict=True,
@@ -200,7 +192,13 @@ class LM(object):
 
                     hs_list.append(hs)
 
-                out_attr = torch.cat(hs_list, dim=0)
+                setattr(output, attributes, torch.cat(hs_list, dim=0))
+
+        if getattr(output, "hidden_states", None):
+            assert getattr(output, "encoder_hidden_states", None) is None \
+                   and getattr(output, "decoder_hidden_states", None) is None, \
+                "Not expected to have encoder_hidden_states/decoder_hidden_states with 'hidden_states'"
+            setattr(output, "decoder_hidden_states", output.hidden_states)
 
         return prediction_id, output
 

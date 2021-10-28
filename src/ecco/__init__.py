@@ -47,29 +47,27 @@ def from_pretrained(hf_model_id: str,
         verbose: If True, model.generate() displays output tokens in HTML as they're generated.
         gpu: Set to False to force using the CPU even if a GPU exists.
     """
-    configs = load_config(hf_model_id)
 
-    if configs['type'] == 'enc-dec':
-        tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
-        model = AutoModelForSeq2SeqLM.from_pretrained(hf_model_id,
-                                                      output_hidden_states=hidden_states,
-                                                      output_attentions=attention)
-    elif configs['type'] == 'causal':
-        tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
-        model = AutoModelForCausalLM.from_pretrained(hf_model_id,
-                                          output_hidden_states=hidden_states,
-                                          output_attentions=attention)
+    config = load_config(hf_model_id)
+    tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
+
+    if config['type'] == 'enc-dec':
+        model_cls = AutoModelForSeq2SeqLM
+    elif config['type'] == 'causal':
+        model_cls = AutoModelForCausalLM
     else:
-        tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
-        model = AutoModel.from_pretrained(hf_model_id,
-                                            output_hidden_states=hidden_states,
-                                            output_attentions=attention)
+        model_cls = AutoModel
+
+    model = model_cls.from_pretrained(hf_model_id, output_hidden_states=hidden_states, output_attentions=attention)
+
     lm_kwargs = {
         'model_name': hf_model_id,
-        'config': configs,
+        'config': config,
         'collect_activations_flag': activations,
         'collect_activations_layer_nums': activations_layer_nums,
         'verbose': verbose,
         'gpu': gpu}
+
     lm = LM(model, tokenizer, **lm_kwargs)
+
     return lm
