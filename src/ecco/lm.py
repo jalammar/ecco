@@ -158,7 +158,6 @@ class LM(object):
         prediction_logit = predict[0][-1][prediction_id]
 
         if attribution_flag:
-
             # Add input saliency to self.attributions
             saliency_results = compute_saliency_scores(
                 prediction_logit,
@@ -169,9 +168,15 @@ class LM(object):
             )
             self.attributions['gradient'].append(saliency_results['gradient'].cpu().detach().numpy())
             self.attributions['grad_x_input'].append(saliency_results['grad_x_input'].cpu().detach().numpy())
-
             # Add integrated gradients to self.attributions
-            compute_integrated_gradients_scores(self.model, forward_kwargs, prediction_id)
+            self.attributions['integrated_gradients'].append(compute_integrated_gradients_scores(
+                                                model=self.model,
+                                                forward_kwargs={
+                                                    'inputs_embeds': encoder_inputs_embeds,
+                                                    'decoder_inputs_embeds': decoder_inputs_embeds,
+                                                },
+                                                prediction_id=prediction_id,
+                                            )[0].cpu().detach().numpy()) # Getting the attributions
 
         output['logits'] = None  # free tensor memory we won't use again
 

@@ -1,5 +1,6 @@
+from functools import partial
 import torch
-from typing import Optional
+from typing import Any, Dict, Optional, Tuple
 from captum.attr import IntegratedGradients
 from torch.nn import functional as F
 
@@ -105,13 +106,50 @@ def gradient_x_inputs_attribution(prediction_logit, encoder_inputs_embeds, decod
     return token_importance_normalized
 
 
-def compute_saliency_scores(prediction_logit,
-                            encoder_token_ids_tensor_one_hot,
-                            encoder_inputs_embeds,
-                            decoder_token_ids_tensor_one_hot: Optional = None,
-                            decoder_inputs_embeds: Optional = None,
-                            gradient_kwargs={},
-                            gradient_x_input_kwargs={}):
+def compute_integrated_gradients_scores(model: torch.nn.Module, forward_kwargs: Dict[str, Any], prediction_id: torch.Tensor):
+
+    extra_forward_args = {k: v for k, v in forward_kwargs.items() if k not in ['inputs_embeds', 'decoder_inputs_embeds']}
+    input_ = forward_kwargs.get('inputs_embeds')
+    decoder_ = forward_kwargs.get('decoder_inputs_embeds')
+
+    if not decoder_:
+        forward_func = partial(model_forward, decoder_=decoder_, model=model, extra_forward_args=extra_forward_args)
+        inputs = input_
+    else:
+        forward_func = partial(model_forward, model=model, extra_forward_args=extra_forward_args)
+        inputs = tuple(input_, decoder_)
+
+    ig = IntegratedGradients(forward_func=forward_func)
+    result = ig.attribute(inputs, return_convergence_delta=True, target=prediction_id)
+     
+    if decoder_:
+        return torch.cat(normalize_attributes(result[0]), normalize_attributes(result[1]), dim=1), result[2]
+    else:
+        return normalize_attributes(result[0]), result[1]
+
+
+def model_forward(input_: torch.Tensor, decoder_: torch.Tensor, model, extra_forward_args: Dict[str, Any]) -> torch.Tensor:
+    if decoder_:
+        output = model(inputs_embeds=input_, decoder_inputs_embeds=decoder_, **extra_forward_args)
+        pass
+    else:
+        output = model(inputs_embeds=input_, **extra_forward_args)
+        return F.softmax(output.logits[:, -1, :], dim=-1)
+
+
+def normalize_attributes(attributes: torch.Tensor) -> torch.Tensor:
+    attributes = attributes.sum(dim=-1).squeeze(0)
+    attributes = attributes / torch.norm(attributes)
+    return attributes
+
+
+def compute_saliency_scores(prediction_logit: torch.Tensor,
+                            encoder_token_ids_tensor_one_hot: torch.Tensor,
+                            encoder_inputs_embeds: torch.Tensor,
+                            decoder_token_ids_tensor_one_hot: Optional[torch.Tensor] = None,
+                            decoder_inputs_embeds: Optional[torch.Tensor] = None,
+                            gradient_kwargs: Dict[str, Any] = {},
+                            gradient_x_input_kwargs: Dict[str, Any] = {}):
 
     results = {}
 
@@ -130,27 +168,3 @@ def compute_saliency_scores(prediction_logit,
     )
 
     return results
-
-
-def compute_integrated_gradients_scores(model, forward_kwargs: dict, prediction_id):
-    inputs, inputs_keys = [], []
-    extra_forward_args = {}
-    for arg, v in forward_kwargs.items():
-        if isinstance(v, torch.Tensor) and 'attention_mask' not in arg:
-            inputs.append(v)
-            inputs_keys.append(arg)
-        else:
-            extra_forward_args[arg] = v
-
-    if len(inputs) > 1:
-        inputs = tuple(inputs)
-        forward_func=lambda *x: F.softmax(model(**dict(zip(inputs_keys, x)), **extra_forward_args).logits, dim=-1)
-    else:
-        inputs = inputs[0]
-        forward_func=lambda x: F.softmax(model(**dict(zip(inputs_keys, [x])), **extra_forward_args).logits, dim=-1)
-
-
-    ig = IntegratedGradients(forward_func=forward_func)
-    from ipdb import set_trace; set_trace()
-
-    (input1_attr, input2_attr), delta = ig.attribute(tuple(inputs), return_convergence_delta=True, target=prediction_id)
