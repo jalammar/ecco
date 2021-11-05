@@ -163,6 +163,9 @@ class OutputSeq:
 
         importance_id = position - self.n_input_tokens
         tokens = []
+
+        assert attr_method in self.attribution, \
+            f"attr_method={attr_method} not found. Choose one of the following: {list(self.attribution.keys())}"
         attribution = self.attribution[attr_method]
         for idx, token in enumerate(self.tokens):
             type = "input" if idx < self.n_input_tokens else 'output'
@@ -237,6 +240,9 @@ class OutputSeq:
 
         importance_id = position - self.n_input_tokens
         tokens = []
+
+        assert attr_method in self.attribution, \
+            f"attr_method={attr_method} not found. Choose one of the following: {list(self.attribution.keys())}"
         attribution = self.attribution[attr_method]
         for idx, token in enumerate(self.tokens[0]):
             type = "input" if idx < self.n_input_tokens else 'output'

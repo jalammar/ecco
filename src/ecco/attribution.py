@@ -1,5 +1,6 @@
 import torch
 from typing import Optional
+from captum.attr import IntegratedGradients
 
 
 def saliency(prediction_logit, encoder_token_ids_tensor_one_hot, decoder_token_ids_tensor_one_hot: Optional = None,
@@ -128,3 +129,27 @@ def compute_saliency_scores(prediction_logit,
     )
 
     return results
+
+
+def compute_integrated_gradients_scores(model, forward_kwargs: dict, prediction_logit):
+    inputs, inputs_keys = [], []
+    extra_forward_args = {}
+    for arg, v in forward_kwargs.items():
+        if isinstance(v, torch.Tensor) and 'attention_mask' not in arg:
+            inputs.append(v)
+            inputs_keys.append(arg)
+        else:
+            extra_forward_args[arg] = v
+
+    if len(inputs) > 1:
+        inputs = tuple(inputs)
+        forward_func=lambda *x: model(**dict(zip(inputs_keys, x)), **extra_forward_args)
+    else:
+        inputs = inputs[0]
+        forward_func=lambda x: model(**dict(zip(inputs_keys, [x])), **extra_forward_args)
+
+
+    ig = IntegratedGradients(forward_func=forward_func)
+    from ipdb import set_trace; set_trace()
+
+    (input1_attr, input2_attr), delta = ig.attribute(tuple(inputs), return_convergence_delta=True)

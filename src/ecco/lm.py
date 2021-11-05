@@ -132,18 +132,21 @@ class LM(object):
         else:
             decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = None, None
 
-        extra_kwargs = {
+
+        extra_forward_kwargs = {
             'attention_mask': encoder_attention_mask,
             'decoder_inputs_embeds': decoder_inputs_embeds
         }
-
+        forward_kwargs = {
+            'inputs_embeds': encoder_inputs_embeds,
+            'use_cache': False,
+            'return_dict': True,
+            **{k: v for k, v in extra_forward_kwargs.items() if k in inspect.signature(self.model.forward).parameters}
+        }
         output = self.model(
             # TODO: This re-forwarding encoder side is expensive, can we optimise or is it needed everytime for fresh backward?
             #       We need to keep this for input_saliency, but it can be optimized for other visualizations such as token likelihoods
-            inputs_embeds=encoder_inputs_embeds,
-            use_cache=False,
-            return_dict=True,
-            **{ k: v for k, v in extra_kwargs.items() if k in inspect.signature(self.model.forward).parameters}
+            **forward_kwargs
         )
 
         predict = output.logits
@@ -156,6 +159,7 @@ class LM(object):
 
         if attribution_flag:
 
+            # Add input saliency to self.attributions
             saliency_results = compute_saliency_scores(
                 prediction_logit,
                 encoder_token_ids_tensor_one_hot,
@@ -163,14 +167,11 @@ class LM(object):
                 decoder_token_ids_tensor_one_hot,
                 decoder_inputs_embeds,
             )
-
-            if 'gradient' not in self.attributions:
-                self.attributions['gradient'] = []
             self.attributions['gradient'].append(saliency_results['gradient'].cpu().detach().numpy())
-
-            if 'grad_x_input' not in self.attributions:
-                self.attributions['grad_x_input'] = []
             self.attributions['grad_x_input'].append(saliency_results['grad_x_input'].cpu().detach().numpy())
+
+            # Add integrated gradients to self.attributions
+            compute_integrated_gradients_scores(self.model, forward_kwargs, prediction_logit)
 
         output['logits'] = None  # free tensor memory we won't use again
 
@@ -248,7 +249,7 @@ class LM(object):
             max_length = n_input_tokens + generate
 
         past = None
-        self.attributions = {}
+        self.attributions = defaultdict(list)
         outputs = []
 
         if cur_len >= max_length:
