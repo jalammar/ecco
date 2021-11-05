@@ -171,7 +171,7 @@ class LM(object):
             self.attributions['grad_x_input'].append(saliency_results['grad_x_input'].cpu().detach().numpy())
 
             # Add integrated gradients to self.attributions
-            compute_integrated_gradients_scores(self.model, forward_kwargs, prediction_logit)
+            compute_integrated_gradients_scores(self.model, forward_kwargs, prediction_id)
 
         output['logits'] = None  # free tensor memory we won't use again
 
