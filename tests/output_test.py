@@ -67,19 +67,19 @@ class TestOutput:
 
     def test_nmf_raises_activations_dimension_value_error(self):
         with pytest.raises(ValueError, match=r".* four dimensions.*") as ex:
-            NMF(np.zeros(0),
+            NMF({'layer_0': np.zeros(0)},
                 n_components=2)
 
     def test_nmf_raises_value_error_same_layer(self):
         with pytest.raises(ValueError, match=r".* same value.*") as ex:
-            NMF(np.zeros((1, 1, 1, 1)),
+            NMF({'layer_0':np.zeros((1, 1, 1, 1))},
                 n_components=2,
                 from_layer=0,
                 to_layer=0)
 
     def test_nmf_raises_value_error_layer_bounds(self):
         with pytest.raises(ValueError, match=r".* larger.*"):
-            NMF(np.zeros((1, 1, 1, 1)),
+            NMF({'layer_0':np.zeros((1, 1, 1, 1))},
                 n_components=2,
                 from_layer=1,
                 to_layer=0)
@@ -143,12 +143,13 @@ def output_seq_1():
         def decode(self, i=None):
             return ''
 
-    output_1 = output.OutputSeq(**{'tokenizer': MockTokenizer(),
+    output_1 = output.OutputSeq(**{'model_type': 'causal',
+                                   'tokenizer': MockTokenizer(),
                                    'token_ids': [[352, 11, 352, 11, 362]],
                                    'n_input_tokens': 4,
                                    'output_text': ' 1, 1, 2',
                                    'tokens': [[' 1', ',', ' 1', ',', ' 2']],
-                                   'hidden_states': [torch.rand(4, 768) for i in range(7)],
+                                   'decoder_hidden_states': torch.rand(6, 4, 768),
                                    'attention': None,
                                    'model_outputs': None,
                                    'attribution': {'gradient': [
@@ -156,7 +157,13 @@ def output_seq_1():
                                        'grad_x_input': [
                                            np.array([0.31678662, 0.18056837, 0.37555906, 0.12708597],
                                                     dtype=np.float32)]},
-                                   'activations': [],
+                                   'activations': [{
+                                       'decoder': {
+                                           'layer_0': torch.rand(1, 768),
+                                           'layer_1': torch.rand(1, 768),
+                                           'layer_2': torch.rand(1, 768),
+                                       }
+                                   }],
                                    'lm_head': torch.nn.Linear(768, 50257, bias=False),
                                    'device': 'cpu'})
 
