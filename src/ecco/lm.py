@@ -119,7 +119,7 @@ class LM(object):
                         temperature: float,
                         top_k: int,
                         top_p: float,
-                        attribution_flag: Optional[bool]):
+                        attribution_flags: Optional[List[str]] = ['gradient', 'grad_x_input', 'integrated_gradients']):
         """
         Run a forward pass through the model and sample a token.
         """
@@ -157,7 +157,8 @@ class LM(object):
         # this token
         prediction_logit = predict[0][-1][prediction_id]
 
-        if attribution_flag:
+        if attribution_flags:
+
             # Add input saliency to self.attributions
             saliency_results = compute_saliency_scores(
                 prediction_logit,
@@ -165,18 +166,23 @@ class LM(object):
                 encoder_inputs_embeds,
                 decoder_token_ids_tensor_one_hot,
                 decoder_inputs_embeds,
+                saliency_methods=attribution_flags
             )
-            self.attributions['gradient'].append(saliency_results['gradient'].cpu().detach().numpy())
-            self.attributions['grad_x_input'].append(saliency_results['grad_x_input'].cpu().detach().numpy())
-            # Add integrated gradients to self.attributions
-            self.attributions['integrated_gradients'].append(compute_integrated_gradients_scores(
-                                                model=self.model,
-                                                forward_kwargs={
-                                                    'inputs_embeds': encoder_inputs_embeds,
-                                                    'decoder_inputs_embeds': decoder_inputs_embeds,
-                                                },
-                                                prediction_id=prediction_id,
-                                            )[0].cpu().detach().numpy()) # Getting the attributions
+            for saliency_method, saliency_result in saliency_results.items():
+                self.attributions[saliency_method].append(saliency_result.cpu().detach().numpy())
+
+            if 'integrated_gradients' in attribution_flags:
+                # Add integrated gradients to self.attributions
+                self.attributions['integrated_gradients'].append(
+                    compute_integrated_gradients_scores(
+                        model=self.model,
+                        forward_kwargs={
+                            'inputs_embeds': encoder_inputs_embeds,
+                            'decoder_inputs_embeds': decoder_inputs_embeds
+                        },
+                        prediction_id=prediction_id
+                    ).cpu().detach().numpy()
+                )
 
         output['logits'] = None  # free tensor memory we won't use again
 
@@ -215,7 +221,7 @@ class LM(object):
                  top_p: Optional[float] = None,
                  get_model_output: Optional[bool] = False,
                  do_sample: Optional[bool] = None,
-                 attribution: Optional[bool] = True,
+                 attribution: Optional[List[str]] = ['gradient', 'grad_x_input', 'integrated_gradients'],
                  generate: Optional[int] = None):
         """
         Generate tokens in response to an input prompt.
@@ -232,7 +238,7 @@ class LM(object):
                 chooses the highest scoring candidate output
                 token. This may lead to repetitive text. If set to True, the model considers
                 consults top_k and/or top_p to generate more itneresting output.
-            attribution: If True, the object will calculate input saliency/attribution.
+            attribution: List of attribution methods to be calculated. By default, it calculates input saliency and integrated gradients.
         """
 
         assert self.model_type != 'mlm', "generate method not supported for MLMs"
@@ -277,20 +283,20 @@ class LM(object):
             decoder_input_ids = None
 
         # Print output
+        n_printed_tokens = n_input_tokens
         if self.verbose:
             viz_id = self.display_input_sequence(input_ids[0])
-            n_printed_tokens = n_input_tokens
 
         while cur_len < max_length:
             output_token_id, output = self._generate_token(encoder_input_ids=input_ids,
                                                            encoder_attention_mask=attention_mask,
                                                            decoder_input_ids=decoder_input_ids,
-                                                           past=past,  # Note, this is not currently used
+                                                           past=past,  # Note: this is not currently used
                                                            temperature=temperature,
                                                            top_k=top_k,
                                                            top_p=top_p,
                                                            do_sample=do_sample,
-                                                           attribution_flag=attribution)
+                                                           attribution_flags=attribution)
 
             if get_model_output:
                 outputs.append(output)
@@ -307,19 +313,26 @@ class LM(object):
                     attention_mask = self.model._prepare_attention_mask_for_generation(input_ids, pad_token_id, eos_token_id)
                     attention_mask = self.to(attention_mask)
 
-            if self.verbose:
+            offset = n_input_tokens if decoder_input_ids is not None else 0
+            generated_token_ids = decoder_input_ids if decoder_input_ids is not None else input_ids
 
-                offset = n_input_tokens if decoder_input_ids is not None else 0
-                generated_token_ids = decoder_input_ids if decoder_input_ids is not None else input_ids
+            # More than one token can be generated at once (e.g., automatic split/pad tokens)
+            while len(generated_token_ids[0]) + offset != n_printed_tokens:
 
-                # More than one token can be generated at once (e.g., automatic split/pad tokens)
-                while len(generated_token_ids[0]) + offset != n_printed_tokens:
+                # Display token
+                if self.verbose:
                     self.display_token(
                         viz_id,
                         generated_token_ids[0][n_printed_tokens - offset].cpu().numpy(),
                         cur_len
                     )
-                    n_printed_tokens += 1
+
+                n_printed_tokens += 1
+
+                # Add a zero vector to the attributions vector, if we did not reach the last predicted token
+                if len(generated_token_ids[0]) + offset != n_printed_tokens:
+                    for k in self.attributions:
+                        self.attributions[k].insert(-1, np.zeros_like(self.attributions[k][-1]))
 
             cur_len = cur_len + 1
 
