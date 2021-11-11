@@ -107,7 +107,7 @@ def gradient_x_inputs_attribution(prediction_logit, encoder_inputs_embeds, decod
 
 
 def compute_integrated_gradients_scores(model: torch.nn.Module, forward_kwargs: Dict[str, Any],
-                                        prediction_id: torch.Tensor) -> torch.Tensor:
+                                        prediction_id: torch.Tensor, aggregation="L2") -> torch.Tensor:
 
     def model_forward(input_: torch.Tensor, decoder_: torch.Tensor, model, extra_forward_args: Dict[str, Any]) \
             -> torch.Tensor:
@@ -118,8 +118,15 @@ def compute_integrated_gradients_scores(model: torch.nn.Module, forward_kwargs: 
         return F.softmax(output.logits[:, -1, :], dim=-1)
 
     def normalize_attributes(attributes: torch.Tensor) -> torch.Tensor:
-        attributes = attributes.sum(dim=-1).squeeze(0)
-        attributes = attributes / torch.norm(attributes)
+        # attributes has shape (batch, sequence size, embedding dim)
+        attributes = attributes.squeeze(0)
+
+        if aggregation == "L2":  # norm calculates a scalar value (L2 Norm)
+            norm = torch.norm(attributes, dim=1)
+            attributes = norm / torch.sum(norm) # Normalize the values so they add up to 1
+        else:
+            raise NotImplemented
+
         return attributes
 
     extra_forward_args = {k: v for k, v in forward_kwargs.items() if k not in ['inputs_embeds', 'decoder_inputs_embeds']}

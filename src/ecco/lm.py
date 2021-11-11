@@ -89,9 +89,7 @@ class LM(object):
                    f"The model '{self.model_name}' is not correctly configured in Ecco's 'model-config.yaml' file"
             ) from KeyError()
 
-        self._hooks = {}
         self._reset()
-        self._attach_hooks(self.model)
 
         # If running in Jupyer, outputting setup this in one cell is enough. But for colab
         # we're running it before every d.HTML cell
@@ -104,6 +102,7 @@ class LM(object):
         self.generation_activations = []
         self.neurons_to_inhibit = {}
         self.neurons_to_induce = {}
+        self._hooks = {}
 
     def to(self, tensor: torch.Tensor):
         if self.device == 'cuda':
@@ -132,6 +131,8 @@ class LM(object):
         else:
             decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = None, None
 
+        # attach hooks
+        self._attach_hooks(self.model)
 
         extra_forward_kwargs = {
             'attention_mask': encoder_attention_mask,
@@ -145,7 +146,7 @@ class LM(object):
         }
         output = self.model(
             # TODO: This re-forwarding encoder side is expensive, can we optimise or is it needed everytime for fresh backward?
-            #       We need to keep this for input_saliency, but it can be optimized for other visualizations such as token likelihoods
+            #       We need to keep this for input_saliency/integrated_gradients, but it can be optimized for other visualizations such as token likelihoods
             **forward_kwargs
         )
 
@@ -172,6 +173,10 @@ class LM(object):
                 self.attributions[saliency_method].append(saliency_result.cpu().detach().numpy())
 
             if 'integrated_gradients' in attribution_flags:
+
+                # deactivate hooks
+                self._remove_hooks()
+
                 # Add integrated gradients to self.attributions
                 self.attributions['integrated_gradients'].append(
                     compute_integrated_gradients_scores(
@@ -422,6 +427,9 @@ class LM(object):
         # Remove downstream. For now setting to batch length
         n_input_tokens = len(input_tokens['input_ids'][0])
 
+        # attach hooks
+        self._attach_hooks(self.model)
+
         # model
         if self.model_type == 'mlm':
             output = self.model(**input_tokens, return_dict=True)
@@ -503,6 +511,11 @@ class LM(object):
         return inputs_embeds, token_ids_tensor_one_hot
 
     def _attach_hooks(self, model):
+
+        if self._hooks:
+            # skip if hooks are already attached
+            return
+
         for name, module in model.named_modules():
             # Add hooks to capture activations in every FFNN
 
@@ -519,6 +532,11 @@ class LM(object):
                     lambda self_, input_, name=name: \
                         self._inhibit_neurons_hook(name, input_)
                 )
+
+    def _remove_hooks(self):
+        for handle in self._hooks.values():
+            handle.remove()
+        self._hooks = {}
 
     def _get_activations_hook(self, name: str, input_):
         """
