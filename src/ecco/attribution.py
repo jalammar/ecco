@@ -107,7 +107,7 @@ def gradient_x_inputs_attribution(prediction_logit, encoder_inputs_embeds, decod
 
 
 def compute_integrated_gradients_scores(model: torch.nn.Module, forward_kwargs: Dict[str, Any],
-                                        prediction_id: torch.Tensor, aggregation="L2") -> torch.Tensor:
+                                        prediction_id: torch.Tensor, aggregation: str = "L2") -> torch.Tensor:
 
     def model_forward(input_: torch.Tensor, decoder_: torch.Tensor, model, extra_forward_args: Dict[str, Any]) \
             -> torch.Tensor:
