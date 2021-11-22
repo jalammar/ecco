@@ -3,6 +3,7 @@ import torch
 from typing import Any, Dict, Optional, Tuple, List
 from captum.attr import IntegratedGradients
 from torch.nn import functional as F
+import transformers
 
 
 def saliency(prediction_logit, encoder_token_ids_tensor_one_hot, decoder_token_ids_tensor_one_hot: Optional = None,
