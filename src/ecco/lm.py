@@ -174,7 +174,7 @@ class LM(object):
 
             if 'integrated_gradients' in attribution_flags:
 
-                # deactivate hooks
+                # deactivate hooks: integrated gradients will perform multiple forward steps
                 self._remove_hooks()
 
                 # Add integrated gradients to self.attributions

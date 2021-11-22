@@ -106,9 +106,22 @@ def gradient_x_inputs_attribution(prediction_logit, encoder_inputs_embeds, decod
     return token_importance_normalized
 
 
-def compute_integrated_gradients_scores(model: torch.nn.Module, forward_kwargs: Dict[str, Any],
+def compute_integrated_gradients_scores(model: transformers.PreTrainedModel, forward_kwargs: Dict[str, Any],
                                         prediction_id: torch.Tensor, aggregation: str = "L2") -> torch.Tensor:
 
+    """
+    Computes the Integrated Gradients primary attributions with respect to the specified `prediction_id`.
+
+    Args:
+        model: HuggingFace Transformers Pytorch language model.
+        forward_kwargs: contains all the inputs that are passed to `model` in the forward pass
+        prediction_id: Target Id. The Integrated Gradients will be computed with respect to it.
+        aggregation: Aggregation/normalzation method to perform to the Integrated Gradients attributions.
+         Currently only "L2" is implemented
+
+    Returns: a tensor of the normalized attributions with shape (input sequence size,)
+
+    """
     def model_forward(input_: torch.Tensor, decoder_: torch.Tensor, model, extra_forward_args: Dict[str, Any]) \
             -> torch.Tensor:
         if decoder_ is not None:
