@@ -54,7 +54,6 @@ class OutputSeq:
                  activations=None,
                  collect_activations_layer_nums=None,
                  attention=None,
-                 model_outputs=None,
                  model_type: str= 'mlm',
                  lm_head=None,
                  device='cpu'):
@@ -91,7 +90,6 @@ class OutputSeq:
         self.attribution = attribution
         self.activations = activations
         self.collect_activations_layer_nums = collect_activations_layer_nums
-        self.model_outputs = model_outputs
         self.attention_values = attention
         self.lm_head = lm_head
         self.device = device

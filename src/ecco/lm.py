@@ -3,7 +3,11 @@ import inspect
 import json
 import os
 import random
+
+import torch
 import transformers
+from transformers.generation_utils import SampleDecoderOnlyOutput
+
 import ecco
 import numpy as np
 from typing import Any, Dict, Optional, List, Tuple
@@ -108,6 +112,62 @@ class LM(object):
         if self.device == 'cuda':
             return tensor.to('cuda')
         return tensor
+
+    def _analyze_token(self,
+                       encoder_input_ids,
+                       encoder_attention_mask,
+                       decoder_input_ids,
+                       prediction_logit: torch.Tensor,
+                       prediction_id: torch.Tensor,
+                       attribution_flags: List[str] = ['gradient', 'grad_x_input', 'integrated_gradients'],
+                       run_forward: bool = False) -> None:
+        encoder_inputs_embeds, encoder_token_ids_tensor_one_hot = self._get_embeddings(encoder_input_ids)
+
+        # TODO: This is only okay as long as encoder and decoder share the embeddings
+        # Should make separate ones for more flexibility
+        if decoder_input_ids is not None:
+            decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = self._get_embeddings(decoder_input_ids)
+        else:
+            decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = None, None
+
+        if run_forward: # Utility used to run forward with hooks activated
+            self._attach_hooks(self.model)
+            extra_forward_kwargs = {
+                'attention_mask': encoder_attention_mask,
+                'decoder_inputs_embeds': decoder_inputs_embeds
+            }
+            forward_kwargs = {
+                'inputs_embeds': encoder_inputs_embeds,
+                'use_cache': False,
+                'return_dict': True,
+                **{k: v for k, v in extra_forward_kwargs.items() if k in inspect.signature(self.model.forward).parameters}
+            }
+            self.model(**forward_kwargs)
+
+        # Add input saliency to self.attributions
+        saliency_results = compute_saliency_scores(
+            prediction_logit,
+            encoder_token_ids_tensor_one_hot,
+            encoder_inputs_embeds,
+            decoder_token_ids_tensor_one_hot,
+            decoder_inputs_embeds,
+            saliency_methods=attribution_flags
+        )
+        for saliency_method, saliency_result in saliency_results.items():
+            self.attributions[saliency_method].append(saliency_result.cpu().detach().numpy())
+
+        if 'integrated_gradients' in attribution_flags:
+            # Add integrated gradients to self.attributions
+            self.attributions['integrated_gradients'].append(
+                compute_integrated_gradients_scores(
+                    model=self.model,
+                    forward_kwargs={ # TODO: Missing masks
+                        'inputs_embeds': encoder_inputs_embeds,
+                        'decoder_inputs_embeds': decoder_inputs_embeds
+                    },
+                    prediction_id=prediction_id
+                ).cpu().detach().numpy()
+            )
 
     def _generate_token(self,
                         encoder_input_ids,
@@ -224,10 +284,11 @@ class LM(object):
                  temperature: Optional[float] = None,
                  top_k: Optional[int] = None,
                  top_p: Optional[float] = None,
-                 get_model_output: Optional[bool] = False,
-                 do_sample: Optional[bool] = None,
+                 do_sample: Optional[bool] = False,
                  attribution: Optional[List[str]] = ['gradient', 'grad_x_input', 'integrated_gradients'],
-                 generate: Optional[int] = None):
+                 generate: Optional[int] = None,
+                 beam_size: int = 1,
+                 **generate_kwargs: Any):
         """
         Generate tokens in response to an input prompt.
         Works with Language models like GPT2, not masked language models like BERT.
@@ -238,12 +299,13 @@ class LM(object):
             temperature: Adjust the probability distibution of output candidate tokens.
             top_k: Specify top-k tokens to consider in decoding. Only used when do_sample is True.
             top_p: Specify top-p to consider in decoding. Only used when do_sample is True.
-            get_model_output:  Flag to retrieve the final output object returned by the underlying language model.
             do_sample: Decoding parameter. If set to False, the model always always
                 chooses the highest scoring candidate output
                 token. This may lead to repetitive text. If set to True, the model considers
                 consults top_k and/or top_p to generate more itneresting output.
             attribution: List of attribution methods to be calculated. By default, it calculates input saliency and integrated gradients.
+            beam_size: Beam size to consider while generating
+            generate_kwargs: Other arguments to be passed directly to self.model.generate
         """
 
         assert self.model_type != 'mlm', "generate method not supported for MLMs"
@@ -256,8 +318,9 @@ class LM(object):
         pad_token_id = self.model.config.pad_token_id
         eos_token_id = self.model.config.eos_token_id
 
-        # We needs this as a batch in order to collect activations.
-        input_ids = self.tokenizer(input_str, return_tensors="pt")['input_ids']
+        # We need this as a batch in order to collect activations.
+        input_tokenized_info = self.tokenizer(input_str, return_tensors="pt")
+        input_ids, attention_mask = input_tokenized_info['input_ids'], input_tokenized_info['attention_mask']
         n_input_tokens = len(input_ids[0])
         cur_len = n_input_tokens
 
@@ -273,14 +336,7 @@ class LM(object):
                 "max_length set to {} while input token has more tokens ({}). Consider increasing max_length" \
                     .format(max_length, cur_len))
 
-        # Get attention mask and decoder input ids
-        if getattr(self.model, '_prepare_attention_mask_for_generation'):
-            assert len(input_ids.size()) == 2 # will break otherwise
-            attention_mask = self.model._prepare_attention_mask_for_generation(input_ids, pad_token_id, eos_token_id)
-            attention_mask = self.to(attention_mask)
-        else:
-            attention_mask = None
-
+        # Get decoder input ids
         if self.model_type == 'enc-dec': # FIXME: only done because causal LMs like GPT-2 have the _prepare_decoder_input_ids_for_generation method but do not use it
             assert len(input_ids.size()) == 2 # will break otherwise
             decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_ids, None, None)
@@ -292,25 +348,53 @@ class LM(object):
         if self.verbose:
             viz_id = self.display_input_sequence(input_ids[0])
 
-        while cur_len < max_length:
-            output_token_id, output = self._generate_token(encoder_input_ids=input_ids,
-                                                           encoder_attention_mask=attention_mask,
-                                                           decoder_input_ids=decoder_input_ids,
-                                                           past=past,  # Note: this is not currently used
-                                                           temperature=temperature,
-                                                           top_k=top_k,
-                                                           top_p=top_p,
-                                                           do_sample=do_sample,
-                                                           attribution_flags=attribution)
+        # deactivate hooks: we will run them for the last model forward only
+        self._remove_hooks()
 
-            if get_model_output:
-                outputs.append(output)
+        # Get model generation
+        output = self.model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            num_beams=beam_size,
+            max_length=max_length,
+            do_sample=do_sample,
+            return_dict_in_generate=True,
+            output_scores=True,
+            **generate_kwargs
+        )
 
+        # Get prediction logits for each chosen prediction id
+        prediction_logits, prediction_ids = [], []
+        if self.model_type == 'causal':
+            assert isinstance(output, SampleDecoderOnlyOutput), f"Not expecting `output`to be of type {type(output)}"
+
+            assert len(output.sequences[0][n_input_tokens:]) == len(output.scores)
+            for pred_id, scores in zip(output.sequences[0][n_input_tokens:], output.scores):
+                prediction_ids.append(pred_id)
+                prediction_logits.append(scores[0][pred_id])
+        else:
+            from ipdb import set_trace; set_trace()
+
+        # Analyze each generated token
+        for i, (pred_id, pred_logit) in enumerate(zip(prediction_ids, prediction_logits)):
+
+            # Analyze token depending on specified `attribution`
+            self._analyze_token(
+                encoder_input_ids=input_ids,
+                encoder_attention_mask=attention_mask,
+                decoder_input_ids=decoder_input_ids,
+                prediction_logit=pred_logit,
+                prediction_id=pred_id,
+                attribution_flags=attribution,
+                run_forward=i == len(prediction_ids) - 1 # run forward for last step, to activate hooks
+            )
+
+            # Recomputing inputs ids, attention mask and decoder input ids
             if decoder_input_ids is not None:
                 assert len(decoder_input_ids.size()) == 2 # will break otherwise
-                decoder_input_ids = torch.cat([decoder_input_ids, torch.tensor([[output_token_id]])], dim=-1)
+                decoder_input_ids = torch.cat([decoder_input_ids, torch.tensor([[pred_id]])], dim=-1)
             else:
-                input_ids = torch.cat([input_ids, torch.tensor([[output_token_id]])], dim=-1)
+                input_ids = torch.cat([input_ids, torch.tensor([[pred_id]])], dim=-1)
 
                 # Recomputing Attention Mask
                 if getattr(self.model, '_prepare_attention_mask_for_generation'):
@@ -339,10 +423,14 @@ class LM(object):
                     for k in self.attributions:
                         self.attributions[k].insert(-1, np.zeros_like(self.attributions[k][-1]))
 
-            cur_len = cur_len + 1
+            cur_len += 1
 
-            if output_token_id == eos_token_id:
-                break
+        # Pass 'hidden_states' to 'decoder_hidden_states'
+        if getattr(output, "hidden_states", None) is not None:
+            assert getattr(output, "encoder_hidden_states", None) is None \
+                   and getattr(output, "decoder_hidden_states", None) is None, \
+                "Not expected to have encoder_hidden_states/decoder_hidden_states with 'hidden_states'"
+            setattr(output, "decoder_hidden_states", output.hidden_states)
 
         # Turn activations from dict to a proper array
         activations_dict = self._all_activations_dict
@@ -383,7 +471,6 @@ class LM(object):
                             'encoder_hidden_states': encoder_hidden_states,
                             'decoder_hidden_states': decoder_hidden_states,
                             'attention': attn,
-                            'model_outputs': outputs,
                             'attribution': attributions,
                             'activations': self.activations,
                             'collect_activations_layer_nums': self.collect_activations_layer_nums,
@@ -479,7 +566,6 @@ class LM(object):
                             'encoder_hidden_states': encoder_hidden_states,
                             'decoder_hidden_states': decoder_hidden_states,
                             'attention': attn,
-                            # 'model_outputs': outputs,
                             # 'attribution': attributions,
                             'activations': self.activations,
                             'collect_activations_layer_nums': self.collect_activations_layer_nums,
@@ -511,6 +597,7 @@ class LM(object):
         return inputs_embeds, token_ids_tensor_one_hot
 
     def _attach_hooks(self, model):
+        # TODO: Collect activations for more than 1 step
 
         if self._hooks:
             # skip if hooks are already attached
