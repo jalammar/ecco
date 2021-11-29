@@ -35,7 +35,7 @@ class TestLM:
         lm = ecco.from_pretrained('sshleifer/tiny-gpt2',
                                   activations=True,
                                   verbose=False)
-        output = lm.generate('test', generate=1)
+        output = lm.generate('test', generate=1, attribution=['grad_x_input'])
 
         assert output.token_ids.shape == (1, 2), "Generated one token successfully"
         assert output.attribution['grad_x_input'][0] == 1, "Successfully got an attribution value"
