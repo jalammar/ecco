@@ -9,7 +9,8 @@ import numpy as np
 from typing import Any, Dict, Optional, List, Tuple
 from IPython import display as d
 from torch.nn import functional as F
-from ecco.attribution import *
+import torch
+from ecco.attribution import compute_primary_attributions_scores, ATTR_NAME_ALIASES
 from ecco.output import OutputSeq
 from typing import Optional, Any, List
 from operator import attrgetter
@@ -89,9 +90,7 @@ class LM(object):
                    f"The model '{self.model_name}' is not correctly configured in Ecco's 'model-config.yaml' file"
             ) from KeyError()
 
-        self._hooks = {}
         self._reset()
-        self._attach_hooks(self.model)
 
         # If running in Jupyer, outputting setup this in one cell is enough. But for colab
         # we're running it before every d.HTML cell
@@ -104,6 +103,7 @@ class LM(object):
         self.generation_activations = []
         self.neurons_to_inhibit = {}
         self.neurons_to_induce = {}
+        self._hooks = {}
 
     def to(self, tensor: torch.Tensor):
         if self.device == 'cuda':
@@ -119,7 +119,7 @@ class LM(object):
                         temperature: float,
                         top_k: int,
                         top_p: float,
-                        attribution_flag: Optional[bool]):
+                        attribution_flags: Optional[List[str]] = []):
         """
         Run a forward pass through the model and sample a token.
         """
@@ -132,45 +132,46 @@ class LM(object):
         else:
             decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = None, None
 
-        extra_kwargs = {
+        # attach hooks
+        self._attach_hooks(self.model)
+
+        extra_forward_kwargs = {
             'attention_mask': encoder_attention_mask,
             'decoder_inputs_embeds': decoder_inputs_embeds
         }
-
+        forward_kwargs = {
+            'inputs_embeds': encoder_inputs_embeds,
+            'use_cache': False,
+            'return_dict': True,
+            **{k: v for k, v in extra_forward_kwargs.items() if k in inspect.signature(self.model.forward).parameters}
+        }
         output = self.model(
             # TODO: This re-forwarding encoder side is expensive, can we optimise or is it needed everytime for fresh backward?
-            #       We need to keep this for input_saliency, but it can be optimized for other visualizations such as token likelihoods
-            inputs_embeds=encoder_inputs_embeds,
-            use_cache=False,
-            return_dict=True,
-            **{ k: v for k, v in extra_kwargs.items() if k in inspect.signature(self.model.forward).parameters}
+            #       We need to keep this for input_saliency/integrated_gradients, but it can be optimized for other visualizations such as token likelihoods
+            **forward_kwargs
         )
 
         predict = output.logits
         scores = predict[0, -1:, :]
         prediction_id = sample_output_token(scores, do_sample, temperature, top_k, top_p)
-        # prediction_id now has the id of the token we want to output
-        # To do feature importance, let's get the actual logit associated with
-        # this token
-        prediction_logit = predict[0][-1][prediction_id]
 
-        if attribution_flag:
+        for attr_method in attribution_flags:
 
-            saliency_results = compute_saliency_scores(
-                prediction_logit,
-                encoder_token_ids_tensor_one_hot,
-                encoder_inputs_embeds,
-                decoder_token_ids_tensor_one_hot,
-                decoder_inputs_embeds,
+            # deactivate hooks: attr method can perform multiple forward steps
+            self._remove_hooks()
+
+            # Add attribution scores to self.attributions
+            self.attributions[attr_method].append(
+                compute_primary_attributions_scores(
+                    attr_method=attr_method,
+                    model=self.model,
+                    forward_kwargs={
+                        'inputs_embeds': encoder_inputs_embeds,
+                        'decoder_inputs_embeds': decoder_inputs_embeds
+                    },
+                    prediction_id=prediction_id
+                ).cpu().detach().numpy()
             )
-
-            if 'gradient' not in self.attributions:
-                self.attributions['gradient'] = []
-            self.attributions['gradient'].append(saliency_results['gradient'].cpu().detach().numpy())
-
-            if 'grad_x_input' not in self.attributions:
-                self.attributions['grad_x_input'] = []
-            self.attributions['grad_x_input'].append(saliency_results['grad_x_input'].cpu().detach().numpy())
 
         output['logits'] = None  # free tensor memory we won't use again
 
@@ -209,7 +210,7 @@ class LM(object):
                  top_p: Optional[float] = None,
                  get_model_output: Optional[bool] = False,
                  do_sample: Optional[bool] = None,
-                 attribution: Optional[bool] = True,
+                 attribution: Optional[List[str]] = [],
                  generate: Optional[int] = None):
         """
         Generate tokens in response to an input prompt.
@@ -226,7 +227,7 @@ class LM(object):
                 chooses the highest scoring candidate output
                 token. This may lead to repetitive text. If set to True, the model considers
                 consults top_k and/or top_p to generate more itneresting output.
-            attribution: If True, the object will calculate input saliency/attribution.
+            attribution: List of attribution methods to be calculated. By default, it does not calculate anything.
         """
 
         assert self.model_type != 'mlm', "generate method not supported for MLMs"
@@ -248,7 +249,7 @@ class LM(object):
             max_length = n_input_tokens + generate
 
         past = None
-        self.attributions = {}
+        self.attributions = defaultdict(list)
         outputs = []
 
         if cur_len >= max_length:
@@ -271,20 +272,20 @@ class LM(object):
             decoder_input_ids = None
 
         # Print output
+        n_printed_tokens = n_input_tokens
         if self.verbose:
             viz_id = self.display_input_sequence(input_ids[0])
-            n_printed_tokens = n_input_tokens
 
         while cur_len < max_length:
             output_token_id, output = self._generate_token(encoder_input_ids=input_ids,
                                                            encoder_attention_mask=attention_mask,
                                                            decoder_input_ids=decoder_input_ids,
-                                                           past=past,  # Note, this is not currently used
+                                                           past=past,  # Note: this is not currently used
                                                            temperature=temperature,
                                                            top_k=top_k,
                                                            top_p=top_p,
                                                            do_sample=do_sample,
-                                                           attribution_flag=attribution)
+                                                           attribution_flags=attribution)
 
             if get_model_output:
                 outputs.append(output)
@@ -301,19 +302,26 @@ class LM(object):
                     attention_mask = self.model._prepare_attention_mask_for_generation(input_ids, pad_token_id, eos_token_id)
                     attention_mask = self.to(attention_mask)
 
-            if self.verbose:
+            offset = n_input_tokens if decoder_input_ids is not None else 0
+            generated_token_ids = decoder_input_ids if decoder_input_ids is not None else input_ids
 
-                offset = n_input_tokens if decoder_input_ids is not None else 0
-                generated_token_ids = decoder_input_ids if decoder_input_ids is not None else input_ids
+            # More than one token can be generated at once (e.g., automatic split/pad tokens)
+            while len(generated_token_ids[0]) + offset != n_printed_tokens:
 
-                # More than one token can be generated at once (e.g., automatic split/pad tokens)
-                while len(generated_token_ids[0]) + offset != n_printed_tokens:
+                # Display token
+                if self.verbose:
                     self.display_token(
                         viz_id,
                         generated_token_ids[0][n_printed_tokens - offset].cpu().numpy(),
                         cur_len
                     )
-                    n_printed_tokens += 1
+
+                n_printed_tokens += 1
+
+                # Add a zero vector to the attributions vector, if we did not reach the last predicted token
+                if len(generated_token_ids[0]) + offset != n_printed_tokens:
+                    for k in self.attributions:
+                        self.attributions[k].insert(-1, np.zeros_like(self.attributions[k][-1]))
 
             cur_len = cur_len + 1
 
@@ -403,6 +411,9 @@ class LM(object):
         # Remove downstream. For now setting to batch length
         n_input_tokens = len(input_tokens['input_ids'][0])
 
+        # attach hooks
+        self._attach_hooks(self.model)
+
         # model
         if self.model_type == 'mlm':
             output = self.model(**input_tokens, return_dict=True)
@@ -484,6 +495,11 @@ class LM(object):
         return inputs_embeds, token_ids_tensor_one_hot
 
     def _attach_hooks(self, model):
+
+        if self._hooks:
+            # skip if hooks are already attached
+            return
+
         for name, module in model.named_modules():
             # Add hooks to capture activations in every FFNN
 
@@ -500,6 +516,11 @@ class LM(object):
                     lambda self_, input_, name=name: \
                         self._inhibit_neurons_hook(name, input_)
                 )
+
+    def _remove_hooks(self):
+        for handle in self._hooks.values():
+            handle.remove()
+        self._hooks = {}
 
     def _get_activations_hook(self, name: str, input_):
         """

@@ -19,7 +19,7 @@ class TestOutput:
             output_seq.position(position=0)
 
     def test_saliency(self, output_seq_1):
-        actual = output_seq_1.saliency(printJson=True)
+        actual = output_seq_1.primary_attributions(printJson=True)
         expected = {'tokens': [{'token': ' 1', 'token_id': 352, 'type': 'input', 'value': '0.31678662', 'position': 0},
                                {'token': ',', 'token_id': 11, 'type': 'input', 'value': '0.18056837', 'position': 1},
                                {'token': ' 1', 'token_id': 352, 'type': 'input', 'value': '0.37555906', 'position': 2},
