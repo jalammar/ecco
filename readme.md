@@ -57,12 +57,12 @@ The [API reference](https://ecco.readthedocs.io/en/main/api/ecco/) and the [arch
 <p><strong>Layer Predictions:</strong>Compare the rankings of multiple tokens as candidates for a certain position in the sequence.  [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Comparing_Token_Rankings.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Comparing_Token_Rankings.ipynb">Colab</a>]</p>
 <img src="docs/img/rankings_watch_ex_is_are_widethumb.png" width="400" />
 <hr />
-<p><strong>Input Saliency:</strong> How much did each input token contribute to producing the output token?   [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Colab</a>]
+<p><strong>Primary Attributions:</strong> How much did each input token contribute to producing the output token?   [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Primary_Attributions.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Primary_Attributions.ipynb">Colab</a>]
 </p>
 <img src="docs/img/saliency_ex_1_thumbwide.png" width="400"/>
 
 <hr />
-<p><strong>Detailed Saliency:</strong> See more precise input saliency values using the detailed view. [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Input_Saliency.ipynb">Colab</a>]
+<p><strong>Detailed Primary Attributions:</strong> See more precise input attributions values using the detailed view. [<a href="https://github.com/jalammar/ecco/blob/main/notebooks/Ecco_Primary_Attributions.ipynb">Notebook</a>] [<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Ecco_Primary_Attributions.ipynb">Colab</a>]
 </p>
 <img src="docs/img/saliency_ex_2_thumbwide.png" width="400"/>
 

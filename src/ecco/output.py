@@ -30,7 +30,7 @@ class OutputSeq:
     Shows the rankings of multiple tokens as the model scored them for a single position. For example, if the input is
     "The cat \_\_\_", we use this method to observe how the model ranked the words "is", "are", "was" as candidates
     to fill in the blank.
-    - [saliency()](./#ecco.output.OutputSeq.saliency) <br />
+    - [primary_attributions()](./#ecco.output.OutputSeq.primary_attributions) <br />
     How important was each input token in the selection of calculating the output token?
 
 
@@ -152,7 +152,7 @@ class OutputSeq:
             self.position(position, **kwargs)
 
         else:
-            self.saliency(**kwargs)
+            self.primary_attributions(**kwargs)
 
     def position(self, position, attr_method='grad_x_input'):
 
@@ -163,6 +163,9 @@ class OutputSeq:
 
         importance_id = position - self.n_input_tokens
         tokens = []
+
+        assert attr_method in self.attribution, \
+            f"attr_method={attr_method} not found. Choose one of the following: {list(self.attribution.keys())}"
         attribution = self.attribution[attr_method]
         for idx, token in enumerate(self.tokens):
             type = "input" if idx < self.n_input_tokens else 'output'
@@ -194,9 +197,9 @@ class OutputSeq:
         }})""".format(position, data)
         d.display(d.Javascript(js))
 
-    def saliency(self, attr_method: Optional[str] = 'grad_x_input', style="minimal", **kwargs):
+    def primary_attributions(self, attr_method: Optional[str] = 'grad_x_input', style="minimal", **kwargs):
         """
-            Explorable showing saliency of each token generation step.
+            Explorable showing primary attributions of each token generation step.
             Hovering-over or tapping an output token imposes a saliency map on other tokens
             showing their importance as features to that prediction.
 
@@ -208,8 +211,8 @@ class OutputSeq:
             text= "The countries of the European Union are:\n1. Austria\n2. Belgium\n3. Bulgaria\n4."
             output = lm.generate(text, generate=20, do_sample=True)
 
-            # Show saliency explorable
-            output.saliency()
+            # Show primary attributions explorable
+            output.primary_attributions()
             ```
 
             Which creates the following interactive explorable:
@@ -219,7 +222,7 @@ class OutputSeq:
 
             ```python
             # Show detailed explorable
-            output.saliency(style="detailed")
+            output.primary_attributions(style="detailed")
             ```
 
             Which creates the following interactive explorable:
@@ -237,6 +240,9 @@ class OutputSeq:
 
         importance_id = position - self.n_input_tokens
         tokens = []
+
+        assert attr_method in self.attribution, \
+            f"attr_method={attr_method} not found. Choose one of the following: {list(self.attribution.keys())}"
         attribution = self.attribution[attr_method]
         for idx, token in enumerate(self.tokens[0]):
             type = "input" if idx < self.n_input_tokens else 'output'
