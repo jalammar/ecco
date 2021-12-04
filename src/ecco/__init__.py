@@ -29,7 +29,8 @@ def from_pretrained(hf_model_id: str,
                     gpu: Optional[bool] = True
                     ):
     """
-    Constructs a [LM][ecco.lm.LM] object based on a string identifier from HuggingFace Transformers. This is main entry point to Ecco.
+    Constructs a [LM][ecco.lm.LM] object based on a string identifier from HuggingFace Transformers. This is
+    the main entry point to Ecco.
 
     Usage:
 
@@ -38,14 +39,16 @@ def from_pretrained(hf_model_id: str,
     lm = ecco.from_pretrained('gpt2')
     ```
 
-    If you want to use a custom model:
+    You can also use a custom model and specify its configurations:
     ```python
     import ecco
 
     model_config = {
         'embedding': "transformer.wte.weight",
         'type': 'causal',
-        'activations': ['mlp\.c_proj']
+        'activations': ['mlp\.c_proj'],
+        'token_prefix': ' ',
+        'partial_token_prefix': ''
     }
     lm = ecco.from_pretrained('gpt2', model_config=model_config)
     ```

@@ -57,7 +57,8 @@ class OutputSeq:
                  model_outputs=None,
                  model_type: str= 'mlm',
                  lm_head=None,
-                 device='cpu'):
+                 device='cpu',
+                 config=None):
         """
 
         Args:
@@ -79,6 +80,7 @@ class OutputSeq:
             lm_head: The trained language model head from a language model projecting a
                 hidden state to an output vocabulary associated with teh tokenizer.
             device: "cuda" or "cpu"
+            config: The configuration dict of the language model
         """
         self.token_ids = token_ids
         self.tokenizer = tokenizer
@@ -95,6 +97,7 @@ class OutputSeq:
         self.attention_values = attention
         self.lm_head = lm_head
         self.device = device
+        self.config = config
         self.model_type = model_type
         self._path = os.path.dirname(ecco.__file__)
 
@@ -131,7 +134,7 @@ class OutputSeq:
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         viz_id = 'viz_{}'.format(round(random.random() * 1000000))
         js = """
          requirejs(['basic', 'ecco'], function(basic, ecco){{
@@ -185,7 +188,7 @@ class OutputSeq:
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         viz_id = 'viz_{}'.format(round(random.random() * 1000000))
         js = """
          requirejs(['basic', 'ecco'], function(basic, ecco){{
@@ -264,18 +267,21 @@ class OutputSeq:
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         # viz_id = 'viz_{}'.format(round(random.random() * 1000000))
 
         if (style == "minimal"):
             js = f"""
              requirejs(['basic', 'ecco'], function(basic, ecco){{
                 const viz_id = basic.init()
+                console.log(viz_id)
                 // ecco.interactiveTokens(viz_id, {{}})
                 window.ecco[viz_id] = new ecco.MinimalHighlighter({{
-                parentDiv: viz_id,
-                data: {data},
-                preset: 'viridis'
+                    parentDiv: viz_id,
+                    data: {data},
+                    preset: 'viridis',
+                    tokenization_config: {json.dumps(self.config['tokenizer_config'])}
+
              }})
 
              window.ecco[viz_id].init();
@@ -289,7 +295,12 @@ class OutputSeq:
             js = f"""
              requirejs(['basic', 'ecco'], function(basic, ecco){{
                 const viz_id = basic.init()
-                window.ecco[viz_id] = ecco.interactiveTokens(viz_id, {data})
+                console.log(viz_id)
+                window.ecco[viz_id] = ecco.interactiveTokens({{
+                    parentDiv: viz_id,
+                    data: {data},
+                    tokenization_config: {json.dumps(self.config['tokenizer_config'])}
+             }})
 
              }}, function (err) {{
                 console.log(err);
@@ -392,7 +403,7 @@ class OutputSeq:
             data.append(layer_data)
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
 
         js = f"""
          requirejs(['basic', 'ecco'], function(basic, ecco){{
@@ -590,7 +601,7 @@ class OutputSeq:
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         viz_id = 'viz_{}'.format(round(random.random() * 1000000))
         js = """
          requirejs(['basic', 'ecco'], function(basic, ecco){{
@@ -617,6 +628,7 @@ class OutputSeq:
                    token_ids=self.token_ids,
                    _path=self._path,
                    tokens=self.tokens,
+                   config=self.config,
                    collect_activations_layer_nums=self.collect_activations_layer_nums,
                    **kwargs)
 
@@ -632,6 +644,7 @@ class NMF:
                  to_layer: Optional[int] = None,
                  tokens: Optional[List[str]] = None,
                  collect_activations_layer_nums: Optional[List[int]] = None,
+                 config=None,
                  **kwargs):
         """
         Receives a neuron activations tensor from OutputSeq and decomposes it using NMF into the number
@@ -657,6 +670,7 @@ class NMF:
         self._path = _path
         self.token_ids = token_ids
         self.n_input_tokens = n_input_tokens
+        self.config = config
 
         # Joining Encoder and Decoder (if exists) together
         activations = np.concatenate(list(activations.values()), axis=-1)
@@ -794,18 +808,20 @@ class NMF:
             # Three-dimensional list. Shape: (1, factors, sequence length)
             'factors': [factors]
         }
-
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
-        viz_id = 'viz_{}'.format(round(random.random() * 1000000))
-        # print(data)
-        js = """
+
+        js = f"""
          requirejs(['basic', 'ecco'], function(basic, ecco){{
             const viz_id = basic.init()
-            ecco.interactiveTokensAndFactorSparklines(viz_id, {})
+            
+            ecco.interactiveTokensAndFactorSparklines(viz_id, {data},
+            {{
+            'hltrCFG': {{'tokenization_config': {json.dumps(self.config.tokenizer_config)}
+                }}
+            }})
          }}, function (err) {{
             console.log(err);
-        }})""".format(data)
+        }})"""
         d.display(d.Javascript(js))
 
         if 'printJson' in kwargs and kwargs['printJson']:

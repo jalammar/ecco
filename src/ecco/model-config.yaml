@@ -1,143 +1,203 @@
+
 # GPT2
 gpt2:
     embedding: "transformer.wte.weight" # String. Directly accessed
     type: 'causal'
     activations: # Regex pattern
         - 'mlp\.c_proj'
+    token_prefix: ' '
+    partial_token_prefix: ''
 gpt2-medium:
     embedding: "transformer.wte.weight"
     type: 'causal'
     activations:
         - 'mlp\.c_proj'
+    token_prefix: ' '
+    partial_token_prefix: ''
 gpt2-xl:
     embedding: "transformer.wte.weight"
     type: 'causal'
     activations:
         - 'mlp\.c_proj'
+    token_prefix: ' '
+    partial_token_prefix: ''
 distilgpt2:
     embedding: "transformer.wte.weight"
     type: 'causal'
     activations:
         - 'mlp\.c_proj'
+    token_prefix: 'Ġ'
+    partial_token_prefix: ''
 # BERT
 distilbert-base-uncased:
     embedding: "embeddings.word_embeddings"
     type: 'mlm'
     activations:
         - 'ffn\.lin2'
+    token_prefix: ''
+    partial_token_prefix: '##'
 bert-base-uncased:
     embedding: "embeddings.word_embeddings"
     type: 'mlm'
     activations:
         - '\d+\.output\.dense' #To set apart from attention.output.dense
+    token_prefix: ''
+    partial_token_prefix: '##'
 bert-large-uncased:
-      embedding: "embeddings.word_embeddings"
-      type: 'mlm'
-      activations:
-         - '\d+\.output\.dense'
+    embedding: "embeddings.word_embeddings"
+    type: 'mlm'
+    activations:
+       - '\d+\.output\.dense'
+    token_prefix: ''
+    partial_token_prefix: '##'
 'distilbert-base-uncased-finetuned-sst-2-english':
     embedding: "embeddings.word_embeddings"
     type: 'mlm'
     activations:
         - 'ffn.lin2'
+    token_prefix: ''
+    partial_token_prefix: '##'
 'microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract':
     embedding: "embeddings.word_embeddings"
     type: 'mlm'
     activations:
         - '\d+\.output\.dense'
+    token_prefix: ''
+    partial_token_prefix: '##'
 # ALBERT
 albert-base-v2:
-      embedding: "embeddings.word_embeddings"
-      type: 'mlm'
-      activations:
-        - '\.ffn_output'
+    embedding: "embeddings.word_embeddings"
+    type: 'mlm'
+    activations:
+      - '\.ffn_output'
+    token_prefix: ''
+    partial_token_prefix: '##'
 albert-large-v2:
-      embedding: "embeddings.word_embeddings"
-      type: 'mlm'
-      activations:
-        - '\.ffn_output'
+    embedding: "embeddings.word_embeddings"
+    type: 'mlm'
+    activations:
+      - '\.ffn_output'
+    token_prefix: ''
+    partial_token_prefix: '##'
 albert-xxlarge-v2:
-      embedding: "embeddings.word_embeddings"
-      type: 'mlm'
-      activations:
-        - '\.ffn_output'
+    embedding: "embeddings.word_embeddings"
+    type: 'mlm'
+    activations:
+      - '\.ffn_output'
+    token_prefix: ''
+    partial_token_prefix: '##'
 # ROBERTA
+distilroberta-base:
+    embedding: 'embeddings.word_embeddings'
+    type: 'mlm'
+    activations:
+        - '\d+\.output\.dense'
+    token_prefix: 'Ġ'
+    partial_token_prefix: ''
 roberta-base:
     embedding: 'embeddings.word_embeddings'
     type: 'mlm'
     activations:
         - '\d+\.output\.dense'
+    token_prefix: 'Ġ'
+    partial_token_prefix: ''
 roberta-large:
     embedding: 'embeddings.word_embeddings'
     type: 'mlm'
     activations:
         - '\d+\.output\.dense'
+    token_prefix: 'Ġ'
+    partial_token_prefix: ''
 # ELECTRA
 'google/electra-small-discriminator':
     embedding: 'embeddings.word_embeddings'
     type: 'mlm'
     activations:
         - '\d+\.output\.dense'
+    token_prefix: ''
+    partial_token_prefix: '##'
 'google/electra-base-discriminator':
     embedding: 'embeddings.word_embeddings'
     type: 'mlm'
     activations:
         - '\d+\.output\.dense'
+    token_prefix: ''
+    partial_token_prefix: '##'
 'sentence-transformers/distilbert-base-nli-stsb-mean-tokens':
     embedding: "embeddings.word_embeddings"
     type: 'mlm'
     activations:
         - 'ffn.lin2'
+    token_prefix: ''
+    partial_token_prefix: '##'
 # ENCODER DECODER MODELS
 # T5
-'tscholak/1wnr382e':
-    embedding: 'shared.weight'
-    type: 'enc-dec'
-    activations:
-        - 'wo' #Note that this will be both encoder and decoder layers
-'valhalla/t5-small-qg-hl':
-    embedding: 'shared.weight'
-    type: 'enc-dec'
-    activations:
-        - 'wo' #Note that this will be both encoder and decoder layers
-'valhalla/t5-small-qa-qg-hl':
-    embedding: 'shared.weight'
-    type: 'enc-dec'
-    activations:
-        - 'wo' #Note that this will be both encoder and decoder layers
-'valhalla/t5-base-e2e-qg':
-    embedding: 'shared.weight'
-    type: 'enc-dec'
-    activations:
-        - 'wo' #Note that this will be both encoder and decoder layers
 t5-small:
     embedding: 'shared.weight'
     type: 'enc-dec'
     activations:
         - 'wo' #Note that this will be both encoder and decoder layers
+    token_prefix: '▁'
+    partial_token_prefix: ''
 t5-base:
     embedding: 'shared'
     type: 'enc-dec'
     activations:
         - 'wo' #Note that this will be both encoder and decoder layers
+    token_prefix: '▁'
+    partial_token_prefix: ''
+'tscholak/1wnr382e':
+    embedding: 'shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'wo' #Note that this will be both encoder and decoder layers
+    token_prefix: '▁'
+    partial_token_prefix: ''
+'valhalla/t5-small-qg-hl':
+    embedding: 'shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'wo' #Note that this will be both encoder and decoder layers
+    token_prefix: '▁'
+    partial_token_prefix: ''
+'valhalla/t5-small-qa-qg-hl':
+    embedding: 'shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'wo' #Note that this will be both encoder and decoder layers
+    token_prefix: '▁'
+    partial_token_prefix: ''
+'valhalla/t5-base-e2e-qg':
+    embedding: 'shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'wo' #Note that this will be both encoder and decoder layers
+    token_prefix: '▁'
+    partial_token_prefix: ''
 # BART
 facebook/bart-large-mnli:
     embedding: 'shared'
     type: 'enc-dec'
     activations:
         - 'fc2'
+    token_prefix: ''
+    partial_token_prefix: '##'
 
 # DUMMY MODELS
 'sshleifer/tiny-gpt2':
-  embedding: "transformer.wte.weight"
-  type: 'causal'
-  activations:
+    embedding: "transformer.wte.weight"
+    type: 'causal'
+    activations:
     - 'mlp.c_proj'
+    token_prefix: ' '
+    partial_token_prefix: ''
 'julien-c/bert-xsmall-dummy':
-  embedding: "embeddings.word_embeddings"
-  type: 'mlm'
-  activations:
+    embedding: "embeddings.word_embeddings"
+    type: 'mlm'
+    activations:
     - '\d+\.output\.dense'
+    token_prefix: ''
+    partial_token_prefix: '##'
 
 #EleutherAI
 EleutherAI/gpt-neo-125M:
@@ -145,13 +205,19 @@ EleutherAI/gpt-neo-125M:
     type: 'causal'
     activations:
     - 'mlp\.c_proj'
+    token_prefix: ' '
+    partial_token_prefix: ''
 EleutherAI/gpt-neo-1.3B:
     embedding: "transformer.wte.weight"
     type: 'causal'
     activations:
     - 'mlp\.c_proj'
+    token_prefix: ' '
+    partial_token_prefix: ''
 EleutherAI/gpt-neo-2.7B:
     embedding: "transformer.wte.weight"
     type: 'causal'
     activations:
     - 'mlp\.c_proj'
+    token_prefix: ' '
+    partial_token_prefix: ''

@@ -350,10 +350,11 @@ class LM(object):
         else:
             all_token_ids = input_ids[0]
 
-        tokens = []
-        for i in all_token_ids:
-            token = self.tokenizer.decode([i])
-            tokens.append(token)
+        tokens = self.tokenizer.convert_ids_to_tokens(all_token_ids)
+        # tokens = []
+        # for i in all_token_ids:
+        #     token = self.tokenizer.decode([i])
+        #     tokens.append(token)
 
         attributions = self.attributions
         attn = getattr(output, "attentions", None)
@@ -373,7 +374,8 @@ class LM(object):
                             'collect_activations_layer_nums': self.collect_activations_layer_nums,
                             'lm_head': self.model.lm_head,
                             'model_type': self.model_type,
-                            'device': self.device})
+                            'device': self.device,
+                            'config': self.model_config})
 
     def __call__(self,
                  # input_str: Optional[str] = '',
@@ -469,7 +471,8 @@ class LM(object):
                             'collect_activations_layer_nums': self.collect_activations_layer_nums,
                             'lm_head': lm_head,
                             'model_type': self.model_type,
-                            'device': self.device})
+                            'device': self.device,
+                            'config': self.model_config})
 
     def _get_embeddings(self, input_ids) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
         """
@@ -596,7 +599,7 @@ class LM(object):
         data = {'tokens': tokens}
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         viz_id = f'viz_{round(random.random() * 1000000)}'
         #         html = f"""
         # <div id='{viz_id}_output'></div>

@@ -30,6 +30,10 @@ nav:
       - Output: api/output.md
       - NMF: api/nmf.md
       - Analysis: api/analysis.md
+  - EccoJS:
+      - Overview: eccoJS/overview.md
+
+  - Contribution Guide: contribution_guide.md
 
 markdown_extensions:
   - pymdownx.highlight
