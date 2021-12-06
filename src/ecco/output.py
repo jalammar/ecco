@@ -49,7 +49,6 @@ class OutputSeq:
                  tokens=None,
                  encoder_hidden_states=None,
                  decoder_hidden_states=None,
-                 embedding_states=None,
                  attribution=None,
                  activations=None,
                  collect_activations_layer_nums=None,
@@ -86,7 +85,6 @@ class OutputSeq:
         self.tokens = tokens
         self.encoder_hidden_states = encoder_hidden_states
         self.decoder_hidden_states = decoder_hidden_states
-        self.embedding_states = embedding_states
         self.attribution = attribution
         self.activations = activations
         self.collect_activations_layer_nums = collect_activations_layer_nums
@@ -106,7 +104,7 @@ class OutputSeq:
         return (self.encoder_hidden_states, self.decoder_hidden_states)
 
     def __str__(self):
-        return "<LMOutput '{}' # of lm outputs: {}>".format(self.output_text, len(self._get_hidden_states()[1]))
+        return "<LMOutput '{}' # of lm outputs: {}>".format(self.output_text, len(self._get_hidden_states()[1][-1]))
 
     def to(self, tensor: torch.Tensor):
         if self.device == 'cuda':
@@ -346,6 +344,7 @@ class OutputSeq:
             assert new_position >= 0, f"position={position} not supported, minimum is " \
                                       f"position={self.n_input_tokens} for the first generated token"
             position = new_position
+        dec_hidden_states = dec_hidden_states[position] # only focus on the hidden states for that particular position
 
         if layer is not None:
             # If a layer is specified, choose it only.
@@ -426,6 +425,11 @@ class OutputSeq:
 
         n_layers_dec = len(dec_hidden_states)
 
+        # Only consider last produced token hidden states
+        # TODO: Is this correct? Does this work because decoder is always unidirectional
+        #  or it works when only a single token is generated?
+        dec_hidden_states = dec_hidden_states[-1]
+
         if self.model_type == 'causal':
             position = dec_hidden_states.shape[1] - self.n_input_tokens + 1
         elif self.model_type == 'enc-dec':
@@ -498,6 +502,11 @@ class OutputSeq:
 
         _, dec_hidden_states = self._get_hidden_states()
         assert dec_hidden_states is not None, "decoder hidden states not found"
+
+        # Only consider last produced token hidden states
+        # TODO: Is this correct? Does this work because decoder is always unidirectional
+        #  or it works when only a single token is generated?
+        dec_hidden_states = dec_hidden_states[-1]
 
         if position != -1:
             if self.model_type == 'causal':

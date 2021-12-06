@@ -5,11 +5,18 @@ import os
 import random
 import torch
 import transformers
+from transformers.generation_utils import BeamSampleDecoderOnlyOutput, BeamSampleEncoderDecoderOutput, \
+    BeamSearchEncoderDecoderOutput, BeamSearchDecoderOnlyOutput
 import ecco
 import numpy as np
 from IPython import display as d
 from torch.nn import functional as F
-from ecco.attribution import compute_primary_attributions_scores
+<<<<<<< HEAD
+from ecco.attribution import compute_saliency_scores, compute_integrated_gradients_scores
+=======
+import torch
+from ecco.attribution import compute_primary_attributions_scores, ATTR_NAME_ALIASES
+>>>>>>> 356732448723892fe97be10447fbcf9b3199d674
 from ecco.output import OutputSeq
 from typing import Optional, Any, List, Tuple, Dict
 from operator import attrgetter
@@ -89,8 +96,6 @@ class LM(object):
                    f"The model '{self.model_name}' is not correctly configured in Ecco's 'model-config.yaml' file"
             ) from KeyError()
 
-        assert self.model_type in ['causal', 'mlm', 'enc-dec'], f"model type {self.model_type} not found"
-
         self._reset()
 
         # If running in Jupyer, outputting setup this in one cell is enough. But for colab
@@ -111,16 +116,75 @@ class LM(object):
             return tensor.to('cuda')
         return tensor
 
-    def _analyze_token(self,
-                       encoder_input_embeds: torch.Tensor,
-                       encoder_attention_mask: Optional, # TODO: use encoder mask and also decoder mask
-                       decoder_input_embeds: Optional[torch.Tensor],
-                       prediction_id: torch.Tensor,
-                       attribution_flags: Optional[List[str]] = []) -> None:
+    def _generate_token(self,
+                        encoder_input_ids,
+                        encoder_attention_mask: Optional,
+                        decoder_input_ids: Optional,
+                        past,
+<<<<<<< HEAD
+                        sampling_args: Optional[Dict[str, Any]] = {},
+                        attribution_flags: Optional[List[str]] = ['gradient', 'grad_x_input', 'integrated_gradients'],
+                        prediction_id: Optional[torch.Tensor] = None):
+=======
+                        do_sample: bool,
+                        temperature: float,
+                        top_k: int,
+                        top_p: float,
+                        attribution_flags: Optional[List[str]] = []):
+>>>>>>> 356732448723892fe97be10447fbcf9b3199d674
         """
-        Analyzes a predicted token.
-        Currently this methods computes the primary attribution explainability scores for each given token.
+        Run a forward pass through the model and sample a token (if no prediction_id is given).
         """
+        encoder_inputs_embeds, encoder_token_ids_tensor_one_hot = self._get_embeddings(encoder_input_ids)
+
+        # TODO: This is only okay as long as encoder and decoder share the embeddings
+        # Should make separate ones for more flexibility
+        if decoder_input_ids is not None:
+            decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = self._get_embeddings(decoder_input_ids)
+        else:
+            decoder_inputs_embeds, decoder_token_ids_tensor_one_hot = None, None
+
+        # attach hooks
+        self._attach_hooks(self.model)
+
+        extra_forward_kwargs = {
+            'attention_mask': encoder_attention_mask,
+            'decoder_inputs_embeds': decoder_inputs_embeds
+        }
+        forward_kwargs = {
+            'inputs_embeds': encoder_inputs_embeds,
+            'use_cache': False,
+            'return_dict': True,
+            **{k: v for k, v in extra_forward_kwargs.items() if k in inspect.signature(self.model.forward).parameters}
+        }
+        output = self.model(**forward_kwargs)
+        predict = output.logits
+<<<<<<< HEAD
+
+        # Get the prediction_id if it was not passed to function
+        if prediction_id is None:
+            scores = predict[0, -1:, :]
+            prediction_id = sample_output_token(scores, **sampling_args)
+
+        # prediction_id now has the id of the token we want to output
+        # To do feature importance, let's get the actual logit associated with
+        # this token
+        prediction_logit = predict[0][-1][prediction_id]
+
+        if attribution_flags:
+
+            # Add input saliency to self.attributions
+            saliency_results = compute_saliency_scores(
+                prediction_logit,
+                encoder_token_ids_tensor_one_hot,
+                encoder_inputs_embeds,
+                decoder_token_ids_tensor_one_hot,
+                decoder_inputs_embeds,
+                saliency_methods=attribution_flags
+=======
+        scores = predict[0, -1:, :]
+        prediction_id = sample_output_token(scores, do_sample, temperature, top_k, top_p)
+
         for attr_method in attribution_flags:
 
             # deactivate hooks: attr method can perform multiple forward steps
@@ -132,23 +196,33 @@ class LM(object):
                     attr_method=attr_method,
                     model=self.model,
                     forward_kwargs={
-                        'inputs_embeds': encoder_input_embeds,
-                        'decoder_inputs_embeds': decoder_input_embeds
+                        'inputs_embeds': encoder_inputs_embeds,
+                        'decoder_inputs_embeds': decoder_inputs_embeds
                     },
                     prediction_id=prediction_id
                 ).cpu().detach().numpy()
+>>>>>>> 356732448723892fe97be10447fbcf9b3199d674
             )
+
+        return prediction_id, output
 
     def generate(self, input_str: str,
                  max_length: Optional[int] = 8,
                  temperature: Optional[float] = None,
                  top_k: Optional[int] = None,
                  top_p: Optional[float] = None,
+<<<<<<< HEAD
                  do_sample: Optional[bool] = False,
-                 attribution: Optional[List[str]] = [],
+                 attribution: Optional[List[str]] = ['gradient', 'grad_x_input', 'integrated_gradients'],
                  generate: Optional[int] = None,
                  beam_size: int = 1,
                  **generate_kwargs: Any):
+=======
+                 get_model_output: Optional[bool] = False,
+                 do_sample: Optional[bool] = None,
+                 attribution: Optional[List[str]] = [],
+                 generate: Optional[int] = None):
+>>>>>>> 356732448723892fe97be10447fbcf9b3199d674
         """
         Generate tokens in response to an input prompt.
         Works with Language models like GPT2, not masked language models like BERT.
@@ -163,9 +237,13 @@ class LM(object):
                 chooses the highest scoring candidate output
                 token. This may lead to repetitive text. If set to True, the model considers
                 consults top_k and/or top_p to generate more itneresting output.
-            attribution: List of attribution methods to be calculated. By default, it does not calculate anything.
+<<<<<<< HEAD
+            attribution: List of attribution methods to be calculated. By default, it calculates input saliency and integrated gradients.
             beam_size: Beam size to consider while generating
             generate_kwargs: Other arguments to be passed directly to self.model.generate
+=======
+            attribution: List of attribution methods to be calculated. By default, it does not calculate anything.
+>>>>>>> 356732448723892fe97be10447fbcf9b3199d674
         """
 
         assert self.model_type in ['enc-dec', 'causal'], f"generate method not supported for model type '{self.model_type}'"
@@ -187,6 +265,9 @@ class LM(object):
         if generate is not None:
             max_length = n_input_tokens + generate
 
+        past = None
+        self.attributions = defaultdict(list)
+
         if cur_len >= max_length:
             raise ValueError(
                 "max_length set to {} while input token has more tokens ({}). Consider increasing max_length" \
@@ -204,81 +285,59 @@ class LM(object):
         if self.verbose:
             viz_id = self.display_input_sequence(input_ids[0])
 
-        # Get model output
-        self._remove_hooks() # deactivate hooks: we will run them for the last model forward only
-        output = self.model.generate(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            num_beams=beam_size,
-            # FIXME: +1 in max_length to account for first start token in decoder, find a better way to do this
-            max_length=(generate or max_length - cur_len) + 1 if self.model_type == 'enc-dec' else max_length,
-            do_sample=do_sample,
-            top_p=top_p,
-            top_k=top_k,
-            temperature=temperature,
-            return_dict_in_generate=True,
-            output_scores=True,
-            **generate_kwargs
-        )
-
-        # Get prediction logits for each chosen prediction id
+        output = None
         prediction_logits, prediction_ids = [], []
-        if output.__class__.__name__.endswith("EncoderDecoderOutput"):
-            prediction_ids, prediction_scores = output.sequences[0][1:], output.scores
+        if beam_size > 1: # Get generation with self.model.generate when beam search is in use
+            self._remove_hooks() # deactivate hooks: we will run them for the last model forward only
+            output = self.model.generate(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                num_beams=beam_size,
+                # FIXME: +1 to account for first start token in decoder, find a better way to do this
+                max_length=(generate or max_length - cur_len) + 1 if self.model_type == 'enc-dec' else max_length,
+                do_sample=do_sample,
+                return_dict_in_generate=True,
+                output_scores=True,
+                **generate_kwargs
+            )
 
-        elif output.__class__.__name__.endswith("DecoderOnlyOutput"):
-            prediction_ids, prediction_scores = output.sequences[0][n_input_tokens:], output.scores
+            # Get prediction logits for each chosen prediction id
+            if self.model_type == 'enc-dec':
+                assert isinstance(output, BeamSampleEncoderDecoderOutput) or isinstance(output, BeamSearchEncoderDecoderOutput), \
+                    f"Not expecting `output`to be of type {type(output)}"
+                prediction_ids, prediction_scores = output.sequences[0][1:], output.scores
 
-        else:
-            raise NotImplementedError(f"Unexpected output type: {type(output)}")
+            else:
+                assert isinstance(output, BeamSampleDecoderOnlyOutput) or isinstance(output, BeamSearchDecoderOnlyOutput), \
+                    f"Not expecting `output`to be of type {type(output)}"
+                prediction_ids, prediction_scores = output.sequences[0][n_input_tokens:], output.scores
 
-        assert prediction_ids != []
-        assert len(prediction_ids) == len(prediction_scores)
-        for pred_id, scores in zip(prediction_ids, prediction_scores):
-            prediction_logits.append(scores[0][pred_id])
+            assert len(prediction_ids) == len(prediction_scores)
+            for pred_id, scores in zip(prediction_ids, prediction_scores):
+                prediction_logits.append(scores[0][pred_id])
+
+            # deactivate sampling, no longer needed for later
+            do_sample = False
 
         # Analyze each generated token
-        self.attributions = defaultdict(list) # reset attributions dict
-        for pred_index, prediction_id in enumerate(prediction_ids):
-
-            # First get encoder/decoder input embeddings
-            encoder_input_embeds, _ = self._get_embeddings(input_ids)
-
-            # TODO: This is only okay as long as encoder and decoder share the embeddings
-            # Should make separate ones for more flexibility
-            if decoder_input_ids is not None:
-                decoder_input_embeds, _ = self._get_embeddings(decoder_input_ids)
-            else:
-                decoder_input_embeds= None
-
-            if pred_index == len(prediction_ids) - 1: # -1 because we want to catch the inputs for the last generated token
-                # attach hooks and run last forward step
-                # TODO: collect activation for more than 1 step
-                self._attach_hooks(self.model)
-                extra_forward_kwargs = {'attention_mask': attention_mask, 'decoder_inputs_embeds': decoder_input_embeds}
-                forward_kwargs = {
-                    'inputs_embeds': encoder_input_embeds,
-                    'use_cache': False,
-                    'return_dict': True,
-                    **{k: v for k, v in extra_forward_kwargs.items() if k in inspect.signature(self.model.forward).parameters}
-                }
-                _ = self.model(**forward_kwargs)
-
-            # Get primary attributions for produced token
-            self._analyze_token(
-                encoder_input_embeds=encoder_input_embeds,
+        while cur_len < max_length:
+            pred_token_index = cur_len - n_input_tokens
+            output_token_id, output = self._generate_token(
+                encoder_input_ids=input_ids,
                 encoder_attention_mask=attention_mask,
-                decoder_input_embeds=decoder_input_embeds,
+                decoder_input_ids=decoder_input_ids,
+                past=past,  # Note: this is not currently used
+                sampling_args={'temperature': temperature, 'top_k': top_k, 'top_p': top_p, 'do_sample': do_sample},
                 attribution_flags=attribution,
-                prediction_id=prediction_id
+                prediction_id=prediction_ids[pred_token_index] if len(prediction_ids) > 0 else None
             )
 
             # Recomputing inputs ids, attention mask and decoder input ids
             if decoder_input_ids is not None:
                 assert len(decoder_input_ids.size()) == 2 # will break otherwise
-                decoder_input_ids = torch.cat([decoder_input_ids, torch.tensor([[prediction_id]])], dim=-1)
+                decoder_input_ids = torch.cat([decoder_input_ids, torch.tensor([[output_token_id]])], dim=-1)
             else:
-                input_ids = torch.cat([input_ids, torch.tensor([[prediction_id]])], dim=-1)
+                input_ids = torch.cat([input_ids, torch.tensor([[output_token_id]])], dim=-1)
 
                 # Recomputing Attention Mask
                 if getattr(self.model, '_prepare_attention_mask_for_generation'):
@@ -309,34 +368,35 @@ class LM(object):
 
             cur_len += 1
 
-        # Get encoder/decoder hidden states
-        for attributes in ["hidden_states", "encoder_hidden_states", "decoder_hidden_states"]:
-            out_attr = getattr(output, attributes, None)
-            if out_attr is not None:
+            # Check end condition and save encoder/decoder hidden states
+            if (output_token_id == eos_token_id or cur_len >= max_length):
+                # Get encoder/decoder hidden states
+                # TODO: (JoaoLages) shouldn't this consider previously obtained hidden states?
+                #  I think this only works because the decoders in use are unidirectional and therefore their decoder hidden states
+                #  are correct for each token at the end.
+                #
+                # detach(): don't need grads here
+                # cpu(): not used by GPU during generation; may lead to GPU OOM if left on GPU during long generations
+                for attributes in ["hidden_states", "encoder_hidden_states", "decoder_hidden_states"]:
+                    out_attr = getattr(output, attributes, None)
+                    if out_attr is not None:
+                        hs_list = []
+                        for idx, layer_hs in enumerate(out_attr):
+                            # in Hugging Face Transformers v4, there's an extra index for batch
+                            if len(layer_hs.shape) == 3:  # If there's a batch dimension, pick the first oen
+                                hs = layer_hs.cpu().detach()[0].unsqueeze(0)  # Adding a dimension to concat to later
+                            # Earlier versions are only 2 dimensional
+                            # But also, in v4, for GPT2, all except the last one would have 3 dims, the last layer
+                            # would only have two dims
+                            else:
+                                hs = layer_hs.cpu().detach().unsqueeze(0)
 
-                tokens_hs_list = []
-                for token_out_attr in out_attr:
+                            hs_list.append(hs)
 
-                    hs_list = []
-                    for idx, layer_hs in enumerate(token_out_attr):
-                        # in Hugging Face Transformers v4, there's an extra index for batch
-                        if len(layer_hs.shape) == 3:  # If there's a batch dimension, pick the first oen
-                            hs = layer_hs.cpu().detach()[0].unsqueeze(0)  # Adding a dimension to concat to later
-                        # Earlier versions are only 2 dimensional
-                        # But also, in v4, for GPT2, all except the last one would have 3 dims, the last layer
-                        # would only have two dims
-                        else:
-                            hs = layer_hs.cpu().detach().unsqueeze(0)
+                        setattr(output, attributes, torch.cat(hs_list, dim=0))
 
-                        hs_list.append(hs)
-
-                    # First hidden state is the embedding layer, skip it
-                    # FIXME: do this in a cleaner way
-                    hs_list = torch.cat(hs_list, dim=0)
-                    hidden_states = hs_list[1:]
-                    tokens_hs_list.append(hidden_states)
-
-                setattr(output, attributes, tokens_hs_list)
+            if output_token_id == eos_token_id:
+                break
 
         # Pass 'hidden_states' to 'decoder_hidden_states'
         if getattr(output, "hidden_states", None) is not None:
@@ -345,13 +405,21 @@ class LM(object):
                 "Not expected to have encoder_hidden_states/decoder_hidden_states with 'hidden_states'"
             setattr(output, "decoder_hidden_states", output.hidden_states)
 
-        encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
-        decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
-
         # Turn activations from dict to a proper array
         activations_dict = self._all_activations_dict
         for layer_type, activations in activations_dict.items():
             self.activations[layer_type] = activations_dict_to_array(activations)
+
+        encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
+        decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
+
+        if self.model_type in ['causal', 'mlm', 'enc-dec']:
+            # First hidden state of the causal model is the embedding layer, skip it
+            # FIXME: do this in a cleaner way
+            embedding_states = decoder_hidden_states[0]
+            decoder_hidden_states = decoder_hidden_states[1:]
+        else:
+            raise NotImplemented(f"model type {self.model_type} not found")
 
         if decoder_input_ids is not None:
             assert len(decoder_input_ids.size()) == 2
@@ -372,6 +440,7 @@ class LM(object):
                             'n_input_tokens': n_input_tokens,
                             'output_text': self.tokenizer.decode(all_token_ids),
                             'tokens': [tokens],  # Add a batch dimension
+                            'embedding_states': embedding_states,
                             'encoder_hidden_states': encoder_hidden_states,
                             'decoder_hidden_states': decoder_hidden_states,
                             'attention': attn,
@@ -382,7 +451,11 @@ class LM(object):
                             'model_type': self.model_type,
                             'device': self.device})
 
-    def __call__(self, input_tokens: torch.Tensor):
+    def __call__(self,
+                 # input_str: Optional[str] = '',
+                 input_tokens: torch.Tensor,
+                 # attribution: Optional[bool] = True,
+                 ):
         """
         Run a forward pass through the model. For when we don't care about output tokens.
         Currently only support activations collection. No attribution/saliency.
@@ -399,6 +472,7 @@ class LM(object):
                 contains key 'input_ids', its value tensor with input token ids.
                 Shape is (batch_size, sequence_length).
                 Also a key for masked tokens
+            attribution: Flag indicating whether to calculate attribution/saliency
         """
 
         if 'input_ids' not in input_tokens:
@@ -441,8 +515,10 @@ class LM(object):
         if self.model_type in ['causal', 'mlm']:
             # First hidden state of the causal model is the embedding layer, skip it
             # FIXME: do this in a cleaner way
+            embedding_states = decoder_hidden_states[0]
             decoder_hidden_states = decoder_hidden_states[1:]
         elif self.model_type == 'enc-dec':
+            embedding_states = encoder_hidden_states[0]
             encoder_hidden_states = encoder_hidden_states[1:]
         else:
             raise NotImplemented(f"model type {self.model_type} not found")
@@ -457,10 +533,13 @@ class LM(object):
         return OutputSeq(**{'tokenizer': self.tokenizer,
                             'token_ids': input_tokens['input_ids'],
                             'n_input_tokens': n_input_tokens,
+                            # 'output_text': self.tokenizer.decode(input_ids),
                             'tokens': tokens,
+                            'embedding_states': embedding_states,
                             'encoder_hidden_states': encoder_hidden_states,
                             'decoder_hidden_states': decoder_hidden_states,
                             'attention': attn,
+                            # 'attribution': attributions,
                             'activations': self.activations,
                             'collect_activations_layer_nums': self.collect_activations_layer_nums,
                             'lm_head': lm_head,

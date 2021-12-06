@@ -151,7 +151,6 @@ def output_seq_1():
                                    'tokens': [[' 1', ',', ' 1', ',', ' 2']],
                                    'decoder_hidden_states': torch.rand(6, 4, 768),
                                    'attention': None,
-                                   'model_outputs': None,
                                    'attribution': {'gradient': [
                                        np.array([0.41861308, 0.13054065, 0.23851791, 0.21232839], dtype=np.float32)],
                                        'grad_x_input': [

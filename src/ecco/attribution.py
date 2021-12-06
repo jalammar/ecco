@@ -1,6 +1,6 @@
 from functools import partial
 import torch
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict
 from captum.attr import (
     IntegratedGradients,
     Saliency,
