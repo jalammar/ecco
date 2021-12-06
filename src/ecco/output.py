@@ -49,6 +49,7 @@ class OutputSeq:
                  tokens=None,
                  encoder_hidden_states=None,
                  decoder_hidden_states=None,
+                 embedding_states=None,
                  attribution=None,
                  activations=None,
                  collect_activations_layer_nums=None,
@@ -85,6 +86,7 @@ class OutputSeq:
         self.tokens = tokens
         self.encoder_hidden_states = encoder_hidden_states
         self.decoder_hidden_states = decoder_hidden_states
+        self.embedding_states = embedding_states
         self.attribution = attribution
         self.activations = activations
         self.collect_activations_layer_nums = collect_activations_layer_nums

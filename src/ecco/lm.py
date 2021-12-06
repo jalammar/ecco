@@ -310,6 +310,7 @@ class LM(object):
             cur_len += 1
 
         # Get encoder/decoder hidden states
+        embedding_states = None
         for attributes in ["hidden_states", "encoder_hidden_states", "decoder_hidden_states"]:
             out_attr = getattr(output, attributes, None)
             if out_attr is not None:
@@ -333,6 +334,7 @@ class LM(object):
                     # First hidden state is the embedding layer, skip it
                     # FIXME: do this in a cleaner way
                     hs_list = torch.cat(hs_list, dim=0)
+                    embedding_states = hs_list[0]
                     hidden_states = hs_list[1:]
                     tokens_hs_list.append(hidden_states)
 
@@ -374,6 +376,7 @@ class LM(object):
                             'tokens': [tokens],  # Add a batch dimension
                             'encoder_hidden_states': encoder_hidden_states,
                             'decoder_hidden_states': decoder_hidden_states,
+                            'embedding_states': embedding_states,
                             'attention': attn,
                             'attribution': attributions,
                             'activations': self.activations,
@@ -441,9 +444,13 @@ class LM(object):
         if self.model_type in ['causal', 'mlm']:
             # First hidden state of the causal model is the embedding layer, skip it
             # FIXME: do this in a cleaner way
+            embedding_states = decoder_hidden_states[0]
             decoder_hidden_states = decoder_hidden_states[1:]
+
         elif self.model_type == 'enc-dec':
+            embedding_states = encoder_hidden_states[0]
             encoder_hidden_states = encoder_hidden_states[1:]
+
         else:
             raise NotImplemented(f"model type {self.model_type} not found")
 
@@ -460,6 +467,7 @@ class LM(object):
                             'tokens': tokens,
                             'encoder_hidden_states': encoder_hidden_states,
                             'decoder_hidden_states': decoder_hidden_states,
+                            'embedding_states': embedding_states,
                             'attention': attn,
                             'activations': self.activations,
                             'collect_activations_layer_nums': self.collect_activations_layer_nums,
