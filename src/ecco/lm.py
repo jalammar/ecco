@@ -11,7 +11,7 @@ import ecco
 import numpy as np
 from IPython import display as d
 from torch.nn import functional as F
-from ecco.attribution import compute_saliency_scores, compute_integrated_gradients_scores
+from ecco.attribution import compute_primary_attributions_scores, ATTR_NAME_ALIASES
 from ecco.output import OutputSeq
 from typing import Optional, Any, List, Tuple, Dict
 from operator import attrgetter
@@ -117,7 +117,7 @@ class LM(object):
                         decoder_input_ids: Optional,
                         past,
                         sampling_args: Optional[Dict[str, Any]] = {},
-                        attribution_flags: Optional[List[str]] = ['gradient', 'grad_x_input', 'integrated_gradients'],
+                        attribution_flags: Optional[List[str]] = [],
                         prediction_id: Optional[torch.Tensor] = None):
         """
         Run a forward pass through the model and sample a token (if no prediction_id is given).
@@ -152,41 +152,23 @@ class LM(object):
             scores = predict[0, -1:, :]
             prediction_id = sample_output_token(scores, **sampling_args)
 
-        # prediction_id now has the id of the token we want to output
-        # To do feature importance, let's get the actual logit associated with
-        # this token
-        prediction_logit = predict[0][-1][prediction_id]
+        for attr_method in attribution_flags:
 
-        if attribution_flags:
+            # deactivate hooks: attr method can perform multiple forward steps
+            self._remove_hooks()
 
-            # Add input saliency to self.attributions
-            saliency_results = compute_saliency_scores(
-                prediction_logit,
-                encoder_token_ids_tensor_one_hot,
-                encoder_inputs_embeds,
-                decoder_token_ids_tensor_one_hot,
-                decoder_inputs_embeds,
-                saliency_methods=attribution_flags
+            # Add attribution scores to self.attributions
+            self.attributions[attr_method].append(
+                compute_primary_attributions_scores(
+                    attr_method=attr_method,
+                    model=self.model,
+                    forward_kwargs={
+                        'inputs_embeds': encoder_inputs_embeds,
+                        'decoder_inputs_embeds': decoder_inputs_embeds
+                    },
+                    prediction_id=prediction_id
+                ).cpu().detach().numpy()
             )
-            for saliency_method, saliency_result in saliency_results.items():
-                self.attributions[saliency_method].append(saliency_result.cpu().detach().numpy())
-
-            if 'integrated_gradients' in attribution_flags:
-
-                # deactivate hooks: integrated gradients will perform multiple forward steps
-                self._remove_hooks()
-
-                # Add integrated gradients to self.attributions
-                self.attributions['integrated_gradients'].append(
-                    compute_integrated_gradients_scores(
-                        model=self.model,
-                        forward_kwargs={
-                            'inputs_embeds': encoder_inputs_embeds,
-                            'decoder_inputs_embeds': decoder_inputs_embeds
-                        },
-                        prediction_id=prediction_id
-                    ).cpu().detach().numpy()
-                )
 
         return prediction_id, output
 
@@ -196,7 +178,7 @@ class LM(object):
                  top_k: Optional[int] = None,
                  top_p: Optional[float] = None,
                  do_sample: Optional[bool] = False,
-                 attribution: Optional[List[str]] = ['gradient', 'grad_x_input', 'integrated_gradients'],
+                 attribution: Optional[List[str]] = [],
                  generate: Optional[int] = None,
                  beam_size: int = 1,
                  **generate_kwargs: Any):
@@ -214,7 +196,7 @@ class LM(object):
                 chooses the highest scoring candidate output
                 token. This may lead to repetitive text. If set to True, the model considers
                 consults top_k and/or top_p to generate more itneresting output.
-            attribution: List of attribution methods to be calculated. By default, it calculates input saliency and integrated gradients.
+            attribution: List of attribution methods to be calculated. By default, it does not calculate anything.
             beam_size: Beam size to consider while generating
             generate_kwargs: Other arguments to be passed directly to self.model.generate
         """
