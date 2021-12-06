@@ -304,19 +304,6 @@ class OutputSeq:
         self.explorable(**kwargs)
         return '<OutputSeq>'
 
-    # def plot_feature_importance_barplots(self):
-    #     """
-    #     Barplot showing the improtance of each input token. Prints one barplot
-    #     for each generated token.
-    #     :return:
-    #     """
-    #     printable_tokens = [repr(token) for token in self.tokens]
-    #     for i in self.importance:
-    #         importance = i.numpy()
-    #         lm_plots.token_barplot(printable_tokens, importance)
-    #         # print(i.numpy())
-    #         plt.show()
-
     def layer_predictions(self, position: int = 1, topk: Optional[int] = 10, layer: Optional[int] = None, **kwargs):
         """
             Visualization plotting the topk predicted tokens after each layer (using its hidden state).
@@ -339,14 +326,19 @@ class OutputSeq:
             raise ValueError(f"'position' is set to 0. There is never a hidden state associated with this position."
                              f"Possible values are 1 and above -- the position of the token of interest in the sequence")
 
-        if self.model_type == 'enc-dec':
-            # For enc-dec LMs, the position starts at the first generated token, not as in causal LMs
-            # In enc-dec LMs, the position is relative. By that means, position self.n_input_tokens is the first generated token
-            new_position = position - self.n_input_tokens
+        if self.model_type in ['enc-dec', 'causal']:
+            # The position is relative. By that means, position self.n_input_tokens + 1 is the first generated token
+            offset = 1 if self.model_type == 'enc-dec' else 0
+            new_position = position - offset - self.n_input_tokens
             assert new_position >= 0, f"position={position} not supported, minimum is " \
-                                      f"position={self.n_input_tokens} for the first generated token"
+                                      f"position={self.n_input_tokens + offset} for the first generated token"
+            assert new_position < len(dec_hidden_states), f"position={position} not supported, maximum is " \
+                                                          f"position={len(dec_hidden_states) - 1 + self.n_input_tokens + offset} " \
+                                                          f"for the last generated token."
             position = new_position
-        dec_hidden_states = dec_hidden_states[position] # only focus on the hidden states for that particular position
+        else:
+            raise NotImplemented(f"model_type={self.model_type} not supported")
+        dec_hidden_states = dec_hidden_states[position][:, -1, :] # only focus on the hidden states for that particular position
 
         if layer is not None:
             # If a layer is specified, choose it only.
@@ -361,10 +353,8 @@ class OutputSeq:
         # loop through layer levels
         for layer_no, h in enumerate(dec_hidden_states):
 
-            hidden_state = h[position - 1]
-
             # Use lm_head to project the layer's hidden state to output vocabulary
-            logits = self.lm_head(self.to(hidden_state))
+            logits = self.lm_head(self.to(h))
             softmax = F.softmax(logits, dim=-1)
 
             # softmax dims are (number of words in vocab) - 50257 in GPT2
@@ -425,29 +415,18 @@ class OutputSeq:
         _, dec_hidden_states = self._get_hidden_states()
         assert dec_hidden_states is not None, "decoder hidden states not found"
 
-        n_layers_dec = len(dec_hidden_states)
-
-        # Only consider last produced token hidden states
-        # TODO: Is this correct? Does this work because decoder is always unidirectional
-        #  or it works when only a single token is generated?
-        dec_hidden_states = dec_hidden_states[-1]
-
-        if self.model_type == 'causal':
-            position = dec_hidden_states.shape[1] - self.n_input_tokens + 1
-        elif self.model_type == 'enc-dec':
-            position = dec_hidden_states.shape[1]
-        else:
-            raise NotImplemented(f"model_type={self.model_type} not supported")
+        n_layers_dec = dec_hidden_states[0].shape[0]
+        position = len(dec_hidden_states)
 
         rankings = np.zeros((n_layers_dec, position), dtype=np.int32)
         predicted_tokens = np.empty((n_layers_dec, position), dtype='U25')
         token_found_mask = np.ones((n_layers_dec, position))
 
-        # loop through layer levels
-        for i, level in enumerate(dec_hidden_states):
+        # loop through tokens hidden states
+        for j, token_hidden_states in enumerate(dec_hidden_states):
+
             # Loop through generated/output positions
-            offset = 0 if self.model_type == 'enc-dec' else self.n_input_tokens - 1
-            for j, hidden_state in enumerate(level[offset:]):
+            for i, hidden_state in enumerate(token_hidden_states[:, -1, :]):
 
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
@@ -505,22 +484,21 @@ class OutputSeq:
         _, dec_hidden_states = self._get_hidden_states()
         assert dec_hidden_states is not None, "decoder hidden states not found"
 
-        # Only consider last produced token hidden states
-        # TODO: Is this correct? Does this work because decoder is always unidirectional
-        #  or it works when only a single token is generated?
-        dec_hidden_states = dec_hidden_states[-1]
-
         if position != -1:
-            if self.model_type == 'causal':
-                position = position - 1  # e.g. position 5 corresponds to hidden state 4
-            elif self.model_type == 'enc-dec':
-                # In enc-dec LMs, the position is relative. By that means, position self.n_input_tokens + 1 is the first generated token
-                new_position = position - 1 - self.n_input_tokens
+            if self.model_type in ['enc-dec', 'causal']:
+                # The position is relative. By that means, position self.n_input_tokens + 1 is the first generated token
+                offset = 1 if self.model_type == 'enc-dec' else 0
+                new_position = position - offset - self.n_input_tokens
                 assert new_position >= 0, f"position={position} not supported, minimum is " \
-                                          f"position={self.n_input_tokens + 1} for the first generated token"
+                                          f"position={self.n_input_tokens + offset} for the first generated token"
+                assert new_position < len(dec_hidden_states), f"position={position} not supported, maximum is " \
+                                                              f"position={len(dec_hidden_states) - 1 + self.n_input_tokens + offset} " \
+                                                              f"for the last generated token."
                 position = new_position
             else:
                 raise NotImplemented(f"model_type={self.model_type} not supported")
+
+        dec_hidden_states = dec_hidden_states[position][:, -1, :]
 
         n_layers_dec = len(dec_hidden_states) if dec_hidden_states is not None else 0
         n_tokens_to_watch = len(watch)
@@ -531,11 +509,9 @@ class OutputSeq:
             # Loop through generated/output positions
             for j, token_id in enumerate(watch):
 
-                hidden_state = level[position]
-
                 # Project hidden state to vocabulary
                 # (after debugging pain: ensure input is on GPU, if appropriate)
-                logits = self.lm_head(self.to(hidden_state))
+                logits = self.lm_head(self.to(level))
 
                 # Sort by score (ascending)
                 sorted = torch.argsort(logits)
