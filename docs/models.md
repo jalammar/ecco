@@ -27,6 +27,6 @@ Ecco uses configuration parameters for its functionality. If trying to load a lo
 
 **'activations'**: The name of the Feed-forward neural network layer inside transformer blocks. This is used for capturing neuron activations.
 
-**token-prefix**: Here we specify the characters that the tokenizer places in the beginning of tokens, if any. GPT2's tokenizer, for example, has a space ' '. BERT does not have any characers.
+**token_prefix**: Here we specify the characters that the tokenizer places in the beginning of tokens, if any. GPT2's tokenizer, for example, has a space ' '. BERT does not have any characers.
 
 **partial_token_prefix**: The characters that the tokenizer places in the beginning of partial tokens. BERT, for example, places '##' at the beginning of a partial token.

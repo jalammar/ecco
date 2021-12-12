@@ -1,8 +1,8 @@
 <html lang="en">
 <script src="https://requirejs.org/docs/release/2.3.6/minified/require.js"></script>
 <script>
-    //var ecco_url = 'https://storage.googleapis.com/ml-intro/ecco/'
-    var ecco_url = 'http://localhost:8000/'
+    var ecco_url = 'https://storage.googleapis.com/ml-intro/ecco/'
+    //var ecco_url = 'http://localhost:8000/'
 
     if (window.ecco === undefined) window.ecco = {}
 
@@ -44,7 +44,7 @@
                     d3.select(div_parent).insert('link')
                         .attr('rel', 'stylesheet')
                         .attr('type', 'text/css')
-                        .attr('href', ecco_url + 'html/styles.css')
+                        .attr('href', ecco_url + 'html/0.0.2/styles.css')
 
                     return viz_id
                 }

@@ -16,7 +16,7 @@ __version__ = '0.0.15'
 from ecco.lm import LM
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel, AutoModelForSeq2SeqLM
 from typing import Any, Dict, Optional, List
-from ecco.util import load_config
+from ecco.util import load_config, pack_tokenizer_config
 
 
 def from_pretrained(hf_model_id: str,
@@ -66,7 +66,11 @@ def from_pretrained(hf_model_id: str,
         gpu (Optional[bool]): Set to False to force using the CPU even if a GPU exists. Defaults to True.
     """
 
-    config = model_config if model_config else load_config(hf_model_id) 
+    if model_config:
+        config = pack_tokenizer_config(model_config)
+    else:
+        config = load_config(hf_model_id)
+
     tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
 
     if config['type'] == 'enc-dec':

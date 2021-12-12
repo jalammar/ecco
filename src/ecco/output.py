@@ -816,7 +816,7 @@ class NMF:
             
             ecco.interactiveTokensAndFactorSparklines(viz_id, {data},
             {{
-            'hltrCFG': {{'tokenization_config': {json.dumps(self.config.tokenizer_config)}
+            'hltrCFG': {{'tokenization_config': {json.dumps(self.config['tokenizer_config'])}
                 }}
             }})
          }}, function (err) {{
