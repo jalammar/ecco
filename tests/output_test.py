@@ -36,20 +36,20 @@ class TestOutput:
             actual = output_seq_1.layer_predictions(position=0)
 
     def test_layer_predictions_all_layers(self, output_seq_1):
-        actual = output_seq_1.layer_predictions(printJson=True)
+        actual = output_seq_1.layer_predictions(printJson=True, position=4)
         assert len(actual) == 6  # an array for each layer
 
         assert actual[0][0]['ranking'] == 1
         assert actual[0][0]['layer'] == 0
 
     def test_layer_predictions_one_layer(self, output_seq_1):
-        actual = output_seq_1.layer_predictions(layer=2, printJson=True)
+        actual = output_seq_1.layer_predictions(layer=2, printJson=True, position=4)
         assert len(actual) == 1  # an array for each layer
         assert actual[0][0]['ranking'] == 1
         assert actual[0][0]['layer'] == 2
 
     def test_layer_predictions_topk(self, output_seq_1):
-        actual = output_seq_1.layer_predictions(layer=2, printJson=True, topk=15)
+        actual = output_seq_1.layer_predictions(layer=2, printJson=True, topk=15, position=4)
         assert len(actual) == 1  # an array for each layer
         assert len(actual[0]) == 15
 
@@ -149,9 +149,8 @@ def output_seq_1():
                                    'n_input_tokens': 4,
                                    'output_text': ' 1, 1, 2',
                                    'tokens': [[' 1', ',', ' 1', ',', ' 2']],
-                                   'decoder_hidden_states': torch.rand(6, 4, 768),
+                                   'decoder_hidden_states': [torch.rand(6, 1, 768)],
                                    'attention': None,
-                                   'model_outputs': None,
                                    'attribution': {'gradient': [
                                        np.array([0.41861308, 0.13054065, 0.23851791, 0.21232839], dtype=np.float32)],
                                        'grad_x_input': [

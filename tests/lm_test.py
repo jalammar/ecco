@@ -2,7 +2,7 @@ from ecco.lm import LM, _one_hot, sample_output_token, activations_dict_to_array
 import ecco
 import torch
 import numpy as np
-from transformers import PreTrainedModel
+from transformers import PreTrainedModel 
 
 
 class TestLM:
