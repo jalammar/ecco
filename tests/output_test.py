@@ -165,6 +165,16 @@ def output_seq_1():
                                        }
                                    }],
                                    'lm_head': torch.nn.Linear(768, 50257, bias=False),
+                                   'config': {
+                                            'embedding': "embeddings.word_embeddings",
+                                            'type': 'mlm',
+                                            'activations': ['intermediate\.dense'], #This is a regex
+                                            'token_prefix': '▁',
+                                            'partial_token_prefix': '',
+                                            'tokenizer_config': {
+                                                'token_prefix': '▁',
+                                                'partial_token_prefix': ''}
+                                        },
                                    'device': 'cpu'})
 
     yield output_1
