@@ -140,7 +140,35 @@ t5-small:
     token_prefix: '▁'
     partial_token_prefix: ''
 t5-base:
-    embedding: 'shared'
+    embedding: 'shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'wo' #Note that this will be both encoder and decoder layers
+    token_prefix: '▁'
+    partial_token_prefix: ''
+bigscience/T0_3B:
+    embedding: 'shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'wo' #Note that this will be both encoder and decoder layers
+    token_prefix: '▁'
+    partial_token_prefix: ''
+bigscience/T0:
+    embedding: 'shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'wo' #Note that this will be both encoder and decoder layers
+    token_prefix: '▁'
+    partial_token_prefix: ''
+bigscience/T0p:
+    embedding: 'shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'wo' #Note that this will be both encoder and decoder layers
+    token_prefix: '▁'
+    partial_token_prefix: ''
+bigscience/T0pp:
+    embedding: 'shared.weight'
     type: 'enc-dec'
     activations:
         - 'wo' #Note that this will be both encoder and decoder layers

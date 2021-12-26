@@ -41,3 +41,21 @@ def pack_tokenizer_config(model_config):
                         'partial_token_prefix': model_config['partial_token_prefix']}
     model_config['tokenizer_config'] = tokenizer_config
     return model_config
+
+def strip_tokenizer_prefix(model_config,
+                           token,
+                           ellipsis_partial_tokens=False):
+    token = token.lstrip(model_config['token_prefix'])
+    token = token.lstrip(model_config['partial_token_prefix'])
+    token= token.lstrip(' ')
+    return token
+
+
+def is_partial_token(model_config,
+                              token):
+    if (token[0: len(model_config['partial_token_prefix'])] == model_config['partial_token_prefix']) and \
+            ((len(model_config['token_prefix']) == 0) or \
+             token[0:len(model_config['token_prefix'])] != model_config['token_prefix']):
+        return True
+    else:
+        return False

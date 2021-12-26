@@ -10,7 +10,7 @@ import torch
 from torch.nn import functional as F
 from sklearn import decomposition
 from typing import Dict, Optional, List, Tuple, Union
-
+from ecco.util import strip_tokenizer_prefix, is_partial_token
 
 class OutputSeq:
     """An OutputSeq object is the result of running a language model on some input data. It contains not only the output
@@ -134,16 +134,19 @@ class OutputSeq:
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
-        viz_id = 'viz_{}'.format(round(random.random() * 1000000))
-        js = """
+
+        js = f"""
          requirejs(['basic', 'ecco'], function(basic, ecco){{
             const viz_id = basic.init()
 
-            ecco.renderOutputSequence(viz_id, {})
+            ecco.renderOutputSequence({{
+                parentDiv: viz_id,
+                data: {data},
+                tokenization_config: {json.dumps(self.config['tokenizer_config'])}
+            }})
          }}, function (err) {{
             console.log(err);
-        }})""".format(data)
+        }})"""
         d.display(d.Javascript(js))
 
         if printJson:
@@ -200,7 +203,11 @@ class OutputSeq:
         }})""".format(position, data)
         d.display(d.Javascript(js))
 
-    def primary_attributions(self, attr_method: Optional[str] = 'grad_x_input', style="minimal", **kwargs):
+    def primary_attributions(self,
+                             attr_method: Optional[str] = 'grad_x_input',
+                             style="minimal",
+                             ignore_tokens: Optional[List[int]] = [],
+                             **kwargs):
         """
             Explorable showing primary attributions of each token generation step.
             Hovering-over or tapping an output token imposes a saliency map on other tokens
@@ -248,18 +255,31 @@ class OutputSeq:
             f"attr_method={attr_method} not found. Choose one of the following: {list(self.attribution.keys())}"
         attribution = self.attribution[attr_method]
         for idx, token in enumerate(self.tokens[0]):
+            token_id = self.token_ids[0][idx]
+            raw_token = self.tokenizer.convert_ids_to_tokens([token_id])[0]
+            clean_token = self.tokenizer.decode(token_id)
+            # Strip prefixes because bert decode still has ## for partials even after decode()
+            clean_token = strip_tokenizer_prefix(self.config, clean_token)
+
             type = "input" if idx < self.n_input_tokens else 'output'
             if idx < len(attribution[importance_id]):
                 imp = attribution[importance_id][idx]
             else:
                 imp = 0
 
-            tokens.append({'token': token,
+            tokens.append({'token': clean_token,
                            'token_id': int(self.token_ids[0][idx]),
+                           'is_partial': is_partial_token(self.config, raw_token),
                            'type': type,
-                           'value': str(imp),  # because json complains of floats
+                           'value': str(imp),  # because json complains of floats. Probably not used?
                            'position': idx
                            })
+
+
+        if len(ignore_tokens) > 0:
+            for output_token_index, _ in enumerate(attribution):
+                for idx in ignore_tokens:
+                    attribution[output_token_index][idx] = 0
 
         data = {
             'tokens': tokens,
@@ -267,8 +287,6 @@ class OutputSeq:
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
-        # viz_id = 'viz_{}'.format(round(random.random() * 1000000))
 
         if (style == "minimal"):
             js = f"""
@@ -278,7 +296,7 @@ class OutputSeq:
                 // ecco.interactiveTokens(viz_id, {{}})
                 window.ecco[viz_id] = new ecco.MinimalHighlighter({{
                     parentDiv: viz_id,
-                    data: {data},
+                    data: {json.dumps(data)},
                     preset: 'viridis',
                     tokenization_config: {json.dumps(self.config['tokenizer_config'])}
 
@@ -298,7 +316,7 @@ class OutputSeq:
                 console.log(viz_id)
                 window.ecco[viz_id] = ecco.interactiveTokens({{
                     parentDiv: viz_id,
-                    data: {data},
+                    data: {json.dumps(data)},
                     tokenization_config: {json.dumps(self.config['tokenizer_config'])}
              }})
 
@@ -316,19 +334,6 @@ class OutputSeq:
         # if util.type_of_script() == "jupyter":
         self.explorable(**kwargs)
         return '<OutputSeq>'
-
-    # def plot_feature_importance_barplots(self):
-    #     """
-    #     Barplot showing the improtance of each input token. Prints one barplot
-    #     for each generated token.
-    #     :return:
-    #     """
-    #     printable_tokens = [repr(token) for token in self.tokens]
-    #     for i in self.importance:
-    #         importance = i.numpy()
-    #         lm_plots.token_barplot(printable_tokens, importance)
-    #         # print(i.numpy())
-    #         plt.show()
 
     def layer_predictions(self, position: int = 1, topk: Optional[int] = 10, layer: Optional[int] = None, **kwargs):
         """
@@ -479,9 +484,9 @@ class OutputSeq:
                 if token_id == self.token_ids[0][j + 1]:
                     token_found_mask[i, j] = 0
 
-        input_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens - 1:-1]]
+        input_tokens = [repr(strip_tokenizer_prefix(self.config, t)) for t in self.tokens[0][self.n_input_tokens - 1:-1]]
         offset = self.n_input_tokens + 1 if self.model_type == 'enc-dec' else self.n_input_tokens
-        output_tokens = [repr(t) for t in self.tokens[0][offset:]]
+        output_tokens = [repr(strip_tokenizer_prefix(self.config, t)) for t in self.tokens[0][offset:]]
 
         lm_plots.plot_inner_token_rankings(input_tokens,
                                            output_tokens,
@@ -552,7 +557,7 @@ class OutputSeq:
                 ranking = sorted.shape[0] - r
                 rankings[i, j] = int(ranking)
 
-        input_tokens = [t for t in self.tokens[0]]
+        input_tokens = [strip_tokenizer_prefix(self.config,t) for t in self.tokens[0]]
         output_tokens = [repr(self.tokenizer.decode(t)) for t in watch]
 
         lm_plots.plot_inner_token_rankings_watch(input_tokens, output_tokens, rankings,

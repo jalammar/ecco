@@ -161,7 +161,8 @@ svg.scrollable{
 
 .minimal .token{
     border: 0;
-    margin:0 0 0 0;
+    /*margin:0 0 0 0;*/
+    margin: 2px 1px;
     border-bottom: 4px solid #0000;
 }
 

@@ -15,6 +15,7 @@ from ecco.output import OutputSeq
 from typing import Optional, Any, List
 from operator import attrgetter
 import re
+from ecco.util import is_partial_token, strip_tokenizer_prefix
 
 
 class LM(object):
@@ -592,37 +593,53 @@ class LM(object):
         tokens = []
         for idx, token_id in enumerate(input_ids):
             type = "input"
-            tokens.append({'token': self.tokenizer.decode([token_id]),
+            raw_token = self.tokenizer.convert_ids_to_tokens([token_id])[0]
+            clean_token = self.tokenizer.decode(token_id)
+            # Strip prefixes because bert decode still has ## for partials even after decode()
+            clean_token = strip_tokenizer_prefix(self.model_config, clean_token)
+            tokens.append({
+                # 'token': self.tokenizer.decode([token_id]),
+                           'token': clean_token,
+                           'is_partial': is_partial_token(self.model_config, raw_token),
                            'position': idx,
                            'token_id': int(token_id),
                            'type': type})
         data = {'tokens': tokens}
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
-        viz_id = f'viz_{round(random.random() * 1000000)}'
-        #         html = f"""
-        # <div id='{viz_id}_output'></div>
-        # <script>
-        # """
 
+        viz_id = f'viz_{round(random.random() * 1000000)}'
+
+        # TODO: Stop passing tokenization_config to JS now that
+        # it's handled with the is_partial parameter
         js = f"""
          requirejs( ['basic', 'ecco'], function(basic, ecco){{
-            basic.init('{viz_id}')
-
-            window.ecco['{viz_id}'] = ecco.renderOutputSequence('{viz_id}', {data})
+            basic.init('{viz_id}') // Python needs to know the viz id. Used for each output token.
+            window.ecco['{viz_id}'] = new ecco.renderOutputSequence({{
+                    parentDiv: '{viz_id}',
+                    data: {json.dumps(data)},
+                    tokenization_config: {json.dumps(self.model_config['tokenizer_config'])}
+            
+            }})
          }}, function (err) {{
             console.log(err);
         }})
         """
-        # print(js)
-        # d.display(d.HTML(html))
+
         d.display(d.Javascript(js))
         return viz_id
 
     def display_token(self, viz_id, token_id, position):
+
+        raw_token = self.tokenizer.convert_ids_to_tokens([token_id])[0]
+        clean_token = self.tokenizer.decode(token_id)
+        # Strip prefixes because bert decode still has ## for partials even after decode()
+        clean_token = strip_tokenizer_prefix(self.model_config, clean_token)
+
         token = {
-            'token': self.tokenizer.decode([token_id]),
+            # 'token': self.tokenizer.decode([token_id]),
+            'token': clean_token,
+            'is_partial': is_partial_token(self.model_config, raw_token),
             'token_id': int(token_id),
             'position': position,
             'type': 'output'
