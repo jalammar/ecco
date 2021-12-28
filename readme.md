@@ -1,4 +1,4 @@
-![Ecco Logo](https://ar.pegg.io/img/ecco-logo-w-800.png)
+<img src="https://ar.pegg.io/img/ecco-logo-w-800.png" width="400" />
 
 [![PyPI Package latest release](https://img.shields.io/pypi/v/ecco.svg)](https://pypi.org/project/ecco)
 [![Supported versions](https://img.shields.io/pypi/pyversions/ecco.svg)](https://pypi.org/project/ecco)
@@ -21,7 +21,7 @@ Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
 
 ## Examples:
 
-### What is the sentiment of this review?
+### What is the sentiment of this film review?
 ![Sentiment example](https://ar.pegg.io/img/ecco/ecco-sentiment-1.png)
 
 Use a large language model (T5 in this case) to detect text sentiment. In addition to the sentiment, see the tokens the model broke the text into (which can help debug some edge cases).
@@ -31,10 +31,10 @@ Use a large language model (T5 in this case) to detect text sentiment. In additi
 
 Feature attribution using Integrated Gradients helps you explore model decisions. In this case, switching "weakness" to "inclination" allows the model to correctly switch the prediction to *positive*.
 
-### Explore the world-knowedge of GPT models by posing fill-in-the blank questions.
+### Explore the world knowledge of GPT models by posing fill-in-the blank questions.
 ![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/gpt2-heathrow-1.png)
 
-Does GPT2 know where Heathrow Airport is?
+Does GPT2 know where Heathrow Airport is? Yes. It does.
 
 ### What other cities/words did the model consider in addition to London?
 ![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/gpt-candidate-logits.png)
@@ -50,7 +50,7 @@ Visuals the candidate output tokens and their probability scores.
 
 The model chose London by making the highest probability token (ranking it #1) after the last layer in the model. How much did each layer contribute to increasing the ranking of *London*? This is a [logit lens](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens) visualizations that helps explore the activity of different model layers.
 
-### What are the patterns in BERT neuron activation when ir processes a piece of text? 
+### What are the patterns in BERT neuron activation when it processes a piece of text? 
 
 ![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/neuron-bert.png)
 
