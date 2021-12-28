@@ -6,47 +6,60 @@
 
 Ecco is a python library for exploring and explaining Natural Language Processing models using interactive visualizations. 
 
-Examples:
 
-What is the sentiment of this review?
+Ecco provides multiple interfaces to aid the explanation and intuition of [Transformer](https//jalammar.github.io/illustrated-transformer/)-based language models. Read: [Interfaces for Explaining Transformer Language Models](https://jalammar.github.io/explaining-transformers/).
 
-Which words in this review lead the model to classify its sentiment as "negative"?
-[image]
-[small caption: Feature attribution using Integrated Gradients on the T5 language model]
+Ecco runs inside Jupyter notebooks. It is built on top of [pytorch](https://pytorch.org/) and [transformers](https://github.com/huggingface/transformers).
+
+
+Ecco is not concerned with training or fine-tuning models. Only exploring and understanding existing pre-trained models. The library is currently an alpha release of a research project. You're welcome to contribute to make it better!
+
+
+Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
+
+
+
+## Examples:
+
+### What is the sentiment of this review?
+![Sentiment example](https://ar.pegg.io/img/ecco/ecco-sentiment-1.png)
+
+Use a large language model (T5 in this case) to detect text sentiment. In addition to the sentiment, see the tokens the model broke the text into (which can help debug some edge cases).
+
+### Which words in this review lead the model to classify its sentiment as "negative"?
+![Feature attribution for sentiment](https://ar.pegg.io/img/ecco/ecco-attrib-ig-1.png)
+
+Feature attribution using Integrated Gradients helps you explore model decisions. In this case, switching "weakness" to "inclination" allows the model to correctly switch the prediction to *positive*.
+
+### Explore the world-knowedge of GPT models by posing fill-in-the blank questions.
+![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/gpt2-heathrow-1.png)
 
 Does GPT2 know where Heathrow Airport is?
-[image]
-[caption: ]
 
-Which input words lead it to think of London?
-[image]
-[caption:]
+### What other cities/words did the model consider in addition to London?
+![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/gpt-candidate-logits.png)
 
-What other cities/words did the model consider in addition to London?
-[image]
-[caption:]
+Visuals the candidate output tokens and their probability scores.
 
-At which layers did the model gather confidence that London is the right answer?
-[image]
-[caption:]
+### Which input words lead it to think of London?
+![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/heathrow-attribution.png)
 
+
+### At which layers did the model gather confidence that London is the right answer?
+![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/token-evolution.png)
+
+The model chose London by making the highest probability token (ranking it #1) after the last layer in the model. How much did each layer contribute to increasing the ranking of *London*? This is a [logit lens](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens) visualizations that helps explore the activity of different model layers.
+
+### What are the patterns in BERT neuron activation when ir processes a piece of text? 
+
+![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/neuron-bert.png)
+
+A group of neurons in BERT tend to fire in response to commas and other punctuation. Other groups of neurons tend to fire in response to pronouns. Use this visualization to factorize neuron activity in individual FFNN layers or in the entire model.
 
 
 Read the paper: 
 >[Ecco: An Open Source Library for the Explainability of Transformer Language Models](https://aclanthology.org/2021.acl-demo.30/)
 > Association for Computational Linguistics (ACL) System Demonstrations, 2021
-
-
-
-Ecco provides multiple interfaces to aid the explanation and intuition of [Transformer](https://jalammar.github.io/illustrated-transformer/)-based language models. Read: [Interfaces for Explaining Transformer Language Models](https://jalammar.github.io/explaining-transformers/).
-
-Ecco runs inside Jupyter notebooks. It is built on top of [pytorch](https://pytorch.org/) and [transformers](https://github.com/huggingface/transformers).
-
-
-Ecco is not concerned with training or fine-tuning models. Only exploring and understanding existing pre-trained models. The library is currently an alpha release of a research project. Not production ready. You're welcome to contribute to make it better!
-
-
-Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
 
 
 ## Tutorials

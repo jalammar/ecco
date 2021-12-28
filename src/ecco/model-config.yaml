@@ -5,21 +5,21 @@ gpt2:
     type: 'causal'
     activations: # Regex pattern
         - 'mlp\.c_proj'
-    token_prefix: ' '
+    token_prefix: 'Ġ'
     partial_token_prefix: ''
 gpt2-medium:
     embedding: "transformer.wte.weight"
     type: 'causal'
     activations:
         - 'mlp\.c_proj'
-    token_prefix: ' '
+    token_prefix: 'Ġ'
     partial_token_prefix: ''
 gpt2-xl:
     embedding: "transformer.wte.weight"
     type: 'causal'
     activations:
         - 'mlp\.c_proj'
-    token_prefix: ' '
+    token_prefix: 'Ġ'
     partial_token_prefix: ''
 distilgpt2:
     embedding: "transformer.wte.weight"
