@@ -1,5 +1,5 @@
 <div style="text-align: center">
-    <img src="https://ar.pegg.io/img/ecco-logo-w-800.png" width="400" />
+    <img src="https://ar.pegg.io/img/ecco-logo-480.png" width="400" />
 </div>
 
 [![PyPI Package latest release](https://img.shields.io/pypi/v/ecco.svg)](https://pypi.org/project/ecco)
