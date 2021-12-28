@@ -1,6 +1,8 @@
-<div style="text-align: center">
-    <img src="https://ar.pegg.io/img/ecco-logo-480.png" width="400" />
-</div>
+
+<img src="https://ar.pegg.io/img/ecco-logo-480.png" width="400" style="background-color: white" />
+
+<br />
+<br />
 
 [![PyPI Package latest release](https://img.shields.io/pypi/v/ecco.svg)](https://pypi.org/project/ecco)
 [![Supported versions](https://img.shields.io/pypi/pyversions/ecco.svg)](https://pypi.org/project/ecco)
