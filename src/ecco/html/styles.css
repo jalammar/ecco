@@ -104,11 +104,11 @@ svg.scrollable{
 
 .position_in_seq{
     text-align: center;
-    font-size: 8px;
+    font-size: 9px;
     line-height: 100%;
     padding: 0;
     margin: 2px 0 0 0;
-    color:#ccc;
+    color:#999;
 }
 .inputs-indicator{
     color:#7CB342;
@@ -161,7 +161,8 @@ svg.scrollable{
 
 .minimal .token{
     border: 0;
-    margin:0 0 0 0;
+    /*margin:0 0 0 0;*/
+    margin: 2px 1px;
     border-bottom: 4px solid #0000;
 }
 

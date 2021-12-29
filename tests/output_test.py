@@ -20,13 +20,20 @@ class TestOutput:
 
     def test_saliency(self, output_seq_1):
         actual = output_seq_1.primary_attributions(printJson=True)
-        expected = {'tokens': [{'token': ' 1', 'token_id': 352, 'type': 'input', 'value': '0.31678662', 'position': 0},
-                               {'token': ',', 'token_id': 11, 'type': 'input', 'value': '0.18056837', 'position': 1},
-                               {'token': ' 1', 'token_id': 352, 'type': 'input', 'value': '0.37555906', 'position': 2},
-                               {'token': ',', 'token_id': 11, 'type': 'input', 'value': '0.12708597', 'position': 3},
-                               {'token': ' 2', 'token_id': 362, 'type':
-                                   'output', 'value': '0', 'position': 4}], 'attributions': [
+        # print(actual) # This is how to get the expected value. Validated manually then pasted below
+        expected = {'tokens': [{'token': '', 'token_id': 352, 'is_partial': True, 'type': 'input',
+                                'value': '0.31678662', 'position': 0},
+                               {'token': '', 'token_id': 11, 'is_partial': True, 'type': 'input', 'value': '0.18056837',
+                                'position': 1},
+                               {'token': '', 'token_id': 352, 'is_partial': True, 'type': 'input',
+                                'value': '0.37555906',
+                                'position': 2},
+                               {'token': '', 'token_id': 11, 'is_partial': True, 'type': 'input', 'value': '0.12708597',
+                                'position': 3},
+                               {'token': '', 'token_id': 362, 'is_partial': True, 'type': 'output', 'value': '0',
+                                'position': 4}], 'attributions': [
             [0.31678661704063416, 0.1805683672428131, 0.3755590617656708, 0.12708596885204315]]}
+
 
         assert actual == expected
 
@@ -143,6 +150,9 @@ def output_seq_1():
         def decode(self, i=None):
             return ''
 
+        def convert_ids_to_tokens(self,i=None):
+            return ['']
+
     output_1 = output.OutputSeq(**{'model_type': 'causal',
                                    'tokenizer': MockTokenizer(),
                                    'token_ids': [[352, 11, 352, 11, 362]],
@@ -164,6 +174,16 @@ def output_seq_1():
                                        }
                                    }],
                                    'lm_head': torch.nn.Linear(768, 50257, bias=False),
+                                   'config': {
+                                            'embedding': "embeddings.word_embeddings",
+                                            'type': 'mlm',
+                                            'activations': ['intermediate\.dense'], #This is a regex
+                                            'token_prefix': '▁',
+                                            'partial_token_prefix': '',
+                                            'tokenizer_config': {
+                                                'token_prefix': '▁',
+                                                'partial_token_prefix': ''}
+                                        },
                                    'device': 'cpu'})
 
     yield output_1

@@ -10,7 +10,7 @@ import torch
 from torch.nn import functional as F
 from sklearn import decomposition
 from typing import Dict, Optional, List, Tuple, Union
-
+from ecco.util import strip_tokenizer_prefix, is_partial_token
 
 class OutputSeq:
     """An OutputSeq object is the result of running a language model on some input data. It contains not only the output
@@ -56,7 +56,8 @@ class OutputSeq:
                  attention=None,
                  model_type: str= 'mlm',
                  lm_head=None,
-                 device='cpu'):
+                 device='cpu',
+                 config=None):
         """
 
         Args:
@@ -78,6 +79,7 @@ class OutputSeq:
             lm_head: The trained language model head from a language model projecting a
                 hidden state to an output vocabulary associated with teh tokenizer.
             device: "cuda" or "cpu"
+            config: The configuration dict of the language model
         """
         self.token_ids = token_ids
         self.tokenizer = tokenizer
@@ -93,6 +95,7 @@ class OutputSeq:
         self.attention_values = attention
         self.lm_head = lm_head
         self.device = device
+        self.config = config
         self.model_type = model_type
         self._path = os.path.dirname(ecco.__file__)
 
@@ -129,16 +132,19 @@ class OutputSeq:
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
-        viz_id = 'viz_{}'.format(round(random.random() * 1000000))
-        js = """
+
+        js = f"""
          requirejs(['basic', 'ecco'], function(basic, ecco){{
             const viz_id = basic.init()
 
-            ecco.renderOutputSequence(viz_id, {})
+            ecco.renderOutputSequence({{
+                parentDiv: viz_id,
+                data: {data},
+                tokenization_config: {json.dumps(self.config['tokenizer_config'])}
+            }})
          }}, function (err) {{
             console.log(err);
-        }})""".format(data)
+        }})"""
         d.display(d.Javascript(js))
 
         if printJson:
@@ -183,7 +189,7 @@ class OutputSeq:
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         viz_id = 'viz_{}'.format(round(random.random() * 1000000))
         js = """
          requirejs(['basic', 'ecco'], function(basic, ecco){{
@@ -195,7 +201,11 @@ class OutputSeq:
         }})""".format(position, data)
         d.display(d.Javascript(js))
 
-    def primary_attributions(self, attr_method: Optional[str] = 'grad_x_input', style="minimal", **kwargs):
+    def primary_attributions(self,
+                             attr_method: Optional[str] = 'grad_x_input',
+                             style="minimal",
+                             ignore_tokens: Optional[List[int]] = [],
+                             **kwargs):
         """
             Explorable showing primary attributions of each token generation step.
             Hovering-over or tapping an output token imposes a saliency map on other tokens
@@ -243,18 +253,31 @@ class OutputSeq:
             f"attr_method={attr_method} not found. Choose one of the following: {list(self.attribution.keys())}"
         attribution = self.attribution[attr_method]
         for idx, token in enumerate(self.tokens[0]):
+            token_id = self.token_ids[0][idx]
+            raw_token = self.tokenizer.convert_ids_to_tokens([token_id])[0]
+            clean_token = self.tokenizer.decode(token_id)
+            # Strip prefixes because bert decode still has ## for partials even after decode()
+            clean_token = strip_tokenizer_prefix(self.config, clean_token)
+
             type = "input" if idx < self.n_input_tokens else 'output'
             if idx < len(attribution[importance_id]):
                 imp = attribution[importance_id][idx]
             else:
                 imp = 0
 
-            tokens.append({'token': token,
+            tokens.append({'token': clean_token,
                            'token_id': int(self.token_ids[0][idx]),
+                           'is_partial': is_partial_token(self.config, raw_token),
                            'type': type,
-                           'value': str(imp),  # because json complains of floats
+                           'value': str(imp),  # because json complains of floats. Probably not used?
                            'position': idx
                            })
+
+
+        if len(ignore_tokens) > 0:
+            for output_token_index, _ in enumerate(attribution):
+                for idx in ignore_tokens:
+                    attribution[output_token_index][idx] = 0
 
         data = {
             'tokens': tokens,
@@ -262,18 +285,19 @@ class OutputSeq:
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
-        # viz_id = 'viz_{}'.format(round(random.random() * 1000000))
 
         if (style == "minimal"):
             js = f"""
              requirejs(['basic', 'ecco'], function(basic, ecco){{
                 const viz_id = basic.init()
+                console.log(viz_id)
                 // ecco.interactiveTokens(viz_id, {{}})
                 window.ecco[viz_id] = new ecco.MinimalHighlighter({{
-                parentDiv: viz_id,
-                data: {data},
-                preset: 'viridis'
+                    parentDiv: viz_id,
+                    data: {json.dumps(data)},
+                    preset: 'viridis',
+                    tokenization_config: {json.dumps(self.config['tokenizer_config'])}
+
              }})
 
              window.ecco[viz_id].init();
@@ -287,7 +311,12 @@ class OutputSeq:
             js = f"""
              requirejs(['basic', 'ecco'], function(basic, ecco){{
                 const viz_id = basic.init()
-                window.ecco[viz_id] = ecco.interactiveTokens(viz_id, {data})
+                console.log(viz_id)
+                window.ecco[viz_id] = ecco.interactiveTokens({{
+                    parentDiv: viz_id,
+                    data: {json.dumps(data)},
+                    tokenization_config: {json.dumps(self.config['tokenizer_config'])}
+             }})
 
              }}, function (err) {{
                 console.log(err);
@@ -381,7 +410,7 @@ class OutputSeq:
             data.append(layer_data)
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
 
         js = f"""
          requirejs(['basic', 'ecco'], function(basic, ecco){{
@@ -451,9 +480,9 @@ class OutputSeq:
                 if token_id == self.token_ids[0][j + 1]:
                     token_found_mask[i, j] = 0
 
-        input_tokens = [repr(t) for t in self.tokens[0][self.n_input_tokens - 1:-1]]
+        input_tokens = [repr(strip_tokenizer_prefix(self.config, t)) for t in self.tokens[0][self.n_input_tokens - 1:-1]]
         offset = self.n_input_tokens + 1 if self.model_type == 'enc-dec' else self.n_input_tokens
-        output_tokens = [repr(t) for t in self.tokens[0][offset:]]
+        output_tokens = [repr(strip_tokenizer_prefix(self.config, t)) for t in self.tokens[0][offset:]]
 
         lm_plots.plot_inner_token_rankings(input_tokens,
                                            output_tokens,
@@ -526,7 +555,7 @@ class OutputSeq:
                 ranking = sorted.shape[0] - r
                 rankings[i, j] = int(ranking)
 
-        input_tokens = [t for t in self.tokens[0]]
+        input_tokens = [strip_tokenizer_prefix(self.config,t) for t in self.tokens[0]]
         output_tokens = [repr(self.tokenizer.decode(t)) for t in watch]
 
         lm_plots.plot_inner_token_rankings_watch(input_tokens, output_tokens, rankings,
@@ -575,7 +604,7 @@ class OutputSeq:
         }
 
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
+        # d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
         viz_id = 'viz_{}'.format(round(random.random() * 1000000))
         js = """
          requirejs(['basic', 'ecco'], function(basic, ecco){{
@@ -602,6 +631,7 @@ class OutputSeq:
                    token_ids=self.token_ids,
                    _path=self._path,
                    tokens=self.tokens,
+                   config=self.config,
                    collect_activations_layer_nums=self.collect_activations_layer_nums,
                    **kwargs)
 
@@ -617,6 +647,7 @@ class NMF:
                  to_layer: Optional[int] = None,
                  tokens: Optional[List[str]] = None,
                  collect_activations_layer_nums: Optional[List[int]] = None,
+                 config=None,
                  **kwargs):
         """
         Receives a neuron activations tensor from OutputSeq and decomposes it using NMF into the number
@@ -642,6 +673,7 @@ class NMF:
         self._path = _path
         self.token_ids = token_ids
         self.n_input_tokens = n_input_tokens
+        self.config = config
 
         # Joining Encoder and Decoder (if exists) together
         activations = np.concatenate(list(activations.values()), axis=-1)
@@ -779,18 +811,20 @@ class NMF:
             # Three-dimensional list. Shape: (1, factors, sequence length)
             'factors': [factors]
         }
-
         d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
-        d.display(d.HTML(filename=os.path.join(self._path, "html", "basic.html")))
-        viz_id = 'viz_{}'.format(round(random.random() * 1000000))
-        # print(data)
-        js = """
+
+        js = f"""
          requirejs(['basic', 'ecco'], function(basic, ecco){{
             const viz_id = basic.init()
-            ecco.interactiveTokensAndFactorSparklines(viz_id, {})
+            
+            ecco.interactiveTokensAndFactorSparklines(viz_id, {data},
+            {{
+            'hltrCFG': {{'tokenization_config': {json.dumps(self.config['tokenizer_config'])}
+                }}
+            }})
          }}, function (err) {{
             console.log(err);
-        }})""".format(data)
+        }})"""
         d.display(d.Javascript(js))
 
         if 'printJson' in kwargs and kwargs['printJson']:

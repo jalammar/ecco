@@ -2,7 +2,7 @@ mkdocs==1.1.2
 mkdocs-material==6.2.8
 mkdocstrings==0.14.0
 -f https://download.pytorch.org/whl/torch_stable.html
-torch~=1.6.0
+#torch~=1.9.0
 transformers~=4.2.2
 matplotlib~=3.3.1
 numpy~=1.19.1

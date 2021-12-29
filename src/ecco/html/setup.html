@@ -2,30 +2,60 @@
 <script src="https://requirejs.org/docs/release/2.3.6/minified/require.js"></script>
 <script>
     var ecco_url = 'https://storage.googleapis.com/ml-intro/ecco/'
-    // var ecco_url = 'http://localhost:8000/ecco/'
+    //var ecco_url = 'http://localhost:8000/'
 
     if (window.ecco === undefined) window.ecco = {}
 
+    // Setup the paths of the script we'll be using
     requirejs.config({
         urlArgs: "bust=" + (new Date()).getTime(),
         nodeRequire: require,
         paths: {
-            d3: "https://d3js.org/d3.v5.min",
+            d3: "https://d3js.org/d3.v6.min", // This is only for use in setup.html and basic.html
             "d3-array": "https://d3js.org/d3-array.v2.min",
             jquery: "https://code.jquery.com/jquery-3.5.1.min",
-            // oldEcco: ecco_url + 'ecco',
-            ecco: ecco_url + 'js/0.0.4/ecco-bundle.min',
+            ecco: ecco_url + 'js/0.0.6/ecco-bundle.min',
             xregexp: 'https://cdnjs.cloudflare.com/ajax/libs/xregexp/3.2.0/xregexp-all.min'
         }
     });
-    requirejs(['d3'],
-        function (d3) {
-            d3.select('#css').attr('href', ecco_url + 'html/styles.css')
-        })
 
-    console.log('Ecco initialize.')
+    // Add the css file
+    //requirejs(['d3'],
+    //    function (d3) {
+    //        d3.select('#css').attr('href', ecco_url + 'html/styles.css')
+    //    })
+
+    console.log('Ecco initialize!!')
+
+    // returns a 'basic' object. basic.init() selects the html div we'll be
+    // rendering the html into, adds styles.css to the document.
+    define('basic', ['d3'],
+        function (d3) {
+            return {
+                init: function (viz_id = null) {
+                    if (viz_id == null) {
+                        viz_id = "viz_" + Math.round(Math.random() * 10000000)
+                    }
+                    // Select the div rendered below, change its id
+                    const div = d3.select('#basic').attr('id', viz_id),
+                        div_parent = d3.select('#' + viz_id).node().parentNode
+
+                    // Link to CSS file
+                    d3.select(div_parent).insert('link')
+                        .attr('rel', 'stylesheet')
+                        .attr('type', 'text/css')
+                        .attr('href', ecco_url + 'html/0.0.2/styles.css')
+
+                    return viz_id
+                }
+            }
+        }, function (err) {
+            console.log(err);
+        }
+    )
 </script>
 
 <head>
     <link id='css' rel="stylesheet" type="text/css">
 </head>
+<div id="basic"></div>
