@@ -21,7 +21,7 @@ Ecco is not concerned with training or fine-tuning models. Only exploring and un
 
 Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
 
-## Feaatures
+## Features
 - Support for a wide variety of language models (GPT2, BERT, RoBERTA, T5, T0, and others).
 - Ability to add your own **local models** (if they're based on Hugging Face pytorch models).
 - **Feature attribution** (IntegratedGradients, Saliency, InputXGradient, DeepLift, DeepLiftShap, GuidedBackprop, GuidedGradCam, Deconvolution, and LRP via [Captum](https://captum.ai/))
