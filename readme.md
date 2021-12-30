@@ -32,6 +32,22 @@ Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
     - Evolution of processing a token through the layers of the model ([Logit lens](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens))
     - Candidate output tokens and their probabilities (at each layer in the model)
 
+## Installation
+
+You can install `ecco` either with `pip` or with `conda`.
+
+**with pip**
+
+```sh
+pip install ecco
+```
+
+**with conda**
+
+```sh
+conda install -c conda-forge ecco
+```
+
 ## Examples:
 
 ### What is the sentiment of this film review?
