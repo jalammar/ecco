@@ -21,42 +21,49 @@ Ecco is not concerned with training or fine-tuning models. Only exploring and un
 
 Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
 
-
+## Feaatures
+- Support for a wide variety of language models (GPT2, BERT, RoBERTA, T5, T0, and others).
+- Ability to add your own **local models** (if they're based on Hugging Face pytorch models).
+- **Feature attribution** (IntegratedGradients, Saliency, InputXGradient, DeepLift, DeepLiftShap, GuidedBackprop, GuidedGradCam, Deconvolution, and LRP via [Captum](https://captum.ai/))
+- **Capture neuron activations** in the FFNN layer in the Transformer block
+- Identify and **visualize neuron activation patterns**  (via Non-negative Matrix Factorization)
+- Examine neuron activations via comparisons of activations spaces using SVCCA, PWCCA, and CKA
+- Visualizations for:
+    - Evolution of ([Logit lens](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens))
+    - Candidate output tokens and their probabilities (at each layer in the model)
 
 ## Examples:
 
 ### What is the sentiment of this film review?
-![Sentiment example](https://ar.pegg.io/img/ecco/ecco-sentiment-1.png)
+<img src="https://ar.pegg.io/img/ecco/ecco-sentiment-1.png" width="500px" />
 
 Use a large language model (T5 in this case) to detect text sentiment. In addition to the sentiment, see the tokens the model broke the text into (which can help debug some edge cases).
 
 ### Which words in this review lead the model to classify its sentiment as "negative"?
-![Feature attribution for sentiment](https://ar.pegg.io/img/ecco/ecco-attrib-ig-1.png)
+<img src="https://ar.pegg.io/img/ecco/ecco-attrib-ig-1.png" width="500px" />
 
 Feature attribution using Integrated Gradients helps you explore model decisions. In this case, switching "weakness" to "inclination" allows the model to correctly switch the prediction to *positive*.
 
 ### Explore the world knowledge of GPT models by posing fill-in-the blank questions.
-![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/gpt2-heathrow-1.png)
+<img src="https://ar.pegg.io/img/ecco/gpt2-heathrow-1.png" width="500px" alt="Asking GPT2 where heathrow airport is" />
 
 Does GPT2 know where Heathrow Airport is? Yes. It does.
 
 ### What other cities/words did the model consider in addition to London?
-![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/gpt-candidate-logits.png)
+<img src="https://ar.pegg.io/img/ecco/gpt-candidate-logits.png" width="500px" alt="The model also considered Birmingham and Manchester"/>
 
 Visuals the candidate output tokens and their probability scores.
 
 ### Which input words lead it to think of London?
-![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/heathrow-attribution.png)
-
+<img src="https://ar.pegg.io/img/ecco/heathrow-attribution.png" width="400px" alt="Asking GPT2 where heathrow airport is"/>
 
 ### At which layers did the model gather confidence that London is the right answer?
-![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/token-evolution.png)
+<img src="https://ar.pegg.io/img/ecco/token-evolution.png" width="200px" alt="The order of the token in each layer, layer 11 makes it number 1"/>
 
 The model chose London by making the highest probability token (ranking it #1) after the last layer in the model. How much did each layer contribute to increasing the ranking of *London*? This is a [logit lens](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens) visualizations that helps explore the activity of different model layers.
 
 ### What are the patterns in BERT neuron activation when it processes a piece of text? 
-
-![Asking GPT2 where heathrow airport is](https://ar.pegg.io/img/ecco/neuron-bert.png)
+<img src="https://ar.pegg.io/img/ecco/neuron-bert.png" width="500px" alt="Colored line graphs on the left, a piece of text on the right. The line graphs indicate the activation of BERT neuron groups in response to the text"/>
 
 A group of neurons in BERT tend to fire in response to commas and other punctuation. Other groups of neurons tend to fire in response to pronouns. Use this visualization to factorize neuron activity in individual FFNN layers or in the entire model.
 
