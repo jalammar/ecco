@@ -29,7 +29,7 @@ Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
 - Identify and **visualize neuron activation patterns**  (via Non-negative Matrix Factorization)
 - Examine neuron activations via comparisons of activations spaces using SVCCA, PWCCA, and CKA
 - Visualizations for:
-    - Evolution of ([Logit lens](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens))
+    - Evolution of processing a token through the layers of the model ([Logit lens](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens))
     - Candidate output tokens and their probabilities (at each layer in the model)
 
 ## Examples:
