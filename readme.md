@@ -52,7 +52,7 @@ Does GPT2 know where Heathrow Airport is? Yes. It does.
 ### What other cities/words did the model consider in addition to London?
 <img src="https://ar.pegg.io/img/ecco/gpt-candidate-logits.png" width="500px" alt="The model also considered Birmingham and Manchester"/>
 
-Visuals the candidate output tokens and their probability scores.
+Visualize the candidate output tokens and their probability scores.
 
 ### Which input words lead it to think of London?
 <img src="https://ar.pegg.io/img/ecco/heathrow-attribution.png" width="400px" alt="Asking GPT2 where heathrow airport is"/>
