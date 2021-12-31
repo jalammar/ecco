@@ -27,7 +27,7 @@ Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
 - **Feature attribution** (IntegratedGradients, Saliency, InputXGradient, DeepLift, DeepLiftShap, GuidedBackprop, GuidedGradCam, Deconvolution, and LRP via [Captum](https://captum.ai/))
 - **Capture neuron activations** in the FFNN layer in the Transformer block
 - Identify and **visualize neuron activation patterns**  (via Non-negative Matrix Factorization)
-- Examine neuron activations via comparisons of activations spaces using SVCCA, PWCCA, and CKA
+- Examine neuron activations via comparisons of activations spaces using SVCCA, PWCCA, and CKA (See [this video on inspecting neural networks with CCA](https://www.youtube.com/watch?v=u7Dvb_a1D-0))
 - Visualizations for:
     - Evolution of processing a token through the layers of the model ([Logit lens](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens))
     - Candidate output tokens and their probabilities (at each layer in the model)
