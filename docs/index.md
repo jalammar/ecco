@@ -7,6 +7,22 @@ Ecco runs inside Jupyter notebooks. It is built on top of [pytorch](https://pyto
 
 Ecco is not concerned with training or fine-tuning models. Only exploring and understanding existing pre-trained models.
 
+## Installation
+
+You can install `ecco` either with `pip` or with `conda`.
+
+**with pip**
+
+```sh
+pip install ecco
+```
+
+**with conda**
+
+```sh
+conda install -c conda-forge ecco
+```
+
 ## Tutorials
 - Video: [Take A Look Inside Language Models With Ecco](https://www.youtube.com/watch?v=rHrItfNeuh0). \[<a href="https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/Language_Models_and_Ecco_PyData_Khobar.ipynb">Colab Notebook</a>]
 

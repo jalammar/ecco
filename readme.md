@@ -4,8 +4,20 @@
 <br />
 <br />
 
-[![PyPI Package latest release](https://img.shields.io/pypi/v/ecco.svg)](https://pypi.org/project/ecco)
-[![Supported versions](https://img.shields.io/pypi/pyversions/ecco.svg)](https://pypi.org/project/ecco)
+<!--- BADGES: START --->
+[![GitHub - License](https://img.shields.io/github/license/jalammar/ecco?logo=github&style=flat&color=green)][#github-license]
+[![PyPI - Latest Package Version](https://img.shields.io/pypi/v/ecco?logo=pypi&style=flat&color=orange)][#pypi-package]
+[![PyPI - Supported Python Versions](https://img.shields.io/pypi/pyversions/ecco?logo=pypi&style=flat&color=blue)][#pypi-package]
+[![Conda - Platform](https://img.shields.io/conda/pn/conda-forge/ecco?logo=anaconda&style=flat)][#conda-forge-package]
+[![Conda (channel only)](https://img.shields.io/conda/vn/conda-forge/ecco?logo=anaconda&style=flat&color=orange)][#conda-forge-package]
+[![Docs - GitHub.io](https://img.shields.io/static/v1?logo=readthedocs&style=flat&color=pink&label=docs&message=ecco)][#docs-package]
+
+
+[#github-license]: https://github.com/jalammar/ecco/blob/main/LICENSE
+[#pypi-package]: https://pypi.org/project/ecco/
+[#conda-forge-package]: https://anaconda.org/conda-forge/ecco
+[#docs-package]: https://ecco.readthedocs.io/
+<!--- BADGES: END --->
 
 
 Ecco is a python library for exploring and explaining Natural Language Processing models using interactive visualizations. 
@@ -31,6 +43,22 @@ Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
 - Visualizations for:
     - Evolution of processing a token through the layers of the model ([Logit lens](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens))
     - Candidate output tokens and their probabilities (at each layer in the model)
+
+## Installation
+
+You can install `ecco` either with `pip` or with `conda`.
+
+**with pip**
+
+```sh
+pip install ecco
+```
+
+**with conda**
+
+```sh
+conda install -c conda-forge ecco
+```
 
 ## Examples:
 
