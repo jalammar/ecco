@@ -36,10 +36,10 @@ Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
 ## Features
 - Support for a wide variety of language models (GPT2, BERT, RoBERTA, T5, T0, and others).
 - Ability to add your own **local models** (if they're based on Hugging Face pytorch models).
-- **Feature attribution** (IntegratedGradients, Saliency, InputXGradient, DeepLift, DeepLiftShap, GuidedBackprop, GuidedGradCam, Deconvolution, and LRP via [Captum](https://captum.ai/))
+- **Feature attribution** ([IntegratedGradients](https://arxiv.org/abs/1703.01365), [Saliency](https://arxiv.org/abs/1312.6034), [InputXGradient](https://arxiv.org/abs/1412.6815), [DeepLift](https://arxiv.org/abs/1704.02685), [DeepLiftShap](https://proceedings.neurips.cc/paper/2017/hash/8a20a8621978632d76c43dfd28b67767-Abstract.html), [GuidedBackprop](https://arxiv.org/abs/1412.6806), [GuidedGradCam](https://arxiv.org/abs/1610.02391), [Deconvolution](https://arxiv.org/abs/1311.2901), and [LRP](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0130140) via [Captum](https://captum.ai/))
 - **Capture neuron activations** in the FFNN layer in the Transformer block
 - Identify and **visualize neuron activation patterns**  (via Non-negative Matrix Factorization)
-- Examine neuron activations via comparisons of activations spaces using SVCCA, PWCCA, and CKA (See [this video on inspecting neural networks with CCA](https://www.youtube.com/watch?v=u7Dvb_a1D-0))
+- Examine neuron activations via comparisons of activations spaces using [SVCCA](https://arxiv.org/abs/1706.05806), [PWCCA](https://arxiv.org/abs/1806.05759), and [CKA](https://arxiv.org/abs/1905.00414) (See [this video on inspecting neural networks with CCA](https://www.youtube.com/watch?v=u7Dvb_a1D-0))
 - Visualizations for:
     - Evolution of processing a token through the layers of the model ([Logit lens](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens))
     - Candidate output tokens and their probabilities (at each layer in the model)
