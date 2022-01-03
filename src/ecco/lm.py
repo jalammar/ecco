@@ -722,12 +722,13 @@ def sample_output_token(scores, do_sample, temperature, top_k, top_p):
     return prediction_id
 
 
-def _one_hot(token_ids, vocab_size):
-    return torch.zeros(len(token_ids), vocab_size).scatter_(1, token_ids.unsqueeze(1), 1.)
+def _one_hot(token_ids: torch.Tensor, vocab_size: int) -> torch.Tensor:
+    return torch.zeros(len(token_ids), vocab_size, device=token_ids.device).scatter_(1, token_ids.unsqueeze(1), 1.)
 
-def _one_hot_batched(token_ids, vocab_size):
+
+def _one_hot_batched(token_ids: torch.Tensor, vocab_size: int) -> torch.Tensor:
     batch_size, num_tokens = token_ids.shape
-    return torch.zeros(batch_size, num_tokens, vocab_size).scatter_(-1, token_ids.unsqueeze(-1), 1.)
+    return torch.zeros(batch_size, num_tokens, vocab_size, device=token_ids.device).scatter_(-1, token_ids.unsqueeze(-1), 1.)
 
 
 def activations_dict_to_array(activations_dict):
