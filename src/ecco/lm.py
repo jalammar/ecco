@@ -5,13 +5,15 @@ import os
 import random
 import torch
 import transformers
+from transformers import BatchEncoding
+
 import ecco
 import numpy as np
 from IPython import display as d
 from torch.nn import functional as F
 from ecco.attribution import compute_primary_attributions_scores
 from ecco.output import OutputSeq
-from typing import Optional, Any, List, Tuple, Dict
+from typing import Optional, Any, List, Tuple, Dict, Union
 from operator import attrgetter
 import re
 from ecco.util import is_partial_token, strip_tokenizer_prefix
@@ -107,7 +109,7 @@ class LM(object):
         self.neurons_to_induce = {}
         self._hooks = {}
 
-    def to(self, tensor: torch.Tensor):
+    def to(self, tensor: Union[torch.Tensor, BatchEncoding]):
         if self.device == 'cuda':
             return tensor.to('cuda')
         return tensor
@@ -163,7 +165,7 @@ class LM(object):
             do_sample: Decoding parameter. If set to False, the model always always
                 chooses the highest scoring candidate output
                 token. This may lead to repetitive text. If set to True, the model considers
-                consults top_k and/or top_p to generate more itneresting output.
+                consults top_k and/or top_p to generate more interesting output.
             attribution: List of attribution methods to be calculated. By default, it does not calculate anything.
             beam_size: Beam size to consider while generating
             generate_kwargs: Other arguments to be passed directly to self.model.generate
@@ -181,6 +183,8 @@ class LM(object):
 
         # We need this as a batch in order to collect activations.
         input_tokenized_info = self.tokenizer(input_str, return_tensors="pt")
+        if self.model.device.type == "cuda" and input_tokenized_info['input_ids'].device.type == "cpu":
+            input_tokenized_info = self.to(input_tokenized_info)
         input_ids, attention_mask = input_tokenized_info['input_ids'], input_tokenized_info['attention_mask']
         n_input_tokens = len(input_ids[0])
         cur_len = n_input_tokens
