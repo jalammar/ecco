@@ -280,9 +280,15 @@ class LM(object):
             # Recomputing inputs ids, attention mask and decoder input ids
             if decoder_input_ids is not None:
                 assert len(decoder_input_ids.size()) == 2 # will break otherwise
-                decoder_input_ids = torch.cat([decoder_input_ids, torch.tensor([[prediction_id]])], dim=-1)
+                decoder_input_ids = torch.cat(
+                    [decoder_input_ids, torch.tensor([[prediction_id]], device=decoder_input_ids.device)],
+                    dim=-1
+                )
             else:
-                input_ids = torch.cat([input_ids, torch.tensor([[prediction_id]])], dim=-1)
+                input_ids = torch.cat(
+                    [input_ids, torch.tensor([[prediction_id]], device=input_ids.device)],
+                    dim=-1
+                )
 
                 # Recomputing Attention Mask
                 if getattr(self.model, '_prepare_attention_mask_for_generation'):
