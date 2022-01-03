@@ -183,8 +183,7 @@ class LM(object):
 
         # We need this as a batch in order to collect activations.
         input_tokenized_info = self.tokenizer(input_str, return_tensors="pt")
-        if self.model.device.type == "cuda" and input_tokenized_info['input_ids'].device.type == "cpu":
-            input_tokenized_info = self.to(input_tokenized_info)
+        input_tokenized_info = self.to(input_tokenized_info)
         input_ids, attention_mask = input_tokenized_info['input_ids'], input_tokenized_info['attention_mask']
         n_input_tokens = len(input_ids[0])
         cur_len = n_input_tokens
