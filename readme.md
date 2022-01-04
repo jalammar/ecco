@@ -1,5 +1,5 @@
 
-<img src="https://ar.pegg.io/img/ecco-logo-480.png" width="400" style="background-color: white" />
+<img src="https://ar.pegg.io/img/ecco-logo-w800.png" width="400" style="background-color: white" />
 
 <br />
 <br />
