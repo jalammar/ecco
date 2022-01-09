@@ -589,7 +589,7 @@ class LM(object):
         of the neurons indicated in self.neurons_to_inhibit
         """
 
-        layer_number = int(name.split('.')[2])
+        layer_number = re.search("(?<=\.)\d+(?=\.)", name).group(0)
         if layer_number in self.neurons_to_inhibit.keys():
             # print('layer_number', layer_number, input_tensor[0].shape)
 
