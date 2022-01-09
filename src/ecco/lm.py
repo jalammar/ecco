@@ -17,6 +17,7 @@ from typing import Optional, Any, List, Tuple, Dict, Union
 from operator import attrgetter
 import re
 from ecco.util import is_partial_token, strip_tokenizer_prefix
+from packaging import version
 
 
 class LM(object):
@@ -199,7 +200,7 @@ class LM(object):
         # Get decoder input ids
         if self.model_type == 'enc-dec': # FIXME: only done because causal LMs like GPT-2 have the _prepare_decoder_input_ids_for_generation method but do not use it
             assert len(input_ids.size()) == 2 # will break otherwise
-            if transformers.__version__ >= '4.13': # ALSO FIXME: awful hack. But seems to work?
+            if version.parse(transformers.__version__) >= version.parse('4.13'): # ALSO FIXME: awful hack. But seems to work?
                 decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_ids.shape[0], None, None)
             else:
                 decoder_input_ids = self.model._prepare_decoder_input_ids_for_generation(input_ids, None, None)
