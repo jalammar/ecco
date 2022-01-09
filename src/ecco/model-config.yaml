@@ -204,10 +204,10 @@ bigscience/T0pp:
     partial_token_prefix: ''
 # BART
 facebook/bart-large-mnli:
-    embedding: 'shared'
+    embedding: 'model.shared'
     type: 'enc-dec'
     activations:
-        - 'fc2'
+        - 'fc1'
     token_prefix: ''
     partial_token_prefix: '##'
 
