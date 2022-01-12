@@ -34,7 +34,7 @@ Ecco is not concerned with training or fine-tuning models. Only exploring and un
 Documentation: [ecco.readthedocs.io](https://ecco.readthedocs.io/)
 
 ## Features
-- Support for a wide variety of language models (GPT2, BERT, RoBERTA, T5, T0, and others).
+- Support for a wide variety of language models (GPT2, BERT, RoBERTA, T5, T0, and others) [[notebook & instructions for adding more models](https://github.com/jalammar/ecco/blob/main/notebooks/Identifying%20model%20configuration.ipynb)].
 - Ability to add your own **local models** (if they're based on Hugging Face pytorch models).
 - **Feature attribution** ([IntegratedGradients](https://arxiv.org/abs/1703.01365), [Saliency](https://arxiv.org/abs/1312.6034), [InputXGradient](https://arxiv.org/abs/1412.6815), [DeepLift](https://arxiv.org/abs/1704.02685), [DeepLiftShap](https://proceedings.neurips.cc/paper/2017/hash/8a20a8621978632d76c43dfd28b67767-Abstract.html), [GuidedBackprop](https://arxiv.org/abs/1412.6806), [GuidedGradCam](https://arxiv.org/abs/1610.02391), [Deconvolution](https://arxiv.org/abs/1311.2901), and [LRP](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0130140) via [Captum](https://captum.ai/))
 - **Capture neuron activations** in the FFNN layer in the Transformer block
@@ -61,7 +61,7 @@ conda install -c conda-forge ecco
 ```
 
 ## Examples:
-
+You can run all these examples from this [[notebook](https://github.com/jalammar/ecco/blob/main/notebooks/readme.md%20examples.ipynb)] | [[colab](https://colab.research.google.com/github/jalammar/ecco/blob/main/notebooks/readme.md%20examples.ipynb)].
 ### What is the sentiment of this film review?
 <img src="https://ar.pegg.io/img/ecco/ecco-sentiment-1.png" width="500px" />
 
