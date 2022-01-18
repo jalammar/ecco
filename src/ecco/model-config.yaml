@@ -211,6 +211,99 @@ facebook/bart-large-mnli:
     token_prefix: ''
     partial_token_prefix: '##'
 
+# PEGASUS
+google/pegasus-large:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+google/pegasus-xsum:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+google/pegasus-gigaword:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+google/pegasus-cnn_dailymail:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+google/pegasus-wikihow:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+google/pegasus-reddit_tifu:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+google/pegasus-pubmed:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+google/pegasus-newsroom:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+google/pegasus-multi_news:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+google/pegasus-billsum:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+google/pegasus-big_patent:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''  
+google/pegasus-arxiv:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+google/pegasus-aeslc:
+    embedding: 'model.shared.weight'
+    type: 'enc-dec'
+    activations:
+        - 'fc1'
+    token_prefix: '▁'
+    partial_token_prefix: ''  
+
 # DUMMY MODELS
 'sshleifer/tiny-gpt2':
     embedding: "transformer.wte.weight"
