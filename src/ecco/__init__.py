@@ -14,12 +14,13 @@ Usage:
 
 __version__ = '0.1.2'
 from ecco.lm import LM
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel, AutoModelForSeq2SeqLM, PreTrainedModel
 from typing import Any, Dict, Optional, List
 from ecco.util import load_config, pack_tokenizer_config
 
 
 def from_pretrained(hf_model_id: str,
+                    model: Optional[PreTrainedModel] = None,
                     model_config: Optional[Dict[str, Any]] = None,
                     activations: Optional[bool] = False,
                     attention: Optional[bool] = False,
@@ -54,6 +55,7 @@ def from_pretrained(hf_model_id: str,
     ```
 
     Args:
+        model (Optional[PreTrainedModel]): Trained transformer model. If not provided then the default model corresponding to hf_model_id will be loaded
         hf_model_id (str): Name of the model identifying it in the HuggingFace model hub. e.g. 'distilgpt2', 'bert-base-uncased'.
         model_config (Optional[Dict[str, Any]]): Custom model configuration. If the value is None the config file will be
                                                  searched in the model-config.yaml. Defaults to None.
@@ -80,7 +82,8 @@ def from_pretrained(hf_model_id: str,
     else:
         model_cls = AutoModel
 
-    model = model_cls.from_pretrained(hf_model_id, output_hidden_states=hidden_states, output_attentions=attention)
+    if model is None:
+        model = model_cls.from_pretrained(hf_model_id, output_hidden_states=hidden_states, output_attentions=attention)
 
     lm_kwargs = {
         'model_name': hf_model_id,
