@@ -342,3 +342,12 @@ EleutherAI/gpt-neo-2.7B:
     - 'mlp\.c_proj'
     token_prefix: ' '
     partial_token_prefix: ''
+#LLaMA
+decapoda-research/llama-7b-hf:
+    embedding: "transformer.embed_tokens.weight"
+    type: 'causal'
+    activations:
+    - 'mlp\.up_proj'
+    token_prefix: '▁'
+    partial_token_prefix: ''
+
