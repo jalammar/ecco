@@ -86,7 +86,11 @@ class LM(object):
             self.model_type = self.model_config['type']
             embeddings_layer_name = self.model_config['embedding']
             embed_retriever = attrgetter(embeddings_layer_name)
-            self.model_embeddings = embed_retriever(self.model)
+            if type(embed_retriever(self.model)) == torch.nn.Embedding:
+                self.model_embeddings = embed_retriever(self.model).weight
+            else:
+                self.model_embeddings = embed_retriever(self.model)
+            # print(self.model)
             self.collect_activations_layer_name_sig = self.model_config['activations'][0]
         except KeyError:
             raise ValueError(
@@ -346,6 +350,7 @@ class LM(object):
                         hs_list.append(hs)
 
                     # First hidden state is the embedding layer, skip it
+                    # FIXME: do this in a cleaner way
                     # if one shape is different from others, it should be the embedding layer, and it always 
                     #  appear at the beginning or the end
                     if hs_list[0].shape != hs_list[1].shape:
@@ -356,13 +361,12 @@ class LM(object):
                         hidden_states = torch.cat(hs_list[:-1])
                         # revert the hidden_states order
                         hidden_states = torch.flip(hidden_states, [0])
+                        # print(hidden_states.shape)
                     else:
                         hs_list = torch.cat(hs_list, dim=0)
                         embedding_states = hs_list[0]
                         hidden_states = hs_list[1:]
-                    hs_list = torch.cat(hs_list, dim=0)
-                    embedding_states = hs_list[0]
-                    hidden_states = hs_list[1:]
+                        
                     tokens_hs_list.append(hidden_states)
 
                 setattr(output, attributes, tokens_hs_list)
@@ -379,6 +383,7 @@ class LM(object):
 
         # Turn activations from dict to a proper array
         activations_dict = self._all_activations_dict
+        # print(activations_dict)
         for layer_type, activations in activations_dict.items():
             self.activations[layer_type] = activations_dict_to_array(activations)
 
@@ -530,6 +535,7 @@ class LM(object):
 
     def _attach_hooks(self, model):
         # TODO: Collect activations for more than 1 step
+        # print(self.model)
 
         if self._hooks:
             # skip if hooks are already attached
@@ -547,6 +553,7 @@ class LM(object):
                                name=name: self._get_activations_hook(name, input_))
 
                 # Register neuron inhibition hook
+                # print(name)
                 self._hooks[name + '_inhibit'] = module.register_forward_pre_hook(
                     lambda self_, input_, name=name: \
                         self._inhibit_neurons_hook(name, input_)
@@ -602,7 +609,9 @@ class LM(object):
         of the neurons indicated in self.neurons_to_inhibit
         """
 
-        layer_number = re.search("(?<=\.)\d+(?=\.)", name).group(0)
+        # print(name.split('.'))
+        layer_number = int(re.search("(?<=\.)\d+(?=\.)", name).group(0))
+        # print(layer_number, name)
         if layer_number in self.neurons_to_inhibit.keys():
             # print('layer_number', layer_number, input_tensor[0].shape)
 
