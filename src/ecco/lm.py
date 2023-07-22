@@ -346,7 +346,20 @@ class LM(object):
                         hs_list.append(hs)
 
                     # First hidden state is the embedding layer, skip it
-                    # FIXME: do this in a cleaner way
+                    # if one shape is different from others, it should be the embedding layer, and it always 
+                    #  appear at the beginning or the end
+                    if hs_list[0].shape != hs_list[1].shape:
+                        embedding_states = hs_list[0]
+                        hidden_states = torch.cat(hs_list[1:])
+                    elif hs_list[-1].shape != hs_list[-2].shape:
+                        embedding_states = hs_list[-1]
+                        hidden_states = torch.cat(hs_list[:-1])
+                        # revert the hidden_states order
+                        hidden_states = torch.flip(hidden_states, [0])
+                    else:
+                        hs_list = torch.cat(hs_list, dim=0)
+                        embedding_states = hs_list[0]
+                        hidden_states = hs_list[1:]
                     hs_list = torch.cat(hs_list, dim=0)
                     embedding_states = hs_list[0]
                     hidden_states = hs_list[1:]
