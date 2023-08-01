@@ -6,6 +6,7 @@ import random
 import torch
 import transformers
 from transformers import BatchEncoding
+from time import time
 
 import ecco
 import numpy as np
@@ -46,7 +47,8 @@ class LM(object):
                  collect_activations_flag: Optional[bool] = False,
                  collect_activations_layer_nums: Optional[List[int]] = None,  # None --> collect for all layers
                  verbose: Optional[bool] = True,
-                 gpu: Optional[bool] = True
+                 gpu: Optional[bool] = True,
+                 torch_dtype=None
                  ):
         """
         Creates an LM object given a model and tokenizer.
@@ -64,6 +66,7 @@ class LM(object):
         """
         self.model_name = model_name
         self.model = model
+        self.torch_dtype = torch_dtype
         if torch.cuda.is_available() and gpu:
             self.model = model.to('cuda')
 
@@ -86,7 +89,11 @@ class LM(object):
             self.model_type = self.model_config['type']
             embeddings_layer_name = self.model_config['embedding']
             embed_retriever = attrgetter(embeddings_layer_name)
-            self.model_embeddings = embed_retriever(self.model)
+            print(self.model)
+            if type(embed_retriever(self.model)) == torch.nn.Embedding:
+                self.model_embeddings = embed_retriever(self.model).weight
+            else:
+                self.model_embeddings = embed_retriever(self.model)
             self.collect_activations_layer_name_sig = self.model_config['activations'][0]
         except KeyError:
             raise ValueError(
@@ -128,9 +135,11 @@ class LM(object):
         for attr_method in attribution_flags:
 
             # deactivate hooks: attr method can perform multiple forward steps
-            self._remove_hooks()
+            # self._remove_hooks()
 
-            # Add attribution scores to self.attributions
+            # Add attribution scores to self.attributionsp
+            # print which device the model is on
+            # print(self.model.device.type)
             self.attributions[attr_method].append(
                 compute_primary_attributions_scores(
                     attr_method=attr_method,
@@ -213,7 +222,14 @@ class LM(object):
             viz_id = self.display_input_sequence(input_ids[0])
 
         # Get model output
-        self._remove_hooks() # deactivate hooks: we will run them for the last model forward only
+        # self._remove_hooks() # deactivate hooks: we will run them for the last model forward only
+        # print the device of input_ids, attention_mask, and self.model
+        # print(f"input_ids.device: {input_ids.device}")
+        # print(f"attention_mask.device: {attention_mask.device}")
+        # print(f"self.model.device: {self.model.device}")
+        # print(f"self.model: {self.model}")
+        
+        time_start = time()
         output = self.model.generate(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -228,6 +244,7 @@ class LM(object):
             output_scores=True,
             **generate_kwargs
         )
+        print("self.model.generate takes time: ", time() - time_start)
 
         # Get prediction logits for each chosen prediction id
         prediction_logits, prediction_ids = [], []
@@ -247,6 +264,7 @@ class LM(object):
 
         # Analyze each generated token
         self.attributions = defaultdict(list) # reset attributions dict
+        time_start = time()
         for pred_index, prediction_id in enumerate(prediction_ids):
 
             # First get encoder/decoder input embeddings
@@ -262,7 +280,7 @@ class LM(object):
             if pred_index == len(prediction_ids) - 1: # -1 because we want to catch the inputs for the last generated token
                 # attach hooks and run last forward step
                 # TODO: collect activation for more than 1 step
-                self._attach_hooks(self.model)
+                # self._attach_hooks(self.model)
                 extra_forward_kwargs = {'attention_mask': attention_mask, 'decoder_inputs_embeds': decoder_input_embeds}
                 forward_kwargs = {
                     'inputs_embeds': encoder_input_embeds,
@@ -323,7 +341,9 @@ class LM(object):
 
             cur_len += 1
 
-        # Get encoder/decoder hidden states
+        print("self._analyze_token in the for loop takes time: ", time() - time_start)
+
+        # Get encoder/decoder hidden states (don't take long)
         embedding_states = None
         for attributes in ["hidden_states", "encoder_hidden_states", "decoder_hidden_states"]:
             out_attr = getattr(output, attributes, None)
@@ -347,9 +367,22 @@ class LM(object):
 
                     # First hidden state is the embedding layer, skip it
                     # FIXME: do this in a cleaner way
-                    hs_list = torch.cat(hs_list, dim=0)
-                    embedding_states = hs_list[0]
-                    hidden_states = hs_list[1:]
+                    # if one shape is different from others, it should be the embedding layer, and it always 
+                    #  appear at the beginning or the end
+                    if hs_list[0].shape != hs_list[1].shape:
+                        embedding_states = hs_list[0]
+                        hidden_states = torch.cat(hs_list[1:])
+                    elif hs_list[-1].shape != hs_list[-2].shape:
+                        embedding_states = hs_list[-1]
+                        hidden_states = torch.cat(hs_list[:-1])
+                        # revert the hidden_states order
+                        hidden_states = torch.flip(hidden_states, [0])
+                        # print(hidden_states.shape)
+                    else:
+                        hs_list = torch.cat(hs_list, dim=0)
+                        embedding_states = hs_list[0]
+                        hidden_states = hs_list[1:]
+                        
                     tokens_hs_list.append(hidden_states)
 
                 setattr(output, attributes, tokens_hs_list)
@@ -366,6 +399,7 @@ class LM(object):
 
         # Turn activations from dict to a proper array
         activations_dict = self._all_activations_dict
+        # print(activations_dict)
         for layer_type, activations in activations_dict.items():
             self.activations[layer_type] = activations_dict_to_array(activations)
 
@@ -433,7 +467,7 @@ class LM(object):
         n_input_tokens = len(input_tokens['input_ids'][0])
 
         # attach hooks
-        self._attach_hooks(self.model)
+        # self._attach_hooks(self.model)
 
         # model
         if self.model_type == 'mlm':
@@ -510,13 +544,17 @@ class LM(object):
         vocab_size = embedding_matrix.shape[0]
 
         one_hot_tensor = self.to(_one_hot_batched(input_ids, vocab_size))
-        token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
+        token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True).to(dtype=self.torch_dtype)
+        
+        print("dtype of token_ids_tensor_one_hot:", token_ids_tensor_one_hot.dtype)
+        print("dtype of embedding_matrix:", embedding_matrix.dtype)
 
         inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
         return inputs_embeds, token_ids_tensor_one_hot
 
     def _attach_hooks(self, model):
         # TODO: Collect activations for more than 1 step
+        # print(self.model)
 
         if self._hooks:
             # skip if hooks are already attached
@@ -534,6 +572,7 @@ class LM(object):
                                name=name: self._get_activations_hook(name, input_))
 
                 # Register neuron inhibition hook
+                # print(name)
                 self._hooks[name + '_inhibit'] = module.register_forward_pre_hook(
                     lambda self_, input_, name=name: \
                         self._inhibit_neurons_hook(name, input_)
@@ -554,7 +593,7 @@ class LM(object):
             dimensions (batch_size, sequence_length, neurons)
         """
         # print('_get_activations_hook', name)
-        # pprint(input_)
+        # print(input_)
         # print(type(input_), len(input_), type(input_[0]), input_[0].shape, len(input_[0]), input_[0][0].shape)
         # in distilGPT and GPT2, the layer name is 'transformer.h.0.mlp.c_fc'
         # Extract the number of the layer from the name
@@ -589,7 +628,9 @@ class LM(object):
         of the neurons indicated in self.neurons_to_inhibit
         """
 
-        layer_number = re.search("(?<=\.)\d+(?=\.)", name).group(0)
+        # print(name.split('.'))
+        layer_number = int(re.search("(?<=\.)\d+(?=\.)", name).group(0))
+        # print(layer_number, name)
         if layer_number in self.neurons_to_inhibit.keys():
             # print('layer_number', layer_number, input_tensor[0].shape)
 

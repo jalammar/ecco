@@ -26,7 +26,10 @@ def from_pretrained(hf_model_id: str,
                     hidden_states: Optional[bool] = True,
                     activations_layer_nums: Optional[List[int]] = None,
                     verbose: Optional[bool] = True,
-                    gpu: Optional[bool] = True
+                    gpu: Optional[bool] = True,
+                    multi_gpu = False,
+                    cache_dir = None,
+                    torch_dtype=None
                     ):
     """
     Constructs a [LM][ecco.lm.LM] object based on a string identifier from HuggingFace Transformers. This is
@@ -71,7 +74,7 @@ def from_pretrained(hf_model_id: str,
     else:
         config = load_config(hf_model_id)
 
-    tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
+    tokenizer = AutoTokenizer.from_pretrained(hf_model_id, torch_dtype=torch_dtype)
 
     if config['type'] == 'enc-dec':
         model_cls = AutoModelForSeq2SeqLM
@@ -80,7 +83,7 @@ def from_pretrained(hf_model_id: str,
     else:
         model_cls = AutoModel
 
-    model = model_cls.from_pretrained(hf_model_id, output_hidden_states=hidden_states, output_attentions=attention)
+    model = model_cls.from_pretrained(hf_model_id, output_hidden_states=hidden_states, output_attentions=attention, device_map="auto" if multi_gpu else None, cache_dir=cache_dir, torch_dtype=torch_dtype)
 
     lm_kwargs = {
         'model_name': hf_model_id,
@@ -90,6 +93,6 @@ def from_pretrained(hf_model_id: str,
         'verbose': verbose,
         'gpu': gpu}
 
-    lm = LM(model, tokenizer, **lm_kwargs)
+    lm = LM(model, tokenizer, torch_dtype=torch_dtype, **lm_kwargs)
 
     return lm
