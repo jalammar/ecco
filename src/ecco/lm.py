@@ -89,7 +89,7 @@ class LM(object):
             self.model_type = self.model_config['type']
             embeddings_layer_name = self.model_config['embedding']
             embed_retriever = attrgetter(embeddings_layer_name)
-            print(self.model)
+            # print(self.model)
             if type(embed_retriever(self.model)) == torch.nn.Embedding:
                 self.model_embeddings = embed_retriever(self.model).weight
             else:
@@ -244,16 +244,16 @@ class LM(object):
             output_scores=True,
             **generate_kwargs
         )
-        print("self.model.generate takes time: ", time() - time_start)
+        time_end = time()
+        # print("self.model.generate takes time: ", time_end - time_start)
+        gen_time = time_end - time_start
 
         # Get prediction logits for each chosen prediction id
         prediction_logits, prediction_ids = [], []
         if output.__class__.__name__.endswith("EncoderDecoderOutput"):
             prediction_ids, prediction_scores = output.sequences[0][1:], output.scores
-
         elif output.__class__.__name__.endswith("DecoderOnlyOutput"):
             prediction_ids, prediction_scores = output.sequences[0][n_input_tokens:], output.scores
-
         else:
             raise NotImplementedError(f"Unexpected output type: {type(output)}")
 
@@ -291,6 +291,7 @@ class LM(object):
                 _ = self.model(**forward_kwargs)
 
             # Get primary attributions for produced token
+            # print("generating saliency results for token", pred_index)
             self._analyze_token(
                 encoder_input_embeds=encoder_input_embeds,
                 encoder_attention_mask=attention_mask,
@@ -298,6 +299,7 @@ class LM(object):
                 attribution_flags=attribution,
                 prediction_id=prediction_id
             )
+
 
             # Recomputing inputs ids, attention mask and decoder input ids
             if decoder_input_ids is not None:
@@ -340,8 +342,11 @@ class LM(object):
                         self.attributions[k].insert(-1, np.zeros_like(self.attributions[k][-1]))
 
             cur_len += 1
+            
+        time_end = time()
+        attribute_time = time_end - time_start
 
-        print("self._analyze_token in the for loop takes time: ", time() - time_start)
+        # print("self._analyze_token in the for loop takes time: ", time() - time_start)
 
         # Get encoder/decoder hidden states (don't take long)
         embedding_states = None
@@ -433,7 +438,7 @@ class LM(object):
                             'lm_head': self.model.lm_head,
                             'model_type': self.model_type,
                             'device': self.device,
-                            'config': self.model_config})
+                            'config': self.model_config}), gen_time, attribute_time
 
     def __call__(self, input_tokens: torch.Tensor):
         """
@@ -546,8 +551,8 @@ class LM(object):
         one_hot_tensor = self.to(_one_hot_batched(input_ids, vocab_size))
         token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True).to(dtype=self.torch_dtype)
         
-        print("dtype of token_ids_tensor_one_hot:", token_ids_tensor_one_hot.dtype)
-        print("dtype of embedding_matrix:", embedding_matrix.dtype)
+        # print("dtype of token_ids_tensor_one_hot:", token_ids_tensor_one_hot.dtype)
+        # print("dtype of embedding_matrix:", embedding_matrix.dtype)
 
         inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
         return inputs_embeds, token_ids_tensor_one_hot

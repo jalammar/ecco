@@ -18,7 +18,7 @@ import numpy.linalg as la
 from torch.nn import functional as F
 import transformers
 
-N_STEPS=25
+# IG_N_STEPS=50
 
 ATTR_NAME_ALIASES = {
     'ig': 'integrated_gradients',
@@ -101,22 +101,22 @@ def compute_primary_attributions_scores(attr_method : str, model: transformers.P
             f"Please choose one of the methods: {list(ATTR_NAME_TO_CLASS.keys())}"
         )
 
-    print("now running attribution in Capsum")
+    # print("now running attribution in Capsum")
     ig = attr_method_class(forward_func=forward_func)
     # print("ig is", ig)
-    time_start = time()
-    attributions = ig.attribute(inputs, target=prediction_id, n_steps=N_STEPS)
-    # attributions = torch.tensor([0.1, 0.2, 0.3, 0.4])
-    print("attributions shape", attributions.shape)
-    print("attribution " + attr_method + " takes time:", time() - time_start)
+    # time_start = time()
+    # attributions = ig.attribute(inputs, target=prediction_id, n_steps=IG_N_STEPS)
+    attributions = ig.attribute(inputs, target=prediction_id)
+    # print("attributions shape", attributions.shape)
+    # print("attribution " + attr_method + " takes time:", time() - time_start)
 
     if decoder_ is not None:
         # Does it make sense to concatenate encoder and decoder attributions before normalization?
         # We assume that the encoder/decoder embeddings are the same
         normalized_attributes = normalize_attributes(torch.cat(attributions, dim=1))
     else:
-        normalized_attributes =  normalize_attributes(attributions)
+        normalized_attributes = normalize_attributes(attributions)
         
-    print("normalized_attributes is", normalized_attributes)
+    # print("normalized_attributes is", normalized_attributes)
     
     return normalized_attributes
