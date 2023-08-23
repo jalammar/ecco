@@ -147,8 +147,8 @@ class OutputSeq:
         }})"""
         d.display(d.Javascript(js))
 
-        if printJson:
-            print(data)
+        # if printJson:
+            # print(data)
 
     def __call__(self, position=None, **kwargs):
 
@@ -323,9 +323,13 @@ class OutputSeq:
             }})"""
 
         d.display(d.Javascript(js))
+        # save the js
+        path = '/u/haob2/saliency4alce/results/viz.js'
+        with open(path, 'w') as f:
+            f.write(js)
 
         if 'printJson' in kwargs and kwargs['printJson']:
-            print(data)
+            # print(data)
             return data
 
     def _repr_html_(self, **kwargs):
@@ -428,7 +432,7 @@ class OutputSeq:
         d.display(d.Javascript(js))
 
         if 'printJson' in kwargs and kwargs['printJson']:
-            print(data)
+            # print(data)
             return data
 
     def rankings(self, **kwargs):
@@ -497,7 +501,7 @@ class OutputSeq:
                 'predicted_tokens': predicted_tokens,
                 'token_found_mask': token_found_mask
             }
-            print(data)
+            # print(data)
             return data
 
     def rankings_watch(self, watch: List[int] = None, position: int = -1, **kwargs):
@@ -565,7 +569,7 @@ class OutputSeq:
             data = {'input_tokens': input_tokens,
                     'output_tokens': output_tokens,
                     'rankings': rankings}
-            print(data)
+            # print(data)
             return data
 
     def attention(self, attention_values=None, layer=0, **kwargs):
@@ -616,8 +620,8 @@ class OutputSeq:
         }})""".format(data)
         d.display(d.Javascript(js))
 
-        if 'printJson' in kwargs and kwargs['printJson']:
-            print(data)
+        # if 'printJson' in kwargs and kwargs['printJson']:
+            # print(data)
 
     def run_nmf(self, **kwargs):
         """
@@ -828,7 +832,7 @@ class NMF:
         d.display(d.Javascript(js))
 
         if 'printJson' in kwargs and kwargs['printJson']:
-            print(data)
+            # print(data)
             return data
 
 
@@ -837,7 +841,7 @@ class NMF:
 
         for idx, comp in enumerate(self.components):
             #     print('Layer {} components'.format(idx), 'Variance: {}'.format(lm.variances[idx][:n_components]))
-            print('Layer {} components'.format(idx))
+            # print('Layer {} components'.format(idx))
             comp = comp[:n_components, :].T
 
             #     plt.figure(figsize=(16,2))

@@ -18,7 +18,7 @@ import numpy.linalg as la
 from torch.nn import functional as F
 import transformers
 
-# IG_N_STEPS=50
+IG_N_STEPS=50
 
 ATTR_NAME_ALIASES = {
     'ig': 'integrated_gradients',
@@ -102,7 +102,7 @@ def compute_primary_attributions_scores(attr_method : str, model: transformers.P
         )
 
     # print("now running attribution in Capsum")
-    ig = attr_method_class(forward_func=forward_func)
+    ig = attr_method_class(forward_func)
     # print("ig is", ig)
     # time_start = time()
     # attributions = ig.attribute(inputs, target=prediction_id, n_steps=IG_N_STEPS)
