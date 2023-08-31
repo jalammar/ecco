@@ -89,7 +89,7 @@ class LM(object):
             self.model_type = self.model_config['type']
             embeddings_layer_name = self.model_config['embedding']
             embed_retriever = attrgetter(embeddings_layer_name)
-            # print(self.model)
+            print(self.model)
             if type(embed_retriever(self.model)) == torch.nn.Embedding:
                 self.model_embeddings = embed_retriever(self.model).weight
             else:
@@ -127,6 +127,7 @@ class LM(object):
                        encoder_attention_mask: Optional, # TODO: use encoder mask and also decoder mask
                        decoder_input_embeds: Optional[torch.Tensor],
                        prediction_id: torch.Tensor,
+                       supertoken_range: Optional[List[int]] = None,
                        attribution_flags: Optional[List[str]] = []) -> None:
         """
         Analyzes a predicted token.
@@ -135,7 +136,7 @@ class LM(object):
         for attr_method in attribution_flags:
 
             # deactivate hooks: attr method can perform multiple forward steps
-            # self._remove_hooks()
+            self._remove_hooks()
 
             # Add attribution scores to self.attributionsp
             # print which device the model is on
@@ -148,7 +149,8 @@ class LM(object):
                         'inputs_embeds': encoder_input_embeds,
                         'decoder_inputs_embeds': decoder_input_embeds
                     },
-                    prediction_id=prediction_id
+                    prediction_id=prediction_id,
+                    supertoken_range=supertoken_range
                 ).cpu().detach().numpy()
             )
 
@@ -161,6 +163,7 @@ class LM(object):
                  attribution: Optional[List[str]] = [],
                  generate: Optional[int] = None,
                  beam_size: int = 1,
+                 supertoken_range: Optional[List[int]] = None,
                  **generate_kwargs: Any):
         """
         Generate tokens in response to an input prompt.
@@ -222,7 +225,7 @@ class LM(object):
             viz_id = self.display_input_sequence(input_ids[0])
 
         # Get model output
-        # self._remove_hooks() # deactivate hooks: we will run them for the last model forward only
+        self._remove_hooks() # deactivate hooks: we will run them for the last model forward only
         # print the device of input_ids, attention_mask, and self.model
         # print(f"input_ids.device: {input_ids.device}")
         # print(f"attention_mask.device: {attention_mask.device}")
@@ -297,9 +300,9 @@ class LM(object):
                 encoder_attention_mask=attention_mask,
                 decoder_input_embeds=decoder_input_embeds,
                 attribution_flags=attribution,
-                prediction_id=prediction_id
+                prediction_id=prediction_id,
+                supertoken_range=supertoken_range
             )
-
 
             # Recomputing inputs ids, attention mask and decoder input ids
             if decoder_input_ids is not None:

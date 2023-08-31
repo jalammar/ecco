@@ -13,8 +13,10 @@ Usage:
 
 
 __version__ = '0.1.2'
+transformer_deprecated_version = '4.22.1'
 from ecco.lm import LM
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel, AutoModelForSeq2SeqLM
+import transformers
 from typing import Any, Dict, Optional, List
 from ecco.util import load_config, pack_tokenizer_config
 
@@ -74,7 +76,10 @@ def from_pretrained(hf_model_id: str,
     else:
         config = load_config(hf_model_id)
 
+    # if transformers.__version__ != transformer_deprecated_version:
     tokenizer = AutoTokenizer.from_pretrained(hf_model_id, torch_dtype=torch_dtype)
+    # else:
+        # tokenizer = AutoTokenizer.from_pretrained(hf_model_id)
 
     if config['type'] == 'enc-dec':
         model_cls = AutoModelForSeq2SeqLM
@@ -82,8 +87,12 @@ def from_pretrained(hf_model_id: str,
         model_cls = AutoModelForCausalLM
     else:
         model_cls = AutoModel
-
+    
+    print("transformer version:", transformers.__version__)
+    # if transformers.__version__ != transformer_deprecated_version:
     model = model_cls.from_pretrained(hf_model_id, output_hidden_states=hidden_states, output_attentions=attention, device_map="auto" if multi_gpu else None, cache_dir=cache_dir, torch_dtype=torch_dtype)
+    # else:
+        # model = model_cls.from_pretrained(hf_model_id, output_hidden_states=hidden_states, output_attentions=attention, cache_dir=cache_dir)
 
     lm_kwargs = {
         'model_name': hf_model_id,
