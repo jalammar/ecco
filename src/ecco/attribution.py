@@ -151,17 +151,17 @@ def compute_primary_attributions_scores(attr_method : str, model: transformers.P
     #     else:
     #         feature_mask[0][i] = 0
     # feature_mask = feature_mask.to(inputs.device)
-    print("feature_mask shape is", feature_mask.shape)
-    print("feature_mask is", feature_mask)
+    # print("feature_mask shape is", feature_mask.shape)
+    # print("feature_mask is", feature_mask)
     feature_mask_idxs = [0, 27, 203, 424, 572, 743, 919]
-    for feature_mask_idx in feature_mask_idxs:
-        print("feature_mask[0][{}] is".format(feature_mask_idx), feature_mask[0][feature_mask_idx])
+    # for feature_mask_idx in feature_mask_idxs:
+        # print("feature_mask[0][{}] is".format(feature_mask_idx), feature_mask[0][feature_mask_idx])
     
     attributions = ig.attribute(
         inputs, # add batch dimension for Captum
         target=prediction_id,
         feature_mask=feature_mask,
-        n_samples=300,
+        n_samples=5,
         show_progress=True
     ) # for [limebase]
 

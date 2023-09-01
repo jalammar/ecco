@@ -245,8 +245,10 @@ class LM(object):
             temperature=temperature,
             return_dict_in_generate=True,
             output_scores=True,
+            output_hidden_states=True,
             **generate_kwargs
         )
+        # print("output hidden states:", output.hidden_states)
         time_end = time()
         # print("self.model.generate takes time: ", time_end - time_start)
         gen_time = time_end - time_start
@@ -402,6 +404,8 @@ class LM(object):
                 "Not expected to have encoder_hidden_states/decoder_hidden_states with 'hidden_states'"
             setattr(output, "decoder_hidden_states", output.hidden_states)
 
+        # print("output.decoder_hidden_states:", output.decoder_hidden_states)
+
         encoder_hidden_states = getattr(output, "encoder_hidden_states", None)
         decoder_hidden_states = getattr(output, "hidden_states", getattr(output, "decoder_hidden_states", None))
 
@@ -425,6 +429,8 @@ class LM(object):
 
         attributions = self.attributions
         attn = getattr(output, "attentions", None)
+        
+        # print("decoder hidden states:", decoder_hidden_states)
 
         return OutputSeq(**{'tokenizer': self.tokenizer,
                             'token_ids': all_token_ids.unsqueeze(0),  # Add a batch dimension
