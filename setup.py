@@ -52,6 +52,8 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Utilities',
@@ -63,12 +65,12 @@ setup(
     keywords=[
         'Natural Language Processing', 'Explainable AI', 'keyword3',
     ],
-    python_requires='!=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
+    python_requires='!=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*',
     install_requires=[
         "transformers ~= 4.2",
-        "seaborn ~= 0.11",
-        "scikit-learn~=0.23",
-        "PyYAML~=5.4",
+        "seaborn >= 0.11",
+        "scikit-learn>=0.23,<2",
+        "PyYAML>=6.0",
         "captum ~= 0.4"
     ],
     extras_require={

@@ -1,3 +1,6 @@
+# ignore files dumped in tests
+tmp/
+
 *.py[cod]
 __pycache__
 
