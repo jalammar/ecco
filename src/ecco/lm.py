@@ -114,7 +114,7 @@ class LM(object):
         self._hooks = {}
 
     def to(self, tensor: Union[torch.Tensor, BatchEncoding]):
-        return tensor.to(self.device).to(self.model.dtype)
+        return tensor.to(self.device)
 
     def _analyze_token(self,
                        encoder_input_embeds: torch.Tensor,
@@ -519,7 +519,7 @@ class LM(object):
 
         vocab_size = embedding_matrix.shape[0]
 
-        one_hot_tensor = self.to(_one_hot_batched(input_ids, vocab_size))
+        one_hot_tensor = self.to(_one_hot_batched(input_ids, vocab_size)).to(self.model.dtype)
         token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
 
         inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
