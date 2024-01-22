@@ -112,9 +112,7 @@ class OutputSeq:
         return "<LMOutput '{}' # of lm outputs: {}>".format(self.output_text, len(self._get_hidden_states()[1][-1]))
 
     def to(self, tensor: torch.Tensor):
-        if self.device == 'cuda':
-            return tensor.to('cuda')
-        return tensor
+        return tensor.to(self.device)
 
     def explorable(self, printJson: Optional[bool] = False):
 
@@ -394,7 +392,7 @@ class OutputSeq:
 
             layer_top_tokens = [self.tokenizer.decode(t) for t in sorted_softmax[-k:]][::-1]
             top_tokens.append(layer_top_tokens)
-            layer_probs = softmax[sorted_softmax[-k:]].cpu().detach().numpy()[::-1]
+            layer_probs = softmax[sorted_softmax[-k:]].float().cpu().detach().numpy()[::-1]
             probs.append(layer_probs.tolist())
 
             # Package in output format
