@@ -141,7 +141,7 @@ class LM(object):
                         'decoder_inputs_embeds': decoder_input_embeds
                     },
                     prediction_id=prediction_id
-                ).cpu().detach().numpy()
+                ).float().cpu().detach().numpy() # cast to float32 before numpy conversion
             )
 
     def generate(self, input_str: str,
