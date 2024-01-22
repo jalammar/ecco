@@ -67,10 +67,6 @@ class LM(object):
         if torch.cuda.is_available() and gpu:
             self.model = model.to('cuda')
 
-        self.device = 'cuda' if torch.cuda.is_available() \
-                                and self.model.device.type == 'cuda' \
-            else 'cpu'
-
         self.tokenizer = tokenizer
         self.verbose = verbose
         self._path = os.path.dirname(ecco.__file__)
@@ -104,6 +100,10 @@ class LM(object):
         # we're running it before every d.HTML cell
         # d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
 
+    @property
+    def device(self):
+        return self.model.device
+
     def _reset(self):
         self._all_activations_dict = defaultdict(dict)
         self.activations = defaultdict(dict)
@@ -114,9 +114,7 @@ class LM(object):
         self._hooks = {}
 
     def to(self, tensor: Union[torch.Tensor, BatchEncoding]):
-        if self.device == 'cuda':
-            return tensor.to('cuda')
-        return tensor
+        return tensor.to(self.device).to(self.model.dtype)
 
     def _analyze_token(self,
                        encoder_input_embeds: torch.Tensor,
