@@ -591,7 +591,7 @@ class LM(object):
             # overwrite the previous step activations. This collects all activations in the last step
             # Assuming all input tokens are presented as input, no "past"
             # The inputs to c_proj already pass through the gelu activation function
-            self._all_activations_dict[layer_type][layer_number] = input_[0].detach().cpu().numpy()
+            self._all_activations_dict[layer_type][layer_number] = input_[0].detach().float().cpu().numpy()
 
     def _inhibit_neurons_hook(self, name: str, input_tensor):
         """
