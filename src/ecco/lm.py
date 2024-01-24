@@ -574,7 +574,7 @@ class LM(object):
         # (?<=\.) means look for a period before the int
         # \d+ means look for one or multiple digits
         # (?=\.) means look for a period after the int
-        layer_number = re.search("(?<=\.)\d+(?=\.)", name).group(0)
+        layer_number = re.search(r"(?<=\.)\d+(?=\.)", name).group(0)
         layer_type = 'encoder' if name.startswith('encoder.') else 'decoder'
         # print("layer number: ", layer_number)
 
@@ -599,7 +599,7 @@ class LM(object):
         of the neurons indicated in self.neurons_to_inhibit
         """
 
-        layer_number = re.search("(?<=\.)\d+(?=\.)", name).group(0)
+        layer_number = re.search(r"(?<=\.)\d+(?=\.)", name).group(0)
         if layer_number in self.neurons_to_inhibit.keys():
             # print('layer_number', layer_number, input_tensor[0].shape)
 
@@ -727,10 +727,11 @@ def sample_output_token(scores, do_sample, temperature, top_k, top_p):
         if temperature != 1.0:
             scores = scores / temperature
         # Top-p/top-k filtering
-        next_token_logscores = transformers.generation_utils. \
-            top_k_top_p_filtering(scores,
-                                  top_k=top_k,
-                                  top_p=top_p)
+        next_token_logscores = transformers.top_k_top_p_filtering(
+                scores,
+                top_k=top_k,
+                top_p=top_p
+        )
         # Sample
         probs = F.softmax(next_token_logscores, dim=-1)
 
