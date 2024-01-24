@@ -26,7 +26,8 @@ def from_pretrained(hf_model_id: str,
                     hidden_states: Optional[bool] = True,
                     activations_layer_nums: Optional[List[int]] = None,
                     verbose: Optional[bool] = True,
-                    gpu: Optional[bool] = True
+                    gpu: Optional[bool] = True,
+                    **model_kwargs: Dict[str, Any]
                     ):
     """
     Constructs a [LM][ecco.lm.LM] object based on a string identifier from HuggingFace Transformers. This is
@@ -80,7 +81,7 @@ def from_pretrained(hf_model_id: str,
     else:
         model_cls = AutoModel
 
-    model = model_cls.from_pretrained(hf_model_id, output_hidden_states=hidden_states, output_attentions=attention)
+    model = model_cls.from_pretrained(hf_model_id, output_hidden_states=hidden_states, output_attentions=attention, **model_kwargs)
 
     lm_kwargs = {
         'model_name': hf_model_id,
