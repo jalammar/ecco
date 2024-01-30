@@ -67,10 +67,6 @@ class LM(object):
         if torch.cuda.is_available() and gpu:
             self.model = model.to('cuda')
 
-        self.device = 'cuda' if torch.cuda.is_available() \
-                                and self.model.device.type == 'cuda' \
-            else 'cpu'
-
         self.tokenizer = tokenizer
         self.verbose = verbose
         self._path = os.path.dirname(ecco.__file__)
@@ -104,6 +100,10 @@ class LM(object):
         # we're running it before every d.HTML cell
         # d.display(d.HTML(filename=os.path.join(self._path, "html", "setup.html")))
 
+    @property
+    def device(self):
+        return self.model.device
+
     def _reset(self):
         self._all_activations_dict = defaultdict(dict)
         self.activations = defaultdict(dict)
@@ -114,9 +114,7 @@ class LM(object):
         self._hooks = {}
 
     def to(self, tensor: Union[torch.Tensor, BatchEncoding]):
-        if self.device == 'cuda':
-            return tensor.to('cuda')
-        return tensor
+        return tensor.to(self.device)
 
     def _analyze_token(self,
                        encoder_input_embeds: torch.Tensor,
@@ -143,7 +141,7 @@ class LM(object):
                         'decoder_inputs_embeds': decoder_input_embeds
                     },
                     prediction_id=prediction_id
-                ).cpu().detach().numpy()
+                ).float().cpu().detach().numpy() # cast to float32 before numpy conversion
             )
 
     def generate(self, input_str: str,
@@ -521,7 +519,7 @@ class LM(object):
 
         vocab_size = embedding_matrix.shape[0]
 
-        one_hot_tensor = self.to(_one_hot_batched(input_ids, vocab_size))
+        one_hot_tensor = self.to(_one_hot_batched(input_ids, vocab_size)).to(self.model.dtype)
         token_ids_tensor_one_hot = one_hot_tensor.clone().requires_grad_(True)
 
         inputs_embeds = torch.matmul(token_ids_tensor_one_hot, embedding_matrix)
@@ -576,7 +574,7 @@ class LM(object):
         # (?<=\.) means look for a period before the int
         # \d+ means look for one or multiple digits
         # (?=\.) means look for a period after the int
-        layer_number = re.search("(?<=\.)\d+(?=\.)", name).group(0)
+        layer_number = re.search(r"(?<=\.)\d+(?=\.)", name).group(0)
         layer_type = 'encoder' if name.startswith('encoder.') else 'decoder'
         # print("layer number: ", layer_number)
 
@@ -593,7 +591,7 @@ class LM(object):
             # overwrite the previous step activations. This collects all activations in the last step
             # Assuming all input tokens are presented as input, no "past"
             # The inputs to c_proj already pass through the gelu activation function
-            self._all_activations_dict[layer_type][layer_number] = input_[0].detach().cpu().numpy()
+            self._all_activations_dict[layer_type][layer_number] = input_[0].detach().float().cpu().numpy()
 
     def _inhibit_neurons_hook(self, name: str, input_tensor):
         """
@@ -601,7 +599,7 @@ class LM(object):
         of the neurons indicated in self.neurons_to_inhibit
         """
 
-        layer_number = re.search("(?<=\.)\d+(?=\.)", name).group(0)
+        layer_number = re.search(r"(?<=\.)\d+(?=\.)", name).group(0)
         if layer_number in self.neurons_to_inhibit.keys():
             # print('layer_number', layer_number, input_tensor[0].shape)
 
@@ -729,10 +727,11 @@ def sample_output_token(scores, do_sample, temperature, top_k, top_p):
         if temperature != 1.0:
             scores = scores / temperature
         # Top-p/top-k filtering
-        next_token_logscores = transformers.generation_utils. \
-            top_k_top_p_filtering(scores,
-                                  top_k=top_k,
-                                  top_p=top_p)
+        next_token_logscores = transformers.top_k_top_p_filtering(
+                scores,
+                top_k=top_k,
+                top_p=top_p
+        )
         # Sample
         probs = F.softmax(next_token_logscores, dim=-1)
 

@@ -342,3 +342,26 @@ EleutherAI/gpt-neo-2.7B:
     - 'mlp\.c_proj'
     token_prefix: ' '
     partial_token_prefix: ''
+
+# Llama
+openlm-research/open_llama_3b:
+    embedding: "model.embed_tokens"
+    type: 'causal'
+    activations: 
+    - 'mlp\.up_proj' #This is a regex
+    token_prefix: '▁'
+    partial_token_prefix: ''
+meta-llama/Llama-2-7b:
+    embedding: "model.embed_tokens"
+    type: 'causal'
+    activations: 
+    - 'mlp\.up_proj' #This is a regex
+    token_prefix: '▁'
+    partial_token_prefix: ''
+meta-llama/Llama-2-13b:
+    embedding: "model.embed_tokens"
+    type: 'causal'
+    activations: 
+     - 'mlp\.up_proj' #This is a regex
+    token_prefix: '▁'
+    partial_token_prefix: ''

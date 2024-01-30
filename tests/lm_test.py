@@ -2,7 +2,7 @@ from ecco.lm import LM, _one_hot, sample_output_token, activations_dict_to_array
 import ecco
 import torch
 import numpy as np
-from transformers import PreTrainedModel 
+from transformers import PreTrainedModel
 
 
 class TestLM:
@@ -58,6 +58,10 @@ class TestLM:
         # If we do require padding, this CUDA compains with this model for some reason.
         assert output.activations['encoder'].shape == (2, 1, 40, 3)
 
+    def test_half_prec(self):
+        # pass model kwargs
+        lm = ecco.from_pretrained('sshleifer/tiny-gpt2', activations=True, torch_dtype=torch.bfloat16)
+        assert lm.model.dtype == torch.bfloat16, f"Model dtype should be Bfloat16, got {lm.model.dtype}"
 
     # TODO: Test LM Generate with Activation. Tweak to support batch dimension.
     # def test_generate_token_no_attribution(self, mocker):

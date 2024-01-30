@@ -65,11 +65,11 @@ setup(
     ],
     python_requires='!=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
     install_requires=[
-        "transformers ~= 4.2",
-        "seaborn ~= 0.11",
-        "scikit-learn~=0.23",
-        "PyYAML~=5.4",
-        "captum ~= 0.4"
+        "transformers ~= 4.36",
+        "seaborn ~= 0.13",
+        "scikit-learn ~= 1.3",
+        "PyYAML ~= 6.0",
+        "captum ~= 0.6"
     ],
     extras_require={
         "dev": [
