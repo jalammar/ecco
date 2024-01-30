@@ -1,11 +1,8 @@
-import numpy as np
-import torch
-from transformers import PreTrainedModel
-
+from ecco.lm import LM, _one_hot, sample_output_token, activations_dict_to_array
 import ecco
-from ecco.lm import _one_hot
-from ecco.lm import activations_dict_to_array
-from ecco.lm import sample_output_token
+import torch
+import numpy as np
+from transformers import PreTrainedModel
 
 
 class TestLM:
