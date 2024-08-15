@@ -199,12 +199,12 @@ class LM(object):
             raise ValueError(
                 "max_length set to {} while input token has more tokens ({}). Consider increasing max_length" \
                     .format(max_length, cur_len))
-        
+
         # Get decoder input ids
         if self.model_type == 'enc-dec': # FIXME: only done because causal LMs like GPT-2 have the _prepare_decoder_input_ids_for_generation method but do not use it
             assert len(input_ids.size()) == 2 # will break otherwise
             if version.parse(transformers.__version__) >= version.parse('4.13'):
-                
+
                 # following the code in https://github.com/huggingface/transformers/blob/d0c1aebea467af499331234e7b285a6bf91ea073/tests/generation/test_utils.py#L2099
                 model_kwargs = self.model._prepare_encoder_decoder_kwargs_for_generation(input_ids, {})
                 decoder_input_ids, model_kwargs = self.model._prepare_decoder_input_ids_for_generation(
@@ -649,7 +649,7 @@ class LM(object):
                     parentDiv: '{viz_id}',
                     data: {json.dumps(data)},
                     tokenization_config: {json.dumps(self.model_config['tokenizer_config'])}
-            
+
             }})
          }}, function (err) {{
             console.log(err);
@@ -729,10 +729,11 @@ def sample_output_token(scores, do_sample, temperature, top_k, top_p):
         if temperature != 1.0:
             scores = scores / temperature
         # Top-p/top-k filtering
-        next_token_logscores = transformers.generation_utils. \
-            top_k_top_p_filtering(scores,
-                                  top_k=top_k,
-                                  top_p=top_p)
+        if version.parse(transformers.__version__) >= version.parse('4.25.1'):
+            top_k_top_p_filtering_fn = transformers.generation.utils.top_k_top_p_filtering
+        else:
+            top_k_top_p_filtering_fn = transformers.generation_utils.top_k_top_p_filtering
+        next_token_logscores = top_k_top_p_filtering_fn(scores, top_k=top_k, top_p=top_p)
         # Sample
         probs = F.softmax(next_token_logscores, dim=-1)
 
